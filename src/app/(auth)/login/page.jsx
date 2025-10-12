@@ -1,9 +1,10 @@
+"use client"
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Link } from "react-router-dom";
+import Link from "next/link";
 import { Scissors, ArrowLeft } from "lucide-react";
 
 const Auth = () => {
@@ -20,7 +21,7 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center p-4">
       {/* Back to Home Link */}
       <Link
-        to="/"
+        href="/"
         className="absolute top-6 left-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
