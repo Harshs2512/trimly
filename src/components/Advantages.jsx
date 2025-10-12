@@ -28,7 +28,7 @@ const Advantages = () => {
             Built for <span className="text-primary">Everyone</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            Whether you're a customer or a salon owner, Trimly transforms your experience.
+            Whether you&apos;re a customer or a salon owner, Trimly transforms your experience.
           </p>
         </div>
 

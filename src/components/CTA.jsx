@@ -16,7 +16,7 @@ const CTA = () => {
           </h2>
           
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Whether you're looking to save time or grow your salon business, 
+            Whether your&apos;e looking to save time or grow your salon business, 
             Trimly is your perfect partner. Get started in minutes.
           </p>
 
