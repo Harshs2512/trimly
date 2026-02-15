@@ -52,7 +52,7 @@ const Navbar = () => {
                                 {link.name}
                             </a>
                         ))}
-                        <Link href="/auth">
+                        <Link href="/login">
                             <Button variant="default" size="default" className="font-semibold">
                                 Login / Register
                             </Button>

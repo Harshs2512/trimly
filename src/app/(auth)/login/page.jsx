@@ -1,33 +1,69 @@
-"use client"
+"use client";
 import { useState } from "react";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import Link from "next/link";
-import { Scissors, ArrowLeft } from "lucide-react";
+import { Scissors } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isRegister, setIsRegister] = useState(false);
+  const router = useRouter();
 
-  const handleSubmit = (e) => {
+  // ✅ Login / Register Submit Handler
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate loading
-    setTimeout(() => setIsLoading(false), 1000);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("email");
+    const password = formData.get("password");
+
+    try {
+      if (!isRegister) {
+        // 🔹 LOGIN using NextAuth Credentials provider
+        const res = await signIn("credentials", {
+          redirect: false,
+          email,
+          password,
+        });
+
+        if (res?.error) {
+          alert("Invalid credentials, please try again!");
+        } else {
+          router.push("/dashboard"); // redirect after login
+        }
+      } else {
+        // 🔹 REGISTER - Call your API route for user creation
+        const registerRes = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        });
+
+        if (!registerRes.ok) throw new Error("Registration failed");
+        alert("Account created successfully! Please log in.");
+        setIsRegister(false);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ✅ OAuth Login Handler
+  const handleOAuthLogin = async (provider) => {
+    setIsLoading(true);
+    await signIn(provider, { callbackUrl: "/dashboard" });
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center p-4">
-      {/* Back to Home Link */}
-      <Link
-        href="/"
-        className="absolute top-6 left-6 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        <span className="text-sm font-medium">Back to Home</span>
-      </Link>
-
+    <div className="bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
@@ -39,7 +75,11 @@ const Auth = () => {
 
         {/* Auth Card */}
         <div className="bg-card border border-border rounded-2xl shadow-lg p-8">
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs
+            defaultValue="login"
+            className="w-full"
+            onValueChange={(v) => setIsRegister(v === "register")}
+          >
             <TabsList className="grid w-full grid-cols-2 mb-8">
               <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="register">Register</TabsTrigger>
@@ -49,9 +89,10 @@ const Auth = () => {
             <TabsContent value="login">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
-                    id="login-email"
+                    id="email"
+                    name="email"
                     type="email"
                     placeholder="you@example.com"
                     required
@@ -60,25 +101,21 @@ const Auth = () => {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="login-password">Password</Label>
+                    <Label htmlFor="password">Password</Label>
                     <a href="#" className="text-sm text-primary hover:underline">
                       Forgot password?
                     </a>
                   </div>
                   <Input
-                    id="login-password"
+                    id="password"
+                    name="password"
                     type="password"
                     placeholder="••••••••"
                     required
                   />
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  size="lg"
-                  disabled={isLoading}
-                >
+                <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
                   {isLoading ? "Logging in..." : "Login"}
                 </Button>
               </form>
@@ -89,61 +126,31 @@ const Auth = () => {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="first-name">First Name</Label>
-                    <Input
-                      id="first-name"
-                      type="text"
-                      placeholder="John"
-                      required
-                    />
+                    <Label htmlFor="firstName">First Name</Label>
+                    <Input id="firstName" name="firstName" type="text" placeholder="John" required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="last-name">Last Name</Label>
-                    <Input
-                      id="last-name"
-                      type="text"
-                      placeholder="Doe"
-                      required
-                    />
+                    <Label htmlFor="lastName">Last Name</Label>
+                    <Input id="lastName" name="lastName" type="text" placeholder="Doe" required />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="register-email">Email</Label>
-                  <Input
-                    id="register-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    required
-                  />
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" name="email" type="email" placeholder="you@example.com" required />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="register-password">Password</Label>
-                  <Input
-                    id="register-password"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                  />
+                  <Label htmlFor="password">Password</Label>
+                  <Input id="password" name="password" type="password" placeholder="••••••••" required />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm Password</Label>
-                  <Input
-                    id="confirm-password"
-                    type="password"
-                    placeholder="••••••••"
-                    required
-                  />
+                  <Label htmlFor="confirmPassword">Confirm Password</Label>
+                  <Input id="confirmPassword" name="confirmPassword" type="password" placeholder="••••••••" required />
                 </div>
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  size="lg"
-                  disabled={isLoading}
-                >
+                <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
                   {isLoading ? "Creating account..." : "Create Account"}
                 </Button>
               </form>
@@ -160,9 +167,9 @@ const Auth = () => {
             </div>
           </div>
 
-          {/* Social Login Buttons */}
+          {/* OAuth Buttons */}
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" type="button" disabled={isLoading}>
+            <Button variant="outline" type="button" onClick={() => handleOAuthLogin("google")} disabled={isLoading}>
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path
                   fill="currentColor"
@@ -183,18 +190,19 @@ const Auth = () => {
               </svg>
               Google
             </Button>
-            <Button variant="outline" type="button" disabled={isLoading}>
+
+            <Button variant="outline" type="button" onClick={() => handleOAuthLogin("github")} disabled={isLoading}>
               <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                <path d="M12 0C5.37 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.562 21.8 24 17.302 24 12c0-6.627-5.373-12-12-12z" />
               </svg>
               GitHub
             </Button>
           </div>
         </div>
 
-        {/* Footer Text */}
+        {/* Footer */}
         <p className="text-center text-sm text-muted-foreground mt-6">
-          By continuing, you agree to Trimly's{" "}
+          By continuing, you agree to Trimly’s{" "}
           <a href="#" className="text-primary hover:underline">Terms of Service</a> and{" "}
           <a href="#" className="text-primary hover:underline">Privacy Policy</a>
         </p>
