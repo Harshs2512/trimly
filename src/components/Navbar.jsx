@@ -3,8 +3,10 @@ import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 
 const Navbar = () => {
+    const { data: session } = useSession();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -52,11 +54,19 @@ const Navbar = () => {
                                 {link.name}
                             </a>
                         ))}
-                        <Link href="/login">
-                            <Button variant="default" size="default" className="font-semibold">
-                                Login / Register
-                            </Button>
-                        </Link>
+                        {session ? (
+                            <Link href="/dashboard">
+                                <Button variant="default" size="default" className="font-semibold">
+                                    Dashboard
+                                </Button>
+                            </Link>
+                        ) : (
+                            <Link href="/login">
+                                <Button variant="default" size="default" className="font-semibold">
+                                    Login / Register
+                                </Button>
+                            </Link>
+                        )}
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -86,11 +96,19 @@ const Navbar = () => {
                                 {link.name}
                             </a>
                         ))}
-                        <Link href="/auth">
-                            <Button variant="default" size="default" className="w-full font-semibold">
-                                Login / Register
-                            </Button>
-                        </Link>
+                        {session ? (
+                            <Link href="/dashboard">
+                                <Button variant="default" size="default" className="w-full font-semibold">
+                                    Dashboard
+                                </Button>
+                            </Link>
+                        ) : (
+                            <Link href="/login">
+                                <Button variant="default" size="default" className="w-full font-semibold">
+                                    Login / Register
+                                </Button>
+                            </Link>
+                        )}
                     </div>
                 )}
             </div>

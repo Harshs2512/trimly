@@ -2,24 +2,25 @@
 "use client";
 import { useState } from "react";
 import axios from "axios";
+import { useSession } from "next-auth/react";
 
 export default function BookingModal({ barber, onClose }) {
+    const { data: session } = useSession();
     const [service, setService] = useState((barber.services && barber.services[0]?.name) || "");
     const [msg, setMsg] = useState("");
 
     async function submit(e) {
         e.preventDefault();
-        const user = JSON.parse(localStorage.getItem("user") || "null");
-        if (!user) {
+        if (!session) {
             setMsg("Please login to book.");
             return;
         }
         try {
             const payload = {
-                userId: user.email,
+                userId: session.user.id, // Using user ID from session
                 barberId: barber._id,
                 service,
-                timeSlot: new Date().toISOString()
+                timeSlot: new Date().toISOString() // TODO: Add date picker
             };
             await axios.post("/api/bookings", payload);
             setMsg("Booked! You'll be notified.");

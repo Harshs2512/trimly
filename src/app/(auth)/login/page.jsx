@@ -38,10 +38,14 @@ const Auth = () => {
         }
       } else {
         // 🔹 REGISTER - Call your API route for user creation
-        const registerRes = await fetch("/api/register", {
+        const firstName = formData.get("firstName");
+        const lastName = formData.get("lastName");
+        const name = `${firstName} ${lastName}`.trim();
+
+        const registerRes = await fetch("/api/auth/register", { // Updated endpoint path if needed, but analyzed file said /api/register in fetch, but file path is api/auth/register/route.js. Wait, usually nextjs file based routing: api/auth/register/route.js -> /api/auth/register.
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password }),
+          body: JSON.stringify({ name, email, password }),
         });
 
         if (!registerRes.ok) throw new Error("Registration failed");

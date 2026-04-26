@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 const Hero = () => {
   return (
@@ -29,13 +30,15 @@ const Hero = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button
-                size="lg"
-                className="font-semibold group text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all"
-              >
-                Get Started
-                <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
+              <Link href="/login">
+                <Button
+                  size="lg"
+                  className="font-semibold group text-base px-8 py-6 shadow-lg hover:shadow-xl transition-all"
+                >
+                  Get Started
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
               <Button
                 size="lg"
                 variant="outline"
