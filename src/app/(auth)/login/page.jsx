@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Scissors } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -69,13 +70,6 @@ const Auth = () => {
   return (
     <div className="bg-gradient-to-br from-background via-background to-accent/5 flex items-center justify-center min-h-screen p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
-            <Scissors className="w-6 h-6 text-primary-foreground" />
-          </div>
-          <span className="text-3xl font-bold text-foreground">Trimly</span>
-        </div>
 
         {/* Auth Card */}
         <div className="bg-card border border-border rounded-2xl shadow-lg p-8">
@@ -206,7 +200,7 @@ const Auth = () => {
 
         {/* Footer */}
         <p className="text-center text-sm text-muted-foreground mt-6">
-          By continuing, you agree to Trimly’s{" "}
+          By continuing, you agree to Trimlly’s{" "}
           <a href="#" className="text-primary hover:underline">Terms of Service</a> and{" "}
           <a href="#" className="text-primary hover:underline">Privacy Policy</a>
         </p>

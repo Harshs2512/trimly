@@ -6,21 +6,21 @@ const Testimonials = () => {
     {
       name: "Sarah Johnson",
       role: "Regular Customer",
-      content: "Trimly saved me so much time! I used to wait 45 minutes at the salon every weekend. Now I just book ahead and walk right in. Absolute game changer!",
+      content: "Trimlly saved me so much time! I used to wait 45 minutes at the salon every weekend. Now I just book ahead and walk right in. Absolute game changer!",
       rating: 5,
       avatar: "SJ",
     },
     {
       name: "Mike Rodriguez",
       role: "Salon Owner",
-      content: "Since using Trimly, our no-show rate dropped by 60% and we've seen a 35% increase in bookings. The analytics help us optimize our schedule perfectly.",
+      content: "Since using Trimlly, our no-show rate dropped by 60% and we've seen a 35% increase in bookings. The analytics help us optimize our schedule perfectly.",
       rating: 5,
       avatar: "MR",
     },
     {
       name: "Emily Chen",
       role: "Busy Professional",
-      content: "As someone who travels a lot, finding a good salon in a new city was always a hassle. Trimly makes it super easy with reviews and real-time availability.",
+      content: "As someone who travels a lot, finding a good salon in a new city was always a hassle. Trimlly makes it super easy with reviews and real-time availability.",
       rating: 5,
       avatar: "EC",
     },
@@ -37,7 +37,7 @@ const Testimonials = () => {
             What Our <span className="text-primary">Users Say</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            Join thousands of happy customers and salon owners who trust Trimly.
+            Join thousands of happy customers and salon owners who trust Trimlly.
           </p>
         </div>
 

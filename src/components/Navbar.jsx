@@ -4,6 +4,7 @@ import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 
 const Navbar = () => {
     const { data: session } = useSession();
@@ -19,7 +20,7 @@ const Navbar = () => {
     }, []);
 
     const navLinks = [
-        { name: "Home", href: "#home" },
+        { name: "Home", href: "/" },
         { name: "Features", href: "#features" },
         { name: "Benefits", href: "#benefits" },
         { name: "About", href: "#about" },
@@ -28,21 +29,17 @@ const Navbar = () => {
 
     return (
         <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
+            className={`fixed top-0 left-0 right-0 z-50 transition-all py-1 duration-300 ${isScrolled
                 ? "bg-background/95 backdrop-blur-md shadow-md border-b border-border"
                 : "bg-transparent"
                 }`}
         >
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16 md:h-20">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 ">
+                <div className="flex items-center justify-between">
                     {/* Logo */}
-                    <a href="#home" className="flex items-center space-x-2 group">
-                        <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center transition-transform group-hover:scale-110">
-                            <span className="text-primary-foreground font-bold text-xl">T</span>
-                        </div>
-                        <span className="text-2xl font-bold text-foreground">Trimly</span>
+                    <a href="/" className="flex items-center space-x-2 group">
+                        <Image src={'/logo.png'} width={120} height={40} alt="Logo" />
                     </a>
-
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center space-x-8">
                         {navLinks.map((link) => (
@@ -61,8 +58,8 @@ const Navbar = () => {
                                 </Button>
                             </Link>
                         ) : (
-                            <Link href="/login">
-                                <Button variant="default" size="default" className="font-semibold">
+                            <Link href="/login" className="cursor-pointer">
+                                <Button variant="default" size="default" className="font-semibold cursor-pointer">
                                     Login / Register
                                 </Button>
                             </Link>

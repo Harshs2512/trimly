@@ -99,7 +99,7 @@ export default function BarberProfileForm({ user, initialData }) {
                 <FormItem>
                   <FormLabel>Shop Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Trimly Cuts" {...field} />
+                    <Input placeholder="Trimlly Cuts" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

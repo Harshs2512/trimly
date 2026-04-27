@@ -12,13 +12,13 @@ const CTA = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-4xl mx-auto text-center space-y-8">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
-            Join <span className="text-primary">Trimly</span> Today and Say Goodbye to{" "}
+            Join <span className="text-primary">Trimlly</span> Today and Say Goodbye to{" "}
             <span className="text-accent-foreground">Waiting Lines!</span>
           </h2>
           
           <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
             Whether your&apos;e looking to save time or grow your salon business, 
-            Trimly is your perfect partner. Get started in minutes.
+            Trimlly is your perfect partner. Get started in minutes.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">

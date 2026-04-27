@@ -22,13 +22,13 @@ const Advantages = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <div className="inline-block px-4 py-2 bg-accent/10 rounded-full">
-            <span className="text-accent-foreground font-semibold text-sm">Why Trimly?</span>
+            <span className="text-accent-foreground font-semibold text-sm">Why Trimlly?</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
             Built for <span className="text-primary">Everyone</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            Whether you&apos;re a customer or a salon owner, Trimly transforms your experience.
+            Whether you&apos;re a customer or a salon owner, Trimlly transforms your experience.
           </p>
         </div>
 

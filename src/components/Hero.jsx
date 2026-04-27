@@ -26,7 +26,7 @@ const Hero = () => {
 
             <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl">
               No more waiting at salons — get real-time booking and save hours.
-              Trimly connects you with top barbers and helps you manage your time better.
+              Trimlly connects you with top barbers and helps you manage your time better.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4">

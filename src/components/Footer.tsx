@@ -1,11 +1,30 @@
+import Link from "next/link";
 import { Facebook, Instagram, Linkedin, Twitter } from "lucide-react";
+import Image from "next/image";
 
 const Footer = () => {
   const footerLinks = {
-    Product: ["Features", "Pricing", "FAQ", "Support"],
-    Company: ["About Us", "Careers", "Blog", "Press Kit"],
-    Legal: ["Privacy Policy", "Terms of Service", "Cookie Policy", "GDPR"],
-    Resources: ["Help Center", "Documentation", "API", "Status"],
+    Product: [
+      { label: "Features", href: "#" },
+      { label: "Pricing", href: "#" },
+      { label: "FAQ", href: "#" },
+      { label: "Support", href: "#" }
+    ],
+    Company: [
+      { label: "About Us", href: "#" },
+      { label: "Blog", href: "#" },
+    ],
+    Legal: [
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Cookie Policy", href: "#" },
+    ],
+    Resources: [
+      { label: "Help Center", href: "#" },
+      { label: "Documentation", href: "#" },
+      { label: "API", href: "#" },
+      { label: "Status", href: "#" }
+    ],
   };
 
   const socialLinks = [
@@ -23,13 +42,10 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="col-span-2 space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-xl">T</span>
-              </div>
-              <span className="text-2xl font-bold text-foreground">Trimly</span>
+              <Image src={'/logo.png'} width={100} height={40} alt="Logo" />
             </div>
             <p className="text-muted-foreground max-w-xs">
-              The smartest way to book your haircut and manage salon appointments. 
+              The smartest way to book your haircut and manage salon appointments.
               Save time, skip the queue.
             </p>
             {/* Social Links */}
@@ -53,13 +69,13 @@ const Footer = () => {
               <h4 className="font-semibold text-foreground">{category}</h4>
               <ul className="space-y-2">
                 {links.map((link) => (
-                  <li key={link}>
-                    <a
-                      href="#"
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
                       className="text-muted-foreground hover:text-primary transition-colors"
                     >
-                      {link}
-                    </a>
+                      {link.label}
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -70,16 +86,16 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-muted-foreground text-sm">
-            © {new Date().getFullYear()} Trimly. All rights reserved.
+            © {new Date().getFullYear()} Trimlly. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm">
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+            <Link href="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
               Privacy
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+            </Link>
+            <Link href="/terms" className="text-muted-foreground hover:text-primary transition-colors">
               Terms
-            </a>
-            <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+            </Link>
+            <a href="mailto:support@trimly.com" className="text-muted-foreground hover:text-primary transition-colors">
               Contact
             </a>
           </div>
