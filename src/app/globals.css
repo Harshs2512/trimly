@@ -63,7 +63,7 @@
 } */
 
   :root {
-    --background: 0 0% 100%;
+  --background: 0 0% 96.5%; /* #F6F6F6 */
     --foreground: 220 15% 15%;
 
     --card: 0 0% 100%;
@@ -72,11 +72,11 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 15% 15%;
 
-    --primary: 210 100% 55%;
+    --primary: 179 73.1% 23.3%; /* #106766 Deep Teal */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 210 100% 48%;
+    --primary-hover: 179 73.1% 30%;
 
-    --secondary: 220 15% 96%;
+    --secondary: 220 15% 90%;
     --secondary-foreground: 220 15% 15%;
 
     --muted: 220 15% 96%;
@@ -130,9 +130,9 @@
     --popover: 220 20% 10%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 210 100% 55%;
+    --primary: 179 73.1% 23.3%; /* Deep Teal */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 210 100% 62%;
+    --primary-hover: 179 73.1% 30%;
 
     --secondary: 220 15% 16%;
     --secondary-foreground: 0 0% 98%;

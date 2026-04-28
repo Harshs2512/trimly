@@ -38,7 +38,7 @@ const Navbar = () => {
                 <div className="flex items-center justify-between">
                     {/* Logo */}
                     <a href="/" className="flex items-center space-x-2 group">
-                        <Image src={'/logo.png'} width={120} height={40} alt="Logo" />
+                        <Image src={'/logo.png'} width={100} height={40} alt="Logo" />
                     </a>
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center space-x-8">
