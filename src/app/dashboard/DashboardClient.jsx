@@ -49,6 +49,11 @@ export default function DashboardClient({ user, bookings }) {
                {new Date(booking.timeSlot).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
              </div>
           </div>
+          {booking.status === 'cancelled' && booking.cancelReason && (
+             <div className="mt-2 text-xs font-medium text-red-500/90 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-md inline-flex items-center">
+               <span className="font-bold mr-1">Reason:</span> {booking.cancelReason}
+             </div>
+          )}
         </div>
       </div>
       

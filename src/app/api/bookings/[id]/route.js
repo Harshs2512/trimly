@@ -6,7 +6,7 @@ export async function PUT(request, { params }) {
   try {
     const { id } = params;
     const body = await request.json();
-    const { status } = body;
+    const { status, cancelReason } = body;
 
     if (!status || !['confirmed', 'cancelled', 'pending'].includes(status)) {
       return new Response(JSON.stringify({ error: "Invalid status" }), { status: 400 });
@@ -16,9 +16,14 @@ export async function PUT(request, { params }) {
     const db = client.db();
     const col = db.collection("bookings");
 
+    const updateFields = { status, updatedAt: new Date() };
+    if (status === 'cancelled' && cancelReason) {
+      updateFields.cancelReason = cancelReason;
+    }
+
     const updateResult = await col.updateOne(
       { _id: new ObjectId(id) },
-      { $set: { status, updatedAt: new Date() } }
+      { $set: updateFields }
     );
 
     if (updateResult.matchedCount === 0) {

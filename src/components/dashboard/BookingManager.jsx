@@ -2,12 +2,17 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Calendar, Clock, Scissors, Check, X, User, AlertCircle } from "lucide-react";
 
 export default function BookingManager({ barberId }) {
     const [bookings, setBookings] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(null); // stores booking ID being processed
+    const [cancelModalOpen, setCancelModalOpen] = useState(null); // stores booking ID to cancel
+    const [cancelReason, setCancelReason] = useState("");
 
     useEffect(() => {
         fetchBookings();
@@ -26,12 +31,18 @@ export default function BookingManager({ barberId }) {
             });
     };
 
-    const updateStatus = async (id, status) => {
+    const updateStatus = async (id, status, reason = null) => {
         setActionLoading(id);
         try {
-            await axios.put(`/api/bookings/${id}`, { status });
+            const payload = { status };
+            if (reason) payload.cancelReason = reason;
+            await axios.put(`/api/bookings/${id}`, payload);
             // Refresh list locally
-            setBookings(prev => prev.map(b => b._id === id ? { ...b, status } : b));
+            setBookings(prev => prev.map(b => b._id === id ? { ...b, status, cancelReason: reason } : b));
+            if (status === 'cancelled') {
+                setCancelModalOpen(null);
+                setCancelReason("");
+            }
         } catch (err) {
             console.error("Failed to update status", err);
             alert("Failed to update booking status. Please try again.");
@@ -94,7 +105,7 @@ export default function BookingManager({ barberId }) {
                         <Button 
                             variant="outline" 
                             className="flex-1 md:flex-none text-red-500 hover:text-red-600 hover:bg-red-500/10 border-red-500/20"
-                            onClick={() => updateStatus(booking._id, "cancelled")}
+                            onClick={() => setCancelModalOpen(booking._id)}
                             disabled={actionLoading === booking._id}
                         >
                             <X className="w-4 h-4 mr-1.5" /> Decline
@@ -176,6 +187,44 @@ export default function BookingManager({ barberId }) {
                     </div>
                 )}
             </div>
+            {/* Cancel Modal */}
+            <Dialog open={!!cancelModalOpen} onOpenChange={(open) => !open && setCancelModalOpen(null)}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Decline Appointment</DialogTitle>
+                        <DialogDescription>
+                            Please provide a reason for declining this request. The client will see this reason.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="flex flex-col gap-2">
+                            <Label>Quick Reasons</Label>
+                            <div className="flex flex-wrap gap-2">
+                                {["Time slot is busy", "Shop closed unexpectedly", "Double booked"].map(r => (
+                                    <Button key={r} type="button" variant={cancelReason === r ? "default" : "outline"} size="sm" onClick={() => setCancelReason(r)}>
+                                        {r}
+                                    </Button>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-2 mt-2">
+                            <Label htmlFor="custom-reason">Or type a custom reason</Label>
+                            <Input 
+                                id="custom-reason" 
+                                placeholder="Enter custom reason here..." 
+                                value={cancelReason} 
+                                onChange={(e) => setCancelReason(e.target.value)} 
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="ghost" onClick={() => setCancelModalOpen(null)}>Cancel</Button>
+                        <Button variant="destructive" onClick={() => updateStatus(cancelModalOpen, "cancelled", cancelReason || "Cancelled by barber")} disabled={actionLoading === cancelModalOpen}>
+                            {actionLoading === cancelModalOpen ? "Declining..." : "Confirm Decline"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
         </div>
     );
