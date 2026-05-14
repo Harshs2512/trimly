@@ -117,6 +117,7 @@ const Auth = () => {
       {/* Right Sidebar - Auth Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative animate-in fade-in duration-500">
         <div className="w-full max-w-md flex flex-col items-center">
+
           <div className="w-full text-center mb-8 space-y-2">
             <h2 className="text-3xl font-bold tracking-tight text-foreground">
               {isRegister ? "Create an account" : "Welcome back"}
