@@ -2,18 +2,31 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Calendar, Clock, Scissors, MapPin, ArrowRight, UserCircle2, ChevronRight } from "lucide-react";
 
 export default function DashboardClient({ user, bookings }) {
+  const router = useRouter();
   const [greeting, setGreeting] = useState("Hello");
+  const [rescheduleModalOpen, setRescheduleModalOpen] = useState(null);
+  const [newTimeSlot, setNewTimeSlot] = useState("");
+  const [rescheduleLoading, setRescheduleLoading] = useState(false);
+  const [minDateTime, setMinDateTime] = useState("");
 
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour < 12) setGreeting("Good Morning");
     else if (hour < 18) setGreeting("Good Afternoon");
     else setGreeting("Good Evening");
+
+    const now = new Date();
+    const tzoffset = (now).getTimezoneOffset() * 60000;
+    const localNowISO = (new Date(now - tzoffset)).toISOString().slice(0,16);
+    setMinDateTime(localNowISO);
   }, []);
 
   const upcomingBookings = bookings.filter(b => b.status === "confirmed" || b.status === "pending" || new Date(b.timeSlot) >= new Date());
@@ -28,6 +41,23 @@ export default function DashboardClient({ user, bookings }) {
       default:
         return <span className="px-3 py-1 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-full text-xs font-semibold uppercase tracking-wider">Pending</span>;
     }
+  };
+
+  const handleReschedule = async () => {
+      setRescheduleLoading(true);
+      try {
+          await axios.put(`/api/bookings/${rescheduleModalOpen}`, {
+              status: 'pending',
+              timeSlot: new Date(newTimeSlot).toISOString()
+          });
+          router.refresh();
+          setRescheduleModalOpen(null);
+          setNewTimeSlot("");
+      } catch(err) {
+          alert(err.response?.data?.error || "Failed to reschedule.");
+      } finally {
+          setRescheduleLoading(false);
+      }
   };
 
   const BookingCard = ({ booking }) => (
@@ -50,8 +80,15 @@ export default function DashboardClient({ user, bookings }) {
              </div>
           </div>
           {booking.status === 'cancelled' && booking.cancelReason && (
-             <div className="mt-2 text-xs font-medium text-red-500/90 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-md inline-flex items-center">
-               <span className="font-bold mr-1">Reason:</span> {booking.cancelReason}
+             <div className="mt-2 flex flex-col gap-2">
+                 <div className="text-xs font-medium text-red-500/90 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-md inline-flex items-center w-fit">
+                   <span className="font-bold mr-1">Reason:</span> {booking.cancelReason}
+                 </div>
+                 {booking.cancelReason === 'Time slot is busy' && (
+                     <Button variant="outline" size="sm" className="w-fit border-primary text-primary hover:bg-primary/10" onClick={() => setRescheduleModalOpen(booking._id)}>
+                        Reschedule
+                     </Button>
+                 )}
              </div>
           )}
         </div>
@@ -164,6 +201,42 @@ export default function DashboardClient({ user, bookings }) {
           </Tabs>
         </div>
         
+        {/* Reschedule Modal */}
+        <Dialog open={!!rescheduleModalOpen} onOpenChange={(open) => !open && setRescheduleModalOpen(null)}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Reschedule Appointment</DialogTitle>
+                    <DialogDescription>
+                        The barber is busy at the previously selected time. Please choose a new date and time.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-bold flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-primary" /> Select New Date & Time
+                        </label>
+                        <div className="relative group">
+                            <input 
+                                type="datetime-local" 
+                                value={newTimeSlot}
+                                min={minDateTime}
+                                onChange={(e) => setNewTimeSlot(e.target.value)}
+                                className="w-full h-12 pl-12 pr-4 bg-background border-2 border-border/50 rounded-xl font-medium focus:border-primary focus:ring-0 transition-colors"
+                                required
+                            />
+                            <Clock className="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors pointer-events-none" />
+                        </div>
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button variant="ghost" onClick={() => setRescheduleModalOpen(null)}>Cancel</Button>
+                    <Button onClick={handleReschedule} disabled={rescheduleLoading || !newTimeSlot}>
+                        {rescheduleLoading ? "Submitting..." : "Submit Request"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
       </div>
     </div>
   );

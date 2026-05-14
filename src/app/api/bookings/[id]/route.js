@@ -6,7 +6,7 @@ export async function PUT(request, { params }) {
   try {
     const { id } = params;
     const body = await request.json();
-    const { status, cancelReason } = body;
+    const { status, cancelReason, timeSlot } = body;
 
     if (!status || !['confirmed', 'cancelled', 'pending'].includes(status)) {
       return new Response(JSON.stringify({ error: "Invalid status" }), { status: 400 });
@@ -21,9 +21,25 @@ export async function PUT(request, { params }) {
       updateFields.cancelReason = cancelReason;
     }
 
+    let unsetFields = null;
+    if (timeSlot) {
+      const bookingDate = new Date(timeSlot);
+      if (bookingDate < new Date()) {
+        return new Response(JSON.stringify({ error: "Cannot book a date in the past" }), { status: 400 });
+      }
+      updateFields.timeSlot = timeSlot;
+    }
+
+    if (status === 'pending') {
+      unsetFields = { cancelReason: "" };
+    }
+
+    const updateQuery = { $set: updateFields };
+    if (unsetFields) updateQuery.$unset = unsetFields;
+
     const updateResult = await col.updateOne(
       { _id: new ObjectId(id) },
-      { $set: updateFields }
+      updateQuery
     );
 
     if (updateResult.matchedCount === 0) {

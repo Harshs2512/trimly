@@ -16,6 +16,10 @@ export async function POST(request) {
     const { userId, barberId, service, timeSlot, status } = validation.data;
     const bookingDate = new Date(timeSlot);
 
+    if (bookingDate < new Date()) {
+      return new Response(JSON.stringify({ error: "Cannot book a date in the past" }), { status: 400 });
+    }
+
     const client = await clientPromise;
     const db = client.db();
     const col = db.collection("bookings");

@@ -12,14 +12,18 @@ export default function BookingModal({ barber, onClose }) {
     const [timeSlot, setTimeSlot] = useState("");
     const [status, setStatus] = useState("idle"); // idle, loading, success, error
     const [msg, setMsg] = useState("");
+    const [minDateTime, setMinDateTime] = useState("");
 
     // Set default time to next hour
     useEffect(() => {
         const now = new Date();
+        const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+        const localNowISO = (new Date(now - tzoffset)).toISOString().slice(0,16);
+        setMinDateTime(localNowISO);
+
         now.setHours(now.getHours() + 1);
         now.setMinutes(0);
         // Format to YYYY-MM-DDThh:mm
-        const tzoffset = (new Date()).getTimezoneOffset() * 60000;
         const localISOTime = (new Date(now - tzoffset)).toISOString().slice(0,16);
         setTimeSlot(localISOTime);
     }, []);
@@ -130,6 +134,7 @@ export default function BookingModal({ barber, onClose }) {
                                     <input 
                                         type="datetime-local" 
                                         value={timeSlot}
+                                        min={minDateTime}
                                         onChange={(e) => setTimeSlot(e.target.value)}
                                         className="w-full h-14 pl-12 pr-4 bg-background border-2 border-border/50 rounded-2xl font-medium focus:border-primary focus:ring-0 transition-colors"
                                         required
