@@ -60,6 +60,24 @@ export default function DashboardClient({ user, bookings }) {
       }
   };
 
+  const [cancelLoading, setCancelLoading] = useState(null);
+
+  const handleCancelBooking = async (bookingId) => {
+    if (!confirm("Are you sure you want to cancel this appointment?")) return;
+    setCancelLoading(bookingId);
+    try {
+      await axios.put(`/api/bookings/${bookingId}`, {
+        status: "cancelled",
+        cancelReason: "Cancelled by client"
+      });
+      router.refresh();
+    } catch (err) {
+      alert(err.response?.data?.error || "Failed to cancel booking.");
+    } finally {
+      setCancelLoading(null);
+    }
+  };
+
   const BookingCard = ({ booking }) => (
     <div className="group relative bg-card/50 backdrop-blur-md border border-border/50 hover:border-primary/50 transition-all duration-300 rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-[0_4px_20px_rgb(0,0,0,0.02)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
       <div className="flex items-start gap-4">
@@ -94,11 +112,19 @@ export default function DashboardClient({ user, bookings }) {
         </div>
       </div>
       
-      <div className="flex items-center justify-between w-full md:w-auto gap-4">
+      <div className="flex items-center justify-between w-full md:w-auto gap-3">
         {getStatusBadge(booking.status)}
-        <Button variant="ghost" size="icon" className="md:hidden group-hover:bg-primary/10 group-hover:text-primary transition-colors rounded-full">
-           <ChevronRight className="w-5 h-5" />
-        </Button>
+        {booking.status !== "cancelled" && new Date(booking.timeSlot) >= new Date() && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-red-500 hover:text-red-600 hover:bg-red-500/10 text-xs font-semibold rounded-lg"
+            onClick={() => handleCancelBooking(booking._id)}
+            disabled={cancelLoading === booking._id}
+          >
+            {cancelLoading === booking._id ? "Cancelling..." : "Cancel"}
+          </Button>
+        )}
       </div>
     </div>
   );

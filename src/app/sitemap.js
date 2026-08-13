@@ -20,11 +20,6 @@ export default function sitemap() {
       changeFrequency: "monthly",
       priority: 0.5,
     },
-    {
-      url: `${APP_URL}/register`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.5,
-    },
   ];
 }
+

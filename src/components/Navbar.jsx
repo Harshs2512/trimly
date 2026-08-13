@@ -52,11 +52,20 @@ const Navbar = () => {
                             </a>
                         ))}
                         {session ? (
-                            <Link href="/dashboard">
-                                <Button variant="default" size="default" className="font-semibold">
-                                    Dashboard
-                                </Button>
-                            </Link>
+                            <div className="flex items-center gap-3">
+                                {session.user?.role === "admin" && (
+                                    <Link href="/admin">
+                                        <Button variant="outline" size="default" className="font-semibold border-primary/40 text-primary hover:bg-primary/10">
+                                            Admin
+                                        </Button>
+                                    </Link>
+                                )}
+                                <Link href="/dashboard">
+                                    <Button variant="default" size="default" className="font-semibold">
+                                        Dashboard
+                                    </Button>
+                                </Link>
+                            </div>
                         ) : (
                             <Link href="/login" className="cursor-pointer">
                                 <Button variant="default" size="default" className="font-semibold cursor-pointer">

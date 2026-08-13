@@ -1,100 +1,44 @@
-// app/api/barbers/route.js
+// app/api/users/route.js
 import clientPromise from "@/lib/mongodb";
-import { userSchema } from "@/lib/validations";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/authOptions";
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const service = searchParams.get("service");
-  const name = searchParams.get("name");
-  const userId = searchParams.get("userId");
-
-  const client = await clientPromise;
-  const db = client.db();
-  const col = db.collection("users");
-
-  let query = {};
-  if (service) {
-    query["services.name"] = { $regex: service, $options: "i" };
-  }
-  if (name) {
-    query.shopName = { $regex: name, $options: "i" };
-  }
-  if (userId) {
-    query.userId = userId;
-  }
-
-  const list = await col.find(query).toArray();
-  return new Response(JSON.stringify(list), { status: 200 });
-}
-
-export async function POST(request) {
   try {
-    const body = await request.json();
-
-    // Validate request body
-    const validation = userSchema.safeParse(body);
-    if (!validation.success) {
-      return new Response(JSON.stringify({ error: validation.error.format() }), { status: 400 });
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return new Response(JSON.stringify({ error: "Not authenticated" }), { status: 401 });
     }
 
-    const { userId } = validation.data;
+    if (session.user?.role !== "admin") {
+      return new Response(JSON.stringify({ error: "Forbidden: Admin access required" }), { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "20", 10);
+    const skip = (page - 1) * limit;
 
     const client = await clientPromise;
-    const db = client.db();
-    const col = db.collection("barbers");
+    const db = client.db("trimly");
+    const col = db.collection("users");
 
-    // Check if profile already exists for this user
-    const existing = await col.findOne({ userId });
-    if (existing) {
-      return new Response(JSON.stringify({ error: "Profile already exists for this user. Use PUT to update." }), { status: 409 });
-    }
+    const total = await col.countDocuments();
+    const users = await col.find({}, { projection: { password: 0 } })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .toArray();
 
-    // expected: { userId, shopName, address, services: [{name, price}], workingHours: {open,close} }
-    const res = await col.insertOne({
-      ...validation.data,
-      createdAt: new Date(),
-      waitingTime: validation.data.waitingTime || 0
-    });
-
-    return new Response(JSON.stringify({ ok: true, id: res.insertedId }), { status: 201 });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
-  }
-}
-
-export async function PUT(request) {
-  try {
-    const body = await request.json();
-
-    // Use partial schema for updates, but ensure userId is present
-    const validation = userSchema.partial().safeParse(body);
-
-    if (!validation.success) {
-      return new Response(JSON.stringify({ error: validation.error.format() }), { status: 400 });
-    }
-
-    const { userId } = validation.data;
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "User ID is required" }), { status: 400 });
-    }
-
-    const client = await clientPromise;
-    const db = client.db();
-    const col = db.collection("barbers");
-
-    const updateData = { ...validation.data, updatedAt: new Date() };
-    delete updateData.userId; // Don't update userId itself
-
-    const updateResult = await col.updateOne(
-      { userId: userId },
-      { $set: updateData }
-    );
-
-    if (updateResult.matchedCount === 0) {
-      return new Response(JSON.stringify({ error: "Barber profile not found" }), { status: 404 });
-    }
-
-    return new Response(JSON.stringify({ ok: true }), { status: 200 });
+    return new Response(JSON.stringify({
+      users,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      }
+    }), { status: 200 });
   } catch (err) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
