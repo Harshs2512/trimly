@@ -1,57 +1,46 @@
-import clientPromise from "@/lib/mongodb";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/authOptions";
 import { ObjectId } from "mongodb";
+import { getDb } from "@/lib/mongodb";
+import { getActiveSession } from "@/lib/authz";
+import { profileUpdateSchema } from "@/lib/validations";
+import { safeInternalError, rejectCrossSiteRequest } from "@/lib/api";
 
-export async function GET(req) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session) {
-            return Response.json({ message: "Not authenticated" }, { status: 401 });
-        }
+export async function GET() {
+  try {
+    const session = await getActiveSession();
+    if (!session) return Response.json({ error: "Not authenticated" }, { status: 401 });
 
-        const client = await clientPromise;
-        const db = client.db("trimly");
-        const user = await db.collection("users").findOne({ email: session.user.email });
-
-        if (!user) {
-            return Response.json({ message: "User not found" }, { status: 404 });
-        }
-
-        // Remove sensitive data
-        const { password, ...userProfile } = user;
-
-        return Response.json(userProfile);
-    } catch (error) {
-        return Response.json({ error: error.message }, { status: 500 });
-    }
+    const db = await getDb();
+    const user = await db.collection("users").findOne(
+      { _id: new ObjectId(session.user.id) },
+      { projection: { password: 0 } }
+    );
+    if (!user) return Response.json({ error: "User not found" }, { status: 404 });
+    return Response.json(user);
+  } catch (error) {
+    return safeInternalError(error, "profile-get");
+  }
 }
 
 export async function PUT(req) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session) {
-            return Response.json({ message: "Not authenticated" }, { status: 401 });
-        }
+  try {
+    const originError = rejectCrossSiteRequest(req);
+    if (originError) return originError;
+    const session = await getActiveSession();
+    if (!session) return Response.json({ error: "Not authenticated" }, { status: 401 });
 
-        const body = await req.json();
-        const { name, role } = body; // Allow updating name and role only for now
-
-        const client = await clientPromise;
-        const db = client.db("trimly");
-
-        // We update by email since it's unique and present in session
-        const updateResult = await db.collection("users").updateOne(
-            { email: session.user.email },
-            { $set: { name, role, updatedAt: new Date() } }
-        );
-
-        if (updateResult.modifiedCount === 0) {
-            return Response.json({ message: "No changes made or user not found" }, { status: 400 });
-        }
-
-        return Response.json({ message: "Profile updated successfully" });
-    } catch (error) {
-        return Response.json({ error: error.message }, { status: 500 });
+    const validation = profileUpdateSchema.safeParse(await req.json());
+    if (!validation.success) {
+      return Response.json({ error: validation.error.flatten() }, { status: 400 });
     }
+
+    const db = await getDb();
+    const result = await db.collection("users").updateOne(
+      { _id: new ObjectId(session.user.id), active: { $ne: false } },
+      { $set: { name: validation.data.name, updatedAt: new Date() } }
+    );
+    if (!result.matchedCount) return Response.json({ error: "User not found" }, { status: 404 });
+    return Response.json({ message: "Profile updated successfully" });
+  } catch (error) {
+    return safeInternalError(error, "profile-update");
+  }
 }

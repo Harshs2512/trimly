@@ -6,10 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:indexes": "node scripts/ensure-indexes.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "npm run test && npm run lint && npm run build"
   },
   "dependencies": {
-    "@auth/mongodb-adapter": "^3.11.0",
     "@headlessui/react": "^2.2.9",
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -21,11 +23,11 @@
     "bcryptjs": "^3.0.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.545.0",
     "mongodb": "^6.20.0",
     "next": "^15.5.15",
     "next-auth": "^4.24.13",
+    "nodemailer": "^9.0.5",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.71.1",

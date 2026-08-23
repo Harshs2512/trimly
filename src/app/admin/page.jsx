@@ -1,40 +1,28 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/authOptions";
-import clientPromise from "@/lib/mongodb";
 import { redirect } from "next/navigation";
+import { getActiveSession } from "@/lib/authz";
+import { getDb } from "@/lib/mongodb";
 import AdminClient from "./AdminClient";
 
+const PAGE_SIZE = 20;
+
 export default async function AdminPage() {
-  const session = await getServerSession(authOptions);
+  const session = await getActiveSession();
+  if (!session) redirect("/login");
+  if (session.user.role !== "admin") redirect("/dashboard");
 
-  if (!session || session.user.role !== "admin") {
-    redirect("/dashboard");
-  }
+  const db = await getDb();
+  const usersQuery = {};
+  const barbersQuery = { deletedAt: { $exists: false } };
+  const [rawUsers, rawBarbers, totalUsers, totalBarbers, totalBookings] = await Promise.all([
+    db.collection("users").find(usersQuery, { projection: { password: 0 } }).sort({ createdAt: -1 }).limit(PAGE_SIZE).toArray(),
+    db.collection("barbers").find(barbersQuery).sort({ createdAt: -1 }).limit(PAGE_SIZE).toArray(),
+    db.collection("users").countDocuments(usersQuery),
+    db.collection("barbers").countDocuments(barbersQuery),
+    db.collection("bookings").countDocuments(),
+  ]);
 
-  const client = await clientPromise;
-  const db = client.db("trimly");
+  const users = rawUsers.map((u) => ({ ...u, _id: u._id.toString(), createdAt: u.createdAt?.toISOString?.() || u.createdAt }));
+  const barbers = rawBarbers.map((b) => ({ ...b, _id: b._id.toString(), createdAt: b.createdAt?.toISOString?.() || b.createdAt, updatedAt: b.updatedAt?.toISOString?.() || b.updatedAt }));
 
-  const rawUsers = await db.collection("users")
-    .find({}, { projection: { password: 0 } })
-    .sort({ createdAt: -1 })
-    .toArray();
-
-  const rawBarbers = await db.collection("barbers")
-    .find({})
-    .sort({ createdAt: -1 })
-    .toArray();
-
-  const totalBookings = await db.collection("bookings").countDocuments();
-
-  const users = rawUsers.map(u => ({ ...u, _id: u._id.toString(), createdAt: u.createdAt?.toISOString() }));
-  const barbers = rawBarbers.map(b => ({ ...b, _id: b._id.toString(), createdAt: b.createdAt?.toISOString() }));
-
-  return (
-    <AdminClient 
-      adminUser={session.user} 
-      initialUsers={users} 
-      initialBarbers={barbers} 
-      totalBookings={totalBookings} 
-    />
-  );
+  return <AdminClient adminUser={session.user} initialUsers={users} initialBarbers={barbers} totals={{ users: totalUsers, barbers: totalBarbers, bookings: totalBookings }} pageSize={PAGE_SIZE} />;
 }

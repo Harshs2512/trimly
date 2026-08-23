@@ -1,49 +1,44 @@
-import { ObjectId } from "mongodb";
+import { ACTIVE_BOOKING_STATUSES, legacyBarberIdentifiers, resolveBarber } from "@/lib/booking";
+
+export async function calculateBarberWaitingTime(db, barberId, now = new Date()) {
+  const barber = await resolveBarber(db, barberId);
+  if (!barber) return 0;
+
+  const identifiers = legacyBarberIdentifiers(barber);
+  const legacyFloor = new Date(now.getTime() - 30 * 60000).toISOString();
+  const bookings = await db.collection("bookings").find({
+    barberId: { $in: identifiers },
+    status: { $in: ACTIVE_BOOKING_STATUSES },
+    $or: [
+      { endTime: { $gt: now.toISOString() } },
+      { endTime: { $exists: false }, timeSlot: { $gt: legacyFloor } },
+    ],
+  }).sort({ timeSlot: 1 }).toArray();
+
+  let cursor = new Date(now);
+  for (const booking of bookings) {
+    const start = new Date(booking.timeSlot);
+    const end = new Date(booking.endTime || new Date(start.getTime() + (booking.duration || 30) * 60000));
+    if (end <= cursor) continue;
+    if (start > cursor) break;
+    if (end > cursor) cursor = end;
+  }
+
+  return Math.max(0, Math.ceil((cursor.getTime() - now.getTime()) / 60000));
+}
 
 export async function updateBarberWaitingTime(db, barberId) {
   try {
-    const barbers = db.collection("barbers");
-    const bookingsCol = db.collection("bookings");
-
-    let barber = null;
-    if (ObjectId.isValid(barberId)) {
-      barber = await barbers.findOne({ _id: new ObjectId(barberId) });
-    }
-    if (!barber) {
-      barber = await barbers.findOne({ userId: barberId });
-    }
-    if (!barber) return;
-
-    // Get today's start and end date
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
-
-    const activeBookings = await bookingsCol.find({
-      barberId: barberId,
-      status: { $in: ["pending", "confirmed"] },
-    }).toArray();
-
-    // Filter bookings scheduled for today or remaining today
-    const now = new Date();
-    let totalWaitingTime = 0;
-
-    for (const booking of activeBookings) {
-      const bookingTime = new Date(booking.timeSlot);
-      if (bookingTime >= startOfDay && bookingTime <= endOfDay) {
-        // Look up service duration from barber services
-        const serviceObj = barber.services?.find(s => s.name === booking.service);
-        const duration = serviceObj?.duration || booking.duration || 30;
-        totalWaitingTime += duration;
-      }
-    }
-
-    await barbers.updateOne(
+    const barber = await resolveBarber(db, barberId);
+    if (!barber) return 0;
+    const waitingTime = await calculateBarberWaitingTime(db, barberId);
+    await db.collection("barbers").updateOne(
       { _id: barber._id },
-      { $set: { waitingTime: totalWaitingTime } }
+      { $set: { waitingTime, waitingTimeUpdatedAt: new Date() } }
     );
-  } catch (err) {
-    console.error("Error updating barber waiting time:", err);
+    return waitingTime;
+  } catch (error) {
+    console.error("[waiting-time] Failed to update waiting time", error);
+    return 0;
   }
 }

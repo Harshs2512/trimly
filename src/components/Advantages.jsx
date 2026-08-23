@@ -1,83 +1,10 @@
-import { CheckCircle2, TrendingUp, Users, Zap } from "lucide-react";
+import { CheckCircle2, Users, Scissors } from "lucide-react";
 
-const Advantages = () => {
-  const customerBenefits = [
-    "Save hours every month — no more waiting",
-    "Book appointments 24/7 from anywhere",
-    "Get instant confirmation and reminders",
-    "Choose from verified, top-rated salons",
-    "Real-time queue updates on your phone",
-  ];
-
-  const barberBenefits = [
-    "Reduce no-shows with automated reminders",
-    "Optimize your schedule and maximize revenue",
-    "Build loyal customer base with ratings",
-    "Manage walk-ins and bookings seamlessly",
-    "Access analytics to grow your business",
-  ];
-
+export default function Advantages() {
+  const customerBenefits = ["Browse approved barber profiles and service menus", "Select only currently available appointment times", "Track pending, confirmed and historical bookings", "Cancel or reschedule eligible bookings from your dashboard", "Receive in-app booking status notifications"];
+  const barberBenefits = ["Accept or decline incoming booking requests", "Complete appointments or mark no-shows", "Configure services, INR pricing and service duration", "Set shop hours, closed days and booking rules", "Manage a protected barber workspace tied to your own profile"];
   return (
-    <section id="benefits" className="py-20 bg-background">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
-          <div className="inline-block px-4 py-2 bg-accent/10 rounded-full">
-            <span className="text-accent-foreground font-semibold text-sm">Why Trimlly?</span>
-          </div>
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground">
-            Built for <span className="text-primary">Everyone</span>
-          </h2>
-          <p className="text-lg text-muted-foreground">
-            Whether you&apos;re a customer or a salon owner, Trimlly transforms your experience.
-          </p>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-12">
-          {/* For Customers */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center">
-                <Users className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground">For Customers</h3>
-            </div>
-            <p className="text-muted-foreground text-lg">
-              Time-saving convenience and instant booking at your fingertips.
-            </p>
-            <ul className="space-y-4">
-              {customerBenefits.map((benefit, index) => (
-                <li key={index} className="flex items-start gap-3 group">
-                  <CheckCircle2 className="w-6 h-6 text-primary flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-                  <span className="text-foreground/90">{benefit}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* For Barbers/Owners */}
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center">
-                <TrendingUp className="w-8 h-8 text-accent-foreground" />
-              </div>
-              <h3 className="text-2xl font-bold text-foreground">For Barbers & Owners</h3>
-            </div>
-            <p className="text-muted-foreground text-lg">
-              Increase productivity, retain customers, and grow your business.
-            </p>
-            <ul className="space-y-4">
-              {barberBenefits.map((benefit, index) => (
-                <li key={index} className="flex items-start gap-3 group">
-                  <Zap className="w-6 h-6 text-accent-foreground flex-shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-                  <span className="text-foreground/90">{benefit}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
+    <section id="benefits" className="py-20 bg-background"><div className="container mx-auto px-4 sm:px-6 lg:px-8"><div className="text-center max-w-3xl mx-auto mb-16 space-y-4"><div className="inline-block px-4 py-2 bg-accent/10 rounded-full"><span className="font-semibold text-sm">Why Trimlly?</span></div><h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold">Useful for <span className="text-primary">customers and barbers</span></h2><p className="text-lg text-muted-foreground">Keep appointment requests and shop availability in one controlled workflow.</p></div><div className="grid lg:grid-cols-2 gap-12"><Benefit title="For Customers" icon={Users} items={customerBenefits} /><Benefit title="For Barbers" icon={Scissors} items={barberBenefits} /></div></div></section>
   );
-};
-
-export default Advantages;
+}
+function Benefit({ title, icon: Icon, items }) { return <div className="space-y-6"><div className="flex items-center gap-4"><div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center"><Icon className="w-8 h-8 text-primary" /></div><h3 className="text-2xl font-bold">{title}</h3></div><ul className="space-y-4">{items.map((item) => <li key={item} className="flex items-start gap-3"><CheckCircle2 className="w-6 h-6 text-primary shrink-0 mt-0.5" /><span>{item}</span></li>)}</ul></div>; }

@@ -1,131 +1,189 @@
-// app/api/bookings/route.js
-import clientPromise from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
-import { bookingSchema } from "@/lib/validations";
+import { getDb } from "@/lib/mongodb";
+import { getActiveSession } from "@/lib/authz";
+import { bookingCreateSchema } from "@/lib/validations";
+import {
+  canonicalBarberId,
+  expirePendingBookings,
+  getReservationKeys,
+  getService,
+  hasBookingConflict,
+  resolveBarber,
+  legacyBarberIdentifiers,
+  validateBookingWindow,
+} from "@/lib/booking";
 import { updateBarberWaitingTime } from "@/lib/waitingTime";
 import { createNotification } from "@/lib/notifications";
+import { ensureIndexes } from "@/lib/indexes";
+import { parsePagination, safeInternalError, rejectCrossSiteRequest } from "@/lib/api";
 
 export async function POST(request) {
   try {
-    const body = await request.json();
+    const originError = rejectCrossSiteRequest(request);
+    if (originError) return originError;
+    await ensureIndexes();
+    const session = await getActiveSession();
+    if (!session) return Response.json({ error: "Not authenticated" }, { status: 401 });
 
-    // Validate request body
-    const validation = bookingSchema.safeParse(body);
-    if (!validation.success) {
-      return new Response(JSON.stringify({ error: validation.error.format() }), { status: 400 });
+    const validation = bookingCreateSchema.safeParse(await request.json());
+    if (!validation.success) return Response.json({ error: validation.error.flatten() }, { status: 400 });
+
+    const db = await getDb();
+    const barber = await resolveBarber(db, validation.data.barberId);
+    if (!barber || barber.deletedAt || barber.verificationStatus !== "verified") {
+      return Response.json({ error: "Barber profile is not available for booking" }, { status: 404 });
     }
 
-    const { userId, barberId, service, timeSlot, status } = validation.data;
-    const requestStart = new Date(timeSlot);
-
-    if (isNaN(requestStart.getTime())) {
-      return new Response(JSON.stringify({ error: "Invalid date and time" }), { status: 400 });
-    }
-
-    if (requestStart < new Date()) {
-      return new Response(JSON.stringify({ error: "Cannot book a date in the past" }), { status: 400 });
-    }
-
-    const client = await clientPromise;
-    const db = client.db();
-    const barbersCol = db.collection("barbers");
-    const col = db.collection("bookings");
-
-    // Fetch Barber details
-    let barber = null;
-    if (ObjectId.isValid(barberId)) {
-      barber = await barbersCol.findOne({ _id: new ObjectId(barberId) });
-    }
-    if (!barber) {
-      barber = await barbersCol.findOne({ userId: barberId });
-    }
-
-    if (!barber) {
-      return new Response(JSON.stringify({ error: "Barber profile not found" }), { status: 404 });
-    }
-
-    // Determine service duration (in minutes, default 30)
-    const matchedService = barber.services?.find(s => s.name === service);
-    const duration = matchedService?.duration || 30;
-    const requestEnd = new Date(requestStart.getTime() + duration * 60000);
-
-    // Working Hours Check (Item 15)
-    if (barber.workingHours) {
-      const openTime = barber.workingHours.open; // "HH:MM"
-      const closeTime = barber.workingHours.close; // "HH:MM"
-
-      if (openTime && closeTime) {
-        const reqStartStr = requestStart.toTimeString().slice(0, 5); // "HH:MM"
-        const reqEndStr = requestEnd.toTimeString().slice(0, 5); // "HH:MM"
-
-        if (reqStartStr < openTime || reqEndStr > closeTime) {
-          return new Response(JSON.stringify({ error: `Barber is only available between ${openTime} and ${closeTime}` }), { status: 400 });
-        }
-      }
-    }
-
-    // Real Overlap Conflict Detection (Item 9)
-    const activeBookings = await col.find({
-      barberId: barberId,
-      status: { $ne: "cancelled" }
-    }).toArray();
-
-    const hasOverlap = activeBookings.some(b => {
-      const bStart = new Date(b.timeSlot);
-      const bDuration = b.duration || barber.services?.find(s => s.name === b.service)?.duration || 30;
-      const bEnd = new Date(bStart.getTime() + bDuration * 60000);
-      return requestStart < bEnd && requestEnd > bStart;
+    const service = getService(barber, {
+      serviceId: validation.data.serviceId,
+      serviceName: validation.data.service,
     });
+    if (!service) return Response.json({ error: "Selected service is not offered by this barber" }, { status: 400 });
+    await expirePendingBookings(db, { barberId: { $in: legacyBarberIdentifiers(barber) } });
 
-    if (hasOverlap) {
-      return new Response(JSON.stringify({ error: "Time slot overlaps with an existing appointment" }), { status: 409 });
+    const start = new Date(validation.data.timeSlot);
+    const duration = service.duration;
+    const end = new Date(start.getTime() + duration * 60000);
+    const windowValidation = validateBookingWindow(barber, start, duration);
+    if (!windowValidation.ok) return Response.json({ error: windowValidation.error }, { status: windowValidation.status });
+
+    const conflict = await hasBookingConflict(db, {
+      barber,
+      userId: session.user.id,
+      start,
+      end,
+    });
+    if (conflict.conflict) {
+      return Response.json({
+        error: conflict.type === "user"
+          ? "You already have another appointment during this time."
+          : "This time slot is no longer available.",
+      }, { status: 409 });
     }
 
+    const barberId = canonicalBarberId(barber);
+    const reservationKeys = getReservationKeys(start, end);
     const newBooking = {
-      userId,
+      userId: session.user.id,
       barberId,
-      service,
+      serviceId: service.id || null,
+      service: service.name,
+      price: service.price,
       duration,
-      timeSlot,
-      endTime: requestEnd.toISOString(),
-      status: status || "pending",
+      timeSlot: start.toISOString(),
+      endTime: end.toISOString(),
+      reservationKeys,
+      status: "pending",
       createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
-    const res = await col.insertOne(newBooking);
-
-    // Recompute waiting time (Item 10)
+    const result = await db.collection("bookings").insertOne(newBooking);
     await updateBarberWaitingTime(db, barberId);
 
-    // Notify barber of new booking (Item 14)
     if (barber.userId) {
       await createNotification(db, {
         userId: barber.userId,
         type: "booking_created",
-        message: `New booking request for ${service} on ${requestStart.toLocaleDateString()} at ${requestStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,
-        bookingId: res.insertedId.toString(),
+        message: `New booking request for ${service.name}.`,
+        bookingId: result.insertedId.toString(),
       });
     }
 
-    return new Response(JSON.stringify({ ok: true, id: res.insertedId }), { status: 201 });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 });
+    return Response.json({
+      ok: true,
+      id: result.insertedId,
+      status: "pending",
+      message: "Booking request sent. Awaiting barber confirmation.",
+    }, { status: 201 });
+  } catch (error) {
+    if (error?.code === 11000) {
+      return Response.json({ error: "This time slot was just booked. Please choose another available time." }, { status: 409 });
+    }
+    return safeInternalError(error, "booking-create");
   }
 }
 
 export async function GET(request) {
-  const url = new URL(request.url);
-  const userId = url.searchParams.get("userId");
-  const barberId = url.searchParams.get("barberId");
+  try {
+    const session = await getActiveSession();
+    if (!session) return Response.json({ error: "Not authenticated" }, { status: 401 });
 
-  const client = await clientPromise;
-  const db = client.db();
-  const col = db.collection("bookings");
+    const url = new URL(request.url);
+    const requestedUserId = url.searchParams.get("userId")?.trim();
+    const requestedBarberId = url.searchParams.get("barberId")?.trim();
+    const { limit, skip } = parsePagination(url.searchParams, { defaultLimit: 50, maxLimit: 100 });
+    const db = await getDb();
 
-  let filter = {};
-  if (userId) filter.userId = userId;
-  if (barberId) filter.barberId = barberId;
+    const filter = {};
+    let barber = null;
 
-  const list = await col.find(filter).sort({ createdAt: -1 }).toArray();
-  return new Response(JSON.stringify(list), { status: 200 });
+    if (requestedBarberId) {
+      barber = await resolveBarber(db, requestedBarberId);
+      if (!barber) return Response.json({ error: "Barber profile not found" }, { status: 404 });
+      const canReadBarberBookings = session.user.role === "admin" ||
+        (session.user.role === "barber" && barber.userId === session.user.id);
+      if (!canReadBarberBookings) {
+        return Response.json({ error: "Forbidden" }, { status: 403 });
+      }
+      filter.barberId = { $in: legacyBarberIdentifiers(barber) };
+    } else if (requestedUserId) {
+      if (session.user.role !== "admin" && requestedUserId !== session.user.id) {
+        return Response.json({ error: "Forbidden" }, { status: 403 });
+      }
+      filter.userId = requestedUserId;
+    } else if (session.user.role !== "admin") {
+      filter.userId = session.user.id;
+    }
+
+    await expirePendingBookings(db, filter);
+    const [total, bookings] = await Promise.all([
+      db.collection("bookings").countDocuments(filter),
+      db.collection("bookings").find(filter).sort({ timeSlot: -1 }).skip(skip).limit(limit).toArray(),
+    ]);
+
+    const userIds = [...new Set(bookings.map((booking) => String(booking.userId)).filter(Boolean))];
+    const users = userIds.length
+      ? await db.collection("users").find({ _id: { $in: userIds.map((id) => new ObjectId(id)) } }, { projection: { name: 1 } }).toArray()
+      : [];
+    const userMap = new Map(users.map((user) => [user._id.toString(), user.name]));
+
+    const barberIdentifiers = [...new Set(bookings.map((booking) => booking.barberId).filter(Boolean).map(String))];
+    const objectBarberIds = barberIdentifiers.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+    const barbers = barberIdentifiers.length
+      ? await db.collection("barbers").find(
+          {
+            $or: [
+              ...(objectBarberIds.length ? [{ _id: { $in: objectBarberIds } }] : []),
+              { userId: { $in: barberIdentifiers } },
+            ],
+          },
+          { projection: { shopName: 1, address: 1, userId: 1, timezone: 1, bookingHorizonDays: 1 } },
+        ).toArray()
+      : [];
+    const barberMap = new Map();
+    for (const item of barbers) {
+      barberMap.set(item._id.toString(), item);
+      if (item.userId) barberMap.set(String(item.userId), item);
+    }
+
+    const result = bookings.map((booking) => {
+      const shop = barberMap.get(String(booking.barberId));
+      return {
+        ...booking,
+        customerName: userMap.get(booking.userId) || "Customer",
+        shopName: shop?.shopName,
+        shopAddress: shop?.address,
+        barberProfileId: shop?._id?.toString?.(),
+        shopTimezone: shop?.timezone || "Asia/Kolkata",
+        shopBookingHorizonDays: shop?.bookingHorizonDays || 90,
+      };
+    });
+    return Response.json({
+      bookings: result,
+      pagination: { total, page: Math.floor(skip / limit) + 1, limit, totalPages: Math.max(1, Math.ceil(total / limit)) },
+    });
+  } catch (error) {
+    return safeInternalError(error, "bookings-list");
+  }
 }

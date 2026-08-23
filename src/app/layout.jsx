@@ -1,41 +1,19 @@
-// app/layout.jsx
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import Providers from "@/components/Providers";
+import AppChrome from "@/components/AppChrome";
+import { getAppUrl } from "@/lib/appUrl";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const APP_URL = getAppUrl();
 
 export const metadata = {
   metadataBase: new URL(APP_URL),
-  title: {
-    default: "Trimlly - Skip the wait",
-    template: "%s | Trimlly",
-  },
-  description: "Trimlly - smart queue & booking for barbers.",
-  keywords: [
-    "barbershop",
-    "haircut",
-    "booking",
-    "queue management",
-    "barber appointment",
-  ],
+  title: { default: "Trimlly - Barber booking made simpler", template: "%s | Trimlly" },
+  description: "Browse barber services, check appointment availability and send booking requests with Trimlly.",
+  keywords: ["barbershop", "haircut booking", "barber appointment", "salon booking"],
   authors: [{ name: "Trimlly Team" }],
   creator: "Trimlly",
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    url: APP_URL,
-    title: "Trimlly - Skip the wait",
-    description: "Smart queue & booking for barbers.",
-    siteName: "Trimlly",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Trimlly - Skip the wait",
-    description: "Smart queue & booking for barbers.",
-    creator: "@trimlyapp",
-  },
+  openGraph: { type: "website", locale: "en_IN", url: APP_URL, title: "Trimlly - Barber booking made simpler", description: "Browse barber services and request available appointment times.", siteName: "Trimlly" },
+  twitter: { card: "summary_large_image", title: "Trimlly - Barber booking made simpler", description: "Browse barber services and request available appointment times." },
 };
 
 export default function RootLayout({ children }) {
@@ -45,27 +23,16 @@ export default function RootLayout({ children }) {
     name: "Trimlly",
     operatingSystem: "Web",
     applicationCategory: "BusinessApplication",
-    offers: {
-      "@type": "Offer",
-      price: "0",
-      priceCurrency: "USD",
-    },
-    description: "Trimlly is a smart queue and booking application for barbers.",
+    offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
+    description: "Trimlly helps customers browse barber services and request available appointments.",
     url: APP_URL,
   };
 
   return (
     <html lang="en">
-      <body className="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
-        <Providers>
-          <Navbar />
-          <main className="flex-grow">{children}</main>
-          <Footer />
-        </Providers>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-        />
+      <body className="bg-background text-foreground flex flex-col min-h-screen">
+        <Providers><AppChrome>{children}</AppChrome></Providers>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       </body>
     </html>
   );

@@ -1,12 +1,23 @@
+import { getAppUrl } from "@/lib/appUrl";
+
 export default function robots() {
-  const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const appUrl = getAppUrl();
 
   return {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/dashboard/"],
+      disallow: [
+        "/api/",
+        "/admin",
+        "/dashboard",
+        "/login",
+        "/forgot-password",
+        "/reset-password",
+        "/verify-email",
+        "/resend-verification",
+      ],
     },
-    sitemap: `${APP_URL}/sitemap.xml`,
+    sitemap: `${appUrl}/sitemap.xml`,
   };
 }

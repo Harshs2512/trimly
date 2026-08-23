@@ -1,231 +1,114 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Calendar, Clock, Scissors, Check, X, User, AlertCircle } from "lucide-react";
+import { Calendar, Clock, Scissors, Check, X, User, AlertCircle, CheckCircle2, UserX } from "lucide-react";
 
-export default function BookingManager({ barberId }) {
-    const [bookings, setBookings] = useState([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [actionLoading, setActionLoading] = useState(null); // stores booking ID being processed
-    const [cancelModalOpen, setCancelModalOpen] = useState(null); // stores booking ID to cancel
-    const [cancelReason, setCancelReason] = useState("");
+function formatBookingDate(value, timeZone, options) {
+  return new Intl.DateTimeFormat(undefined, { timeZone, ...options }).format(new Date(value));
+}
 
-    useEffect(() => {
-        fetchBookings();
-    }, [barberId]);
+export default function BookingManager({ barberId, timezone = "Asia/Kolkata" }) {
+  const [bookings, setBookings] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [decision, setDecision] = useState(null);
+  const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ totalPages: 1 });
 
-    const fetchBookings = () => {
-        setIsLoading(true);
-        axios.get(`/api/bookings?barberId=${barberId}`)
-            .then(res => {
-                setBookings(res.data);
-                setIsLoading(false);
-            })
-            .catch(err => {
-                console.error("Failed to fetch bookings", err);
-                setIsLoading(false);
-            });
+  useEffect(() => { fetchBookings(page); }, [barberId, page]);
+
+  async function fetchBookings(selectedPage = page) {
+    setIsLoading(true); setError("");
+    try {
+      const response = await axios.get(`/api/bookings?barberId=${encodeURIComponent(barberId)}&page=${selectedPage}&limit=100`);
+      setBookings(response.data.bookings || response.data);
+      setPagination(response.data.pagination || { totalPages: 1 });
+    } catch (err) {
+      setError(typeof err.response?.data?.error === "string" ? err.response.data.error : "Failed to load appointments.");
+    } finally { setIsLoading(false); }
+  }
+
+  async function updateStatus(id, status, cancelReason) {
+    setActionLoading(id); setError("");
+    try {
+      await axios.put(`/api/bookings/${id}`, { status, ...(cancelReason ? { cancelReason } : {}) });
+      await fetchBookings();
+      setDecision(null); setReason("");
+    } catch (err) {
+      setError(typeof err.response?.data?.error === "string" ? err.response.data.error : "Failed to update booking status.");
+    } finally { setActionLoading(null); }
+  }
+
+  const sections = useMemo(() => {
+    const now = Date.now();
+    return {
+      pending: bookings.filter((b) => b.status === "pending"),
+      upcoming: bookings.filter((b) => b.status === "confirmed" && new Date(b.timeSlot).getTime() >= now),
+      needsCompletion: bookings.filter((b) => b.status === "confirmed" && new Date(b.timeSlot).getTime() < now),
+      history: bookings.filter((b) => ["completed", "cancelled", "declined", "no_show", "expired"].includes(b.status)),
     };
+  }, [bookings]);
 
-    const updateStatus = async (id, status, reason = null) => {
-        setActionLoading(id);
-        try {
-            const payload = { status };
-            if (reason) payload.cancelReason = reason;
-            await axios.put(`/api/bookings/${id}`, payload);
-            // Refresh list locally
-            setBookings(prev => prev.map(b => b._id === id ? { ...b, status, cancelReason: reason } : b));
-            if (status === 'cancelled') {
-                setCancelModalOpen(null);
-                setCancelReason("");
-            }
-        } catch (err) {
-            console.error("Failed to update status", err);
-            alert("Failed to update booking status. Please try again.");
-        } finally {
-            setActionLoading(null);
-        }
-    };
+  function badge(status) {
+    const good = ["confirmed", "completed"].includes(status);
+    const bad = ["cancelled", "declined", "no_show", "expired"].includes(status);
+    return <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase border ${good ? "bg-green-500/10 text-green-600 border-green-500/20" : bad ? "bg-red-500/10 text-red-600 border-red-500/20" : "bg-yellow-500/10 text-yellow-600 border-yellow-500/20"}`}>{status.replace("_", " ")}</span>;
+  }
 
-    if (isLoading) {
-        return (
-            <div className="py-12 flex flex-col items-center justify-center space-y-4">
-                <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                <p className="text-muted-foreground font-medium animate-pulse">Loading appointments...</p>
-            </div>
-        );
-    }
-
-    const pending = bookings.filter(b => b.status === "pending");
-    const upcoming = bookings.filter(b => b.status === "confirmed" && new Date(b.timeSlot) >= new Date());
-    const pastOrCancelled = bookings.filter(b => b.status === "cancelled" || new Date(b.timeSlot) < new Date());
-
-    const BookingCard = ({ booking, isPending }) => (
-        <div className="group relative bg-card/50 backdrop-blur-md border border-border/50 hover:border-primary/30 transition-all duration-300 rounded-2xl p-5 shadow-sm hover:shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div className="flex items-start gap-4 w-full md:w-auto">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0">
-                    <User className="w-6 h-6" />
-                </div>
-                <div className="space-y-1 w-full">
-                    <div className="flex justify-between items-start md:block">
-                        <h3 className="font-bold text-lg text-foreground tracking-tight">Client #{booking.userId.substring(0, 4)}</h3>
-                        {/* Mobile Status Badge */}
-                        <div className="md:hidden">
-                            <span className={`px-2 py-1 rounded-md text-xs font-bold uppercase ${booking.status === 'confirmed' ? 'bg-green-500/10 text-green-500' : booking.status === 'cancelled' ? 'bg-red-500/10 text-red-500' : 'bg-yellow-500/10 text-yellow-500'}`}>
-                                {booking.status}
-                            </span>
-                        </div>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-muted-foreground font-medium">
-                        <div className="flex items-center gap-1.5">
-                            <Scissors className="w-4 h-4" />
-                            {booking.service}
-                        </div>
-                        <div className="hidden sm:block w-1 h-1 rounded-full bg-border" />
-                        <div className="flex items-center gap-1.5 text-foreground">
-                            <Calendar className="w-4 h-4 text-primary" />
-                            {new Date(booking.timeSlot).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-                        </div>
-                        <div className="hidden sm:block w-1 h-1 rounded-full bg-border" />
-                        <div className="flex items-center gap-1.5 text-foreground">
-                            <Clock className="w-4 h-4 text-primary" />
-                            {new Date(booking.timeSlot).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex items-center gap-3 w-full md:w-auto mt-4 md:mt-0 justify-end">
-                {isPending ? (
-                    <div className="flex gap-2 w-full md:w-auto">
-                        <Button 
-                            variant="outline" 
-                            className="flex-1 md:flex-none text-red-500 hover:text-red-600 hover:bg-red-500/10 border-red-500/20"
-                            onClick={() => setCancelModalOpen(booking._id)}
-                            disabled={actionLoading === booking._id}
-                        >
-                            <X className="w-4 h-4 mr-1.5" /> Decline
-                        </Button>
-                        <Button 
-                            className="flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => updateStatus(booking._id, "confirmed")}
-                            disabled={actionLoading === booking._id}
-                        >
-                            {actionLoading === booking._id ? (
-                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-1.5" />
-                            ) : (
-                                <Check className="w-4 h-4 mr-1.5" />
-                            )}
-                            Accept
-                        </Button>
-                    </div>
-                ) : (
-                    <div className="hidden md:block">
-                        <span className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider ${booking.status === 'confirmed' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : booking.status === 'cancelled' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'}`}>
-                            {booking.status}
-                        </span>
-                    </div>
-                )}
-            </div>
+  const BookingCard = ({ booking, mode }) => (
+    <div className="bg-card/60 border border-border/60 rounded-2xl p-5 flex flex-col md:flex-row justify-between gap-5">
+      <div className="flex items-start gap-4">
+        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0"><User className="w-6 h-6" /></div>
+        <div className="space-y-1">
+          <h3 className="font-bold text-lg">{booking.customerName || "Customer"}</h3>
+          <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1.5"><Scissors className="w-4 h-4" />{booking.service}</span>
+            <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />{formatBookingDate(booking.timeSlot, timezone, { weekday: "short", month: "short", day: "numeric" })}</span>
+            <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" />{formatBookingDate(booking.timeSlot, timezone, { hour: "2-digit", minute: "2-digit" })}</span>
+            {booking.price != null && <span>₹{booking.price}</span>}
+          </div>
+          {booking.cancelReason && <p className="text-xs text-red-600 mt-2">{booking.cancelReason}</p>}
         </div>
-    );
+      </div>
+      <div className="flex flex-wrap items-center gap-2 md:justify-end">
+        {badge(booking.status)}
+        {mode === "pending" && <><Button variant="outline" className="text-red-600" onClick={() => { setReason(""); setDecision({ booking, status: "declined" }); }}><X className="w-4 h-4 mr-1" />Decline</Button><Button onClick={() => updateStatus(booking._id, "confirmed")} disabled={actionLoading === booking._id}><Check className="w-4 h-4 mr-1" />Accept</Button></>}
+        {mode === "upcoming" && <Button variant="outline" className="text-red-600" onClick={() => { setReason(""); setDecision({ booking, status: "cancelled" }); }}>Cancel</Button>}
+        {mode === "complete" && <><Button variant="outline" onClick={() => updateStatus(booking._id, "no_show")} disabled={actionLoading === booking._id}><UserX className="w-4 h-4 mr-1" />No show</Button><Button onClick={() => updateStatus(booking._id, "completed")} disabled={actionLoading === booking._id || new Date(booking.endTime || booking.timeSlot).getTime() > Date.now()} title={new Date(booking.endTime || booking.timeSlot).getTime() > Date.now() ? "Completion is available after the scheduled service end time." : undefined}><CheckCircle2 className="w-4 h-4 mr-1" />Complete</Button></>}
+      </div>
+    </div>
+  );
 
-    return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            
-            {/* Pending Requests Section */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-2 border-b border-border/50 pb-2">
-                    <AlertCircle className="w-5 h-5 text-yellow-500" />
-                    <h2 className="text-xl font-bold tracking-tight">Pending Requests ({pending.length})</h2>
-                </div>
-                {pending.length === 0 ? (
-                    <div className="text-center py-8 bg-card/30 rounded-2xl border border-dashed border-border/80 text-muted-foreground">
-                        No pending booking requests.
-                    </div>
-                ) : (
-                    <div className="grid gap-3">
-                        {pending.map(b => <BookingCard key={b._id} booking={b} isPending={true} />)}
-                    </div>
-                )}
-            </div>
+  if (isLoading) return <div className="py-12 text-center text-muted-foreground">Loading appointments...</div>;
 
-            {/* Upcoming Appointments Section */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-2 border-b border-border/50 pb-2">
-                    <Calendar className="w-5 h-5 text-green-500" />
-                    <h2 className="text-xl font-bold tracking-tight">Upcoming Appointments ({upcoming.length})</h2>
-                </div>
-                {upcoming.length === 0 ? (
-                    <div className="text-center py-8 bg-card/30 rounded-2xl border border-dashed border-border/80 text-muted-foreground">
-                        No upcoming appointments confirmed.
-                    </div>
-                ) : (
-                    <div className="grid gap-3">
-                        {upcoming.map(b => <BookingCard key={b._id} booking={b} isPending={false} />)}
-                    </div>
-                )}
-            </div>
+  return (
+    <div className="space-y-8">
+      {error && <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-600" role="alert">{error}</div>}
+      <Section icon={AlertCircle} title={`Pending Requests (${sections.pending.length})`} empty="No pending booking requests.">{sections.pending.map((b) => <BookingCard key={b._id} booking={b} mode="pending" />)}</Section>
+      <Section icon={Calendar} title={`Upcoming Appointments (${sections.upcoming.length})`} empty="No upcoming confirmed appointments.">{sections.upcoming.map((b) => <BookingCard key={b._id} booking={b} mode="upcoming" />)}</Section>
+      <Section icon={Clock} title={`Needs Completion (${sections.needsCompletion.length})`} empty="No appointments need completion.">{sections.needsCompletion.map((b) => <BookingCard key={b._id} booking={b} mode="complete" />)}</Section>
+      <Section icon={CheckCircle2} title="History" empty="No booking history yet.">{sections.history.map((b) => <BookingCard key={b._id} booking={b} mode="history" />)}</Section>
+      {pagination.totalPages > 1 && <div className="flex items-center justify-center gap-3"><Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>Previous</Button><span className="text-sm text-muted-foreground">Page {page} of {pagination.totalPages}</span><Button variant="outline" size="sm" disabled={page >= pagination.totalPages} onClick={() => setPage((value) => value + 1)}>Next</Button></div>}
 
-            {/* Past/Cancelled Section */}
-            <div className="space-y-4 opacity-75 hover:opacity-100 transition-opacity">
-                <div className="flex items-center gap-2 border-b border-border/50 pb-2">
-                    <Clock className="w-5 h-5 text-muted-foreground" />
-                    <h2 className="text-xl font-bold tracking-tight text-muted-foreground">Past & Cancelled</h2>
-                </div>
-                {pastOrCancelled.length === 0 ? (
-                    <div className="text-center py-8 bg-card/30 rounded-2xl border border-dashed border-border/80 text-muted-foreground">
-                        No past history.
-                    </div>
-                ) : (
-                    <div className="grid gap-3">
-                        {pastOrCancelled.map(b => <BookingCard key={b._id} booking={b} isPending={false} />)}
-                    </div>
-                )}
-            </div>
-            {/* Cancel Modal */}
-            <Dialog open={!!cancelModalOpen} onOpenChange={(open) => !open && setCancelModalOpen(null)}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Decline Appointment</DialogTitle>
-                        <DialogDescription>
-                            Please provide a reason for declining this request. The client will see this reason.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="flex flex-col gap-2">
-                            <Label>Quick Reasons</Label>
-                            <div className="flex flex-wrap gap-2">
-                                {["Time slot is busy", "Shop closed unexpectedly", "Double booked"].map(r => (
-                                    <Button key={r} type="button" variant={cancelReason === r ? "default" : "outline"} size="sm" onClick={() => setCancelReason(r)}>
-                                        {r}
-                                    </Button>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="flex flex-col gap-2 mt-2">
-                            <Label htmlFor="custom-reason">Or type a custom reason</Label>
-                            <Input 
-                                id="custom-reason" 
-                                placeholder="Enter custom reason here..." 
-                                value={cancelReason} 
-                                onChange={(e) => setCancelReason(e.target.value)} 
-                            />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button variant="ghost" onClick={() => setCancelModalOpen(null)}>Cancel</Button>
-                        <Button variant="destructive" onClick={() => updateStatus(cancelModalOpen, "cancelled", cancelReason || "Cancelled by barber")} disabled={actionLoading === cancelModalOpen}>
-                            {actionLoading === cancelModalOpen ? "Declining..." : "Confirm Decline"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+      <Dialog open={!!decision} onOpenChange={(open) => !open && setDecision(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>{decision?.status === "declined" ? "Decline request" : "Cancel appointment"}</DialogTitle><DialogDescription>Provide a clear reason. The customer will receive it in their notifications.</DialogDescription></DialogHeader>
+          <div className="space-y-3"><Label htmlFor="reason">Reason</Label><div className="flex flex-wrap gap-2">{["Time slot is unavailable", "Shop closed unexpectedly", "Barber unavailable"].map((item) => <Button key={item} type="button" variant={reason === item ? "default" : "outline"} size="sm" onClick={() => setReason(item)}>{item}</Button>)}</div><Input id="reason" value={reason} maxLength={500} onChange={(e) => setReason(e.target.value)} placeholder="Or enter a custom reason" /></div>
+          <DialogFooter><Button variant="outline" onClick={() => setDecision(null)}>Back</Button><Button variant="destructive" disabled={!reason.trim() || actionLoading === decision?.booking?._id} onClick={() => updateStatus(decision.booking._id, decision.status, reason.trim())}>{actionLoading === decision?.booking?._id ? "Saving..." : "Confirm"}</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
 
-        </div>
-    );
+function Section({ icon: Icon, title, empty, children }) {
+  const items = Array.isArray(children) ? children : [children].filter(Boolean);
+  return <section className="space-y-4"><div className="flex items-center gap-2 border-b pb-2"><Icon className="w-5 h-5 text-primary" /><h2 className="text-xl font-bold">{title}</h2></div>{items.length ? <div className="grid gap-3">{items}</div> : <div className="text-center py-8 rounded-2xl border border-dashed text-muted-foreground">{empty}</div>}</section>;
 }

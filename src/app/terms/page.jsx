@@ -9,7 +9,7 @@ export default function TermsOfService() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl space-y-8">
         <h1 className="text-4xl font-bold tracking-tight text-foreground">Terms of Service</h1>
         <div className="prose prose-gray dark:prose-invert max-w-none space-y-6">
-          <p className="text-muted-foreground">Last Updated: {new Date().toLocaleDateString()}</p>
+          <p className="text-muted-foreground">Last Updated: August 21, 2026</p>
           
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-foreground">1. Acceptance of Terms</h2>
@@ -38,8 +38,7 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-foreground">4. Appointment Cancellations</h2>
             <p className="text-muted-foreground">
-              Cancellations must be made in accordance with the specific barber's cancellation policy. 
-              Trimlly is not responsible for any fees incurred due to late cancellations or no-shows.
+              Customers may cancel eligible appointments through the platform. Appointment acceptance, cancellation, rescheduling, completion, and no-show states are recorded by Trimlly according to the booking workflow available to the customer and barber.
             </p>
           </section>
 
