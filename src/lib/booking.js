@@ -193,12 +193,16 @@ export function validateBookingWindow(barber, start, durationMinutes, now = new 
 }
 
 export function canonicalBarberId(barber) {
-  return barber?._id?.toString?.() || String(barber?._id || "");
+  if (!barber) return "";
+  if (typeof barber === "string") return barber;
+  return barber._id?.toString?.() || String(barber._id || "");
 }
 
 export function legacyBarberIdentifiers(barber) {
+  if (!barber) return [];
+  if (typeof barber === "string") return [barber];
   const ids = [canonicalBarberId(barber)];
-  if (barber?.userId) ids.push(barber.userId);
+  if (barber.userId) ids.push(String(barber.userId));
   return [...new Set(ids.filter(Boolean))];
 }
 

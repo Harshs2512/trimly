@@ -1,11 +1,11 @@
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import { getDb } from "@/lib/mongodb";
+import { getDb } from "./mongodb.js";
 import bcrypt from "bcryptjs";
 import { ObjectId } from "mongodb";
-import { normalizeEmail } from "@/lib/security";
-import { rateLimit } from "@/lib/rateLimit";
-import { ensureIndexes } from "@/lib/indexes";
+import { normalizeEmail } from "./security.js";
+import { rateLimit } from "./rateLimit.js";
+import { ensureIndexes } from "./indexes.js";
 
 const providers = [
   CredentialsProvider({

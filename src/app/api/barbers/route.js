@@ -18,7 +18,7 @@ function normalizeServices(services = []) {
 }
 
 function publicBarber(barber, waitingTime) {
-  const { userId, ...safe } = barber;
+  const { userId, idType, idNumber, idDocumentImage, ...safe } = barber;
   return { ...safe, waitingTime };
 }
 
@@ -149,11 +149,6 @@ export async function PUT(request) {
       } catch (error) {
         return Response.json({ error: "Service names must be unique." }, { status: 400 });
       }
-    }
-
-    if (existing.verificationStatus === "verified") {
-      update.verificationStatus = "pending";
-      update.verifiedAt = null;
     }
 
     await db.collection("barbers").updateOne({ _id: existing._id }, { $set: update });

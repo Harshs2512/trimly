@@ -1,6 +1,6 @@
-import { legacyBarberIdentifiers, resolveBarber, canonicalBarberId } from "@/lib/booking";
-import { createNotification } from "@/lib/notifications";
-import { updateBarberWaitingTime } from "@/lib/waitingTime";
+import { legacyBarberIdentifiers, resolveBarber, canonicalBarberId } from "./booking.js";
+import { createNotification } from "./notifications.js";
+import { updateBarberWaitingTime } from "./waitingTime.js";
 
 const ACTIVE_STATUSES = ["pending", "confirmed"];
 
@@ -20,7 +20,8 @@ async function cancelBookingIfActive(db, booking, reason) {
 export async function cancelActiveBookingsForBarber(db, barber, reason) {
   if (!barber) return 0;
 
-  const identifiers = legacyBarberIdentifiers(barber);
+  const resolved = typeof barber === "string" ? await resolveBarber(db, barber) : barber;
+  const identifiers = legacyBarberIdentifiers(resolved || barber);
   const bookings = await db.collection("bookings").find({
     barberId: { $in: identifiers },
     status: { $in: ACTIVE_STATUSES },
@@ -38,7 +39,7 @@ export async function cancelActiveBookingsForBarber(db, barber, reason) {
   })));
 
   if (cancelled.length) {
-    await updateBarberWaitingTime(db, canonicalBarberId(barber));
+    await updateBarberWaitingTime(db, canonicalBarberId(resolved || barber));
   }
   return cancelled.length;
 }

@@ -10,10 +10,10 @@ export async function GET() {
     if (!session) return Response.json({ error: "Not authenticated" }, { status: 401 });
 
     const db = await getDb();
-    const user = await db.collection("users").findOne(
-      { _id: new ObjectId(session.user.id) },
-      { projection: { password: 0 } }
-    );
+    const query = ObjectId.isValid(session.user.id)
+      ? { _id: new ObjectId(session.user.id) }
+      : { _id: session.user.id };
+    const user = await db.collection("users").findOne(query, { projection: { password: 0 } });
     if (!user) return Response.json({ error: "User not found" }, { status: 404 });
     return Response.json(user);
   } catch (error) {
@@ -34,8 +34,11 @@ export async function PUT(req) {
     }
 
     const db = await getDb();
+    const query = ObjectId.isValid(session.user.id)
+      ? { _id: new ObjectId(session.user.id), active: { $ne: false } }
+      : { _id: session.user.id, active: { $ne: false } };
     const result = await db.collection("users").updateOne(
-      { _id: new ObjectId(session.user.id), active: { $ne: false } },
+      query,
       { $set: { name: validation.data.name, updatedAt: new Date() } }
     );
     if (!result.matchedCount) return Response.json({ error: "User not found" }, { status: 404 });

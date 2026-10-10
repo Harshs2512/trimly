@@ -1,7 +1,6 @@
 import nodemailer from "nodemailer";
-import { getAppUrl } from "@/lib/appUrl";
+import { getAppUrl } from "./appUrl.js";
 
-const APP_URL = getAppUrl();
 
 function getTransporter() {
   const host = process.env.SMTP_HOST;
@@ -77,7 +76,8 @@ async function sendEmail({ to, subject, html, text }) {
 }
 
 export async function sendPasswordResetEmail({ to, token }) {
-  const resetUrl = `${APP_URL}/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(to)}`;
+  const appUrl = getAppUrl();
+  const resetUrl = `${appUrl}/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(to)}`;
   return sendEmail({
     to,
     subject: "Reset your Trimlly password",
@@ -87,7 +87,8 @@ export async function sendPasswordResetEmail({ to, token }) {
 }
 
 export async function sendVerificationEmail({ to, token }) {
-  const verifyUrl = `${APP_URL}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(to)}`;
+  const appUrl = getAppUrl();
+  const verifyUrl = `${appUrl}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(to)}`;
   return {
     ...(await sendEmail({
       to,

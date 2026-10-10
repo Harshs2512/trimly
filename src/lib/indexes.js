@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/mongodb";
+import { getDb } from "./mongodb.js";
 
 let indexesPromise;
 
@@ -21,8 +21,24 @@ export async function ensureIndexes() {
         { col: "bookings", spec: { barberId: 1, timeSlot: 1, status: 1 }, opts: { name: "booking_barber_time_status" } },
         { col: "bookings", spec: { barberId: 1, status: 1, endTime: 1 }, opts: { name: "booking_barber_status_end" } },
         { col: "bookings", spec: { userId: 1, status: 1, timeSlot: 1 }, opts: { name: "booking_user_status_time" } },
-        { col: "bookings", spec: { barberId: 1, reservationKeys: 1 }, opts: { unique: true, sparse: true, name: "uniq_barber_active_minutes" } },
-        { col: "bookings", spec: { userId: 1, reservationKeys: 1 }, opts: { unique: true, sparse: true, name: "uniq_user_active_minutes" } },
+        {
+          col: "bookings",
+          spec: { barberId: 1, reservationKeys: 1 },
+          opts: {
+            unique: true,
+            partialFilterExpression: { "reservationKeys.0": { $exists: true } },
+            name: "uniq_barber_active_minutes",
+          },
+        },
+        {
+          col: "bookings",
+          spec: { userId: 1, reservationKeys: 1 },
+          opts: {
+            unique: true,
+            partialFilterExpression: { "reservationKeys.0": { $exists: true } },
+            name: "uniq_user_active_minutes",
+          },
+        },
         { col: "notifications", spec: { userId: 1, createdAt: -1 }, opts: { name: "notification_user_created" } },
         { col: "rate_limits", spec: { expiresAt: 1 }, opts: { expireAfterSeconds: 0, name: "rate_limit_ttl" } },
         { col: "password_reset_tokens", spec: { expiresAt: 1 }, opts: { expireAfterSeconds: 0, name: "password_reset_ttl" } },
@@ -33,12 +49,25 @@ export async function ensureIndexes() {
         { col: "email_verification_tokens", spec: { userId: 1 }, opts: { name: "email_verification_user" } },
         { col: "system_locks", spec: { expiresAt: 1 }, opts: { expireAfterSeconds: 0, name: "system_lock_ttl" } },
         { col: "audit_logs", spec: { createdAt: -1 }, opts: { name: "audit_created" } },
+        { col: "reviews", spec: { bookingId: 1 }, opts: { unique: true, name: "uniq_review_booking" } },
+        { col: "reviews", spec: { barberId: 1, createdAt: -1 }, opts: { name: "review_barber_created" } },
+        { col: "reviews", spec: { userId: 1, createdAt: -1 }, opts: { name: "review_user_created" } },
       ];
 
       const results = await Promise.allSettled(
-        indexDefinitions.map(({ col, spec, opts }) =>
-          db.collection(col).createIndex(spec, opts)
-        )
+        indexDefinitions.map(async ({ col, spec, opts }) => {
+          try {
+            return await db.collection(col).createIndex(spec, opts);
+          } catch (err) {
+            if (err?.codeName === "IndexOptionsConflict" || err?.code === 85) {
+              if (opts?.name) {
+                await db.collection(col).dropIndex(opts.name).catch(() => {});
+                return await db.collection(col).createIndex(spec, opts);
+              }
+            }
+            throw err;
+          }
+        })
       );
 
       results.forEach((res, i) => {

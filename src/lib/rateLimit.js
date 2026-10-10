@@ -1,4 +1,4 @@
-import { getDb } from "@/lib/mongodb";
+import { getDb } from "./mongodb.js";
 
 export async function rateLimit(key, limit = 5, windowMs = 15 * 60 * 1000) {
   const db = await getDb();

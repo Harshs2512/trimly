@@ -143,8 +143,9 @@ export async function GET(request) {
     ]);
 
     const userIds = [...new Set(bookings.map((booking) => String(booking.userId)).filter(Boolean))];
-    const users = userIds.length
-      ? await db.collection("users").find({ _id: { $in: userIds.map((id) => new ObjectId(id)) } }, { projection: { name: 1 } }).toArray()
+    const objectUserIds = userIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+    const users = objectUserIds.length
+      ? await db.collection("users").find({ _id: { $in: objectUserIds } }, { projection: { name: 1 } }).toArray()
       : [];
     const userMap = new Map(users.map((user) => [user._id.toString(), user.name]));
 

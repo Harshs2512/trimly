@@ -63,7 +63,7 @@ export async function POST(req) {
 
     const delivery = await sendVerificationEmail({ to: email, token });
     if (!delivery.sent) {
-      if (process.env.NODE_ENV !== "production" && delivery.reason === "not_configured") {
+      if (process.env.NODE_ENV !== "production") {
         return Response.json({
           message: "Account created. Verify the email before signing in.",
           developmentVerificationUrl: delivery.verifyUrl,

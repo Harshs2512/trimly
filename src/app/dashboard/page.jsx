@@ -32,6 +32,21 @@ export default async function Dashboard() {
     if (barber.userId) barberMap.set(String(barber.userId), barber);
   }
 
+  // Find user's existing reviews
+  const userReviews = await db
+    .collection("reviews")
+    .find({ userId: session.user.id, deletedAt: { $exists: false } })
+    .toArray();
+
+  const initialReviewedMap = {};
+  for (const r of userReviews) {
+    initialReviewedMap[String(r.bookingId)] = {
+      _id: r._id.toString(),
+      rating: r.rating,
+      comment: r.comment || "",
+    };
+  }
+
   const bookings = rawBookings.map((booking) => {
     const barber = barberMap.get(String(booking.barberId));
     return {
@@ -47,5 +62,5 @@ export default async function Dashboard() {
     };
   });
 
-  return <DashboardClient user={session.user} bookings={bookings} />;
+  return <DashboardClient user={session.user} bookings={bookings} initialReviewedMap={initialReviewedMap} />;
 }

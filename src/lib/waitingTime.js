@@ -1,4 +1,4 @@
-import { ACTIVE_BOOKING_STATUSES, legacyBarberIdentifiers, resolveBarber } from "@/lib/booking";
+import { ACTIVE_BOOKING_STATUSES, legacyBarberIdentifiers, resolveBarber } from "./booking.js";
 
 export async function calculateBarberWaitingTime(db, barberId, now = new Date()) {
   const barber = await resolveBarber(db, barberId);

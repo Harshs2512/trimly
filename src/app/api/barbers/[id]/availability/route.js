@@ -44,7 +44,7 @@ export async function GET(request, { params }) {
     if (!dateAtNoon) return Response.json({ error: "Invalid date" }, { status: 400 });
     const weekday = getZonedParts(dateAtNoon, timezone).weekday;
     if ((barber.closedDays || []).map((day) => String(day).toLowerCase()).includes(weekday)) {
-      return Response.json({ date, timezone, slots: [] });
+      return Response.json({ date, timezone, isClosedDay: true, slots: [] });
     }
 
     const openMinutes = timeToMinutes(barber.workingHours?.open || "09:00");

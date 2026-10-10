@@ -5,7 +5,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BarberProfileForm from "@/components/dashboard/BarberProfileForm";
 import ServiceManager from "@/components/dashboard/ServiceManager";
 import BookingManager from "@/components/dashboard/BookingManager";
-import { Scissors, UserCircle, CalendarCheck, Settings } from "lucide-react";
+import BarberReviewsSection from "@/components/BarberReviewsSection";
+import { Scissors, UserCircle, CalendarCheck, Settings, Star } from "lucide-react";
 
 export default async function BarberDashboard() {
   const session = await getActiveSession();
@@ -36,6 +37,7 @@ export default async function BarberDashboard() {
           <TabsList className="bg-card border p-1.5 rounded-2xl h-auto flex flex-wrap justify-start gap-2">
             <TabsTrigger value="bookings" className="rounded-xl px-6 py-3 gap-2"><CalendarCheck className="w-4 h-4" /> Bookings</TabsTrigger>
             <TabsTrigger value="services" className="rounded-xl px-6 py-3 gap-2"><Scissors className="w-4 h-4" /> Services</TabsTrigger>
+            <TabsTrigger value="reviews" className="rounded-xl px-6 py-3 gap-2"><Star className="w-4 h-4" /> Reviews & Ratings</TabsTrigger>
             <TabsTrigger value="profile" className="rounded-xl px-6 py-3 gap-2"><Settings className="w-4 h-4" /> Shop Profile</TabsTrigger>
           </TabsList>
 
@@ -45,6 +47,9 @@ export default async function BarberDashboard() {
             </TabsContent>
             <TabsContent value="services" className="m-0">
               {!plainProfile ? <Empty icon={Scissors} title="Profile incomplete" text="Complete your Shop Profile before adding services." /> : <ServiceManager barberId={plainProfile._id} services={plainProfile.services || []} />}
+            </TabsContent>
+            <TabsContent value="reviews" className="m-0">
+              {!plainProfile ? <Empty icon={Star} title="Profile incomplete" text="Complete your Shop Profile to view reviews." /> : <BarberReviewsSection barberId={plainProfile._id} />}
             </TabsContent>
             <TabsContent value="profile" className="m-0"><BarberProfileForm initialData={plainProfile} /></TabsContent>
           </div>

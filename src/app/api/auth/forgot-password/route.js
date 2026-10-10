@@ -46,10 +46,10 @@ export async function POST(request) {
     const delivery = await sendPasswordResetEmail({ to: email, token });
     if (!delivery.sent) {
       await db.collection("password_reset_tokens").deleteOne({ tokenHash });
-      if (process.env.NODE_ENV !== "production" && delivery.reason === "not_configured") {
+      if (process.env.NODE_ENV !== "production") {
         const appUrl = getAppUrl();
         return Response.json({
-          message: "Email delivery is not configured. Development reset link generated.",
+          message: "Development reset link generated.",
           developmentResetUrl: `${appUrl}/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(email)}`,
         });
       }

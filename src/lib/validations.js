@@ -47,6 +47,14 @@ export const profileUpdateSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
 });
 
+export const workPhotoSchema = z.object({
+  id: z.string().max(100).optional(),
+  url: z.string().max(3_000_000, "Image data exceeds size limit"),
+  caption: z.string().trim().max(100).optional().default(""),
+  category: z.string().trim().max(50).optional().default("Haircut"),
+  createdAt: z.string().optional(),
+});
+
 export const barberSchema = z.object({
   shopName: z.string().trim().min(2, "Shop name must be at least 2 characters").max(120),
   address: z.string().trim().min(5, "Address must be at least 5 characters").max(300),
@@ -58,6 +66,15 @@ export const barberSchema = z.object({
   leadTimeMinutes: z.number().int().min(0).max(1440).optional().default(30),
   bookingHorizonDays: z.number().int().min(1).max(365).optional().default(90),
   slotIntervalMinutes: z.number().int().min(5).max(120).optional().default(30),
+  idType: z.enum(["aadhaar", "pan", "driving_license", "voter_id", "trade_license"]).optional(),
+  idNumber: z.string().trim().max(50).optional().default(""),
+  idDocumentImage: z.string().max(3_000_000).optional().default(""),
+  shopExteriorImage: z.string().max(3_000_000).optional().default(""),
+  shopInteriorImage: z.string().max(3_000_000).optional().default(""),
+  workPhotos: z.array(workPhotoSchema).max(16).optional().default([]),
+  staffCount: z.number().int().min(1, "Must have at least 1 staff member").max(100).optional().default(1),
+  chairsCount: z.number().int().min(1, "Must have at least 1 styling chair").max(50).optional().default(1),
+  specialties: z.array(z.string().trim().min(1).max(50)).max(20).optional().default([]),
 });
 
 export const barberUpdateSchema = barberSchema.partial();
@@ -107,3 +124,16 @@ export const verifyEmailSchema = z.object({
   email: z.string().trim().email("Invalid email address").max(254),
   token: z.string().min(32).max(256),
 });
+
+export const reviewCreateSchema = z.object({
+  barberId: z.string().min(1, "Barber ID is required"),
+  bookingId: z.string().min(1, "Booking ID is required"),
+  rating: z.number().int().min(1, "Rating must be between 1 and 5").max(5, "Rating must be between 1 and 5"),
+  comment: z.string().trim().max(1000, "Comment cannot exceed 1000 characters").optional().default(""),
+});
+
+export const reviewUpdateSchema = z.object({
+  rating: z.number().int().min(1, "Rating must be between 1 and 5").max(5, "Rating must be between 1 and 5").optional(),
+  comment: z.string().trim().max(1000, "Comment cannot exceed 1000 characters").optional(),
+});
+

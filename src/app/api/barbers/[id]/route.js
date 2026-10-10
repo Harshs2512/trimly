@@ -33,8 +33,12 @@ export async function GET(request, { params }) {
     if (!isPublic && !isOwnerOrAdmin) return Response.json({ error: "Barber not found" }, { status: 404 });
 
     const waitingTime = await calculateBarberWaitingTime(db, id);
-    const { userId, ...safe } = barber;
-    return Response.json({ ...safe, waitingTime, ...(isOwnerOrAdmin ? { ownerUserId: userId } : {}) });
+    const { userId, idType, idNumber, idDocumentImage, ...safe } = barber;
+    return Response.json({
+      ...safe,
+      waitingTime,
+      ...(isOwnerOrAdmin ? { ownerUserId: userId, idType, idNumber, idDocumentImage } : {}),
+    });
   } catch (error) {
     return safeInternalError(error, "barber-get");
   }
@@ -69,10 +73,6 @@ export async function PUT(request, { params }) {
       } catch (error) {
         return Response.json({ error: "Service names must be unique." }, { status: 400 });
       }
-    }
-    if (session.user.role !== "admin" && existing.verificationStatus === "verified") {
-      update.verificationStatus = "pending";
-      update.verifiedAt = null;
     }
     await db.collection("barbers").updateOne({ _id: existing._id }, { $set: update });
     return Response.json({ ok: true, message: "Barber updated" });

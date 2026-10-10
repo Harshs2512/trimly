@@ -61,9 +61,9 @@ export async function POST(request) {
     const delivery = await sendVerificationEmail({ to: email, token });
     if (!delivery.sent) {
       await db.collection("email_verification_tokens").deleteOne({ tokenHash });
-      if (process.env.NODE_ENV !== "production" && delivery.reason === "not_configured") {
+      if (process.env.NODE_ENV !== "production") {
         return Response.json({
-          message: "Email delivery is not configured. Development verification link generated.",
+          message: "Development verification link generated.",
           developmentVerificationUrl: delivery.verifyUrl,
         });
       }

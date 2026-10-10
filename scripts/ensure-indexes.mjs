@@ -1,4 +1,31 @@
 import { MongoClient } from "mongodb";
+import fs from "node:fs";
+import path from "node:path";
+
+if (!process.env.MONGODB_URI) {
+  for (const envFile of [".env.local", ".env"]) {
+    const fullPath = path.resolve(process.cwd(), envFile);
+    if (fs.existsSync(fullPath)) {
+      const content = fs.readFileSync(fullPath, "utf8");
+      for (const line of content.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const eqIdx = trimmed.indexOf("=");
+        if (eqIdx !== -1) {
+          const key = trimmed.slice(0, eqIdx).trim();
+          let val = trimmed.slice(eqIdx + 1).trim();
+          if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+            val = val.slice(1, -1);
+          }
+          if (!process.env[key]) {
+            process.env[key] = val;
+          }
+        }
+      }
+      break;
+    }
+  }
+}
 
 const uri = process.env.MONGODB_URI;
 const dbName = process.env.MONGODB_DB || "trimly";
@@ -20,13 +47,26 @@ async function main() {
     db.collection("barbers").createIndex({ verificationStatus: 1, createdAt: -1 }, { name: "barber_verification_created" }),
     db.collection("bookings").createIndex({ userId: 1, createdAt: -1 }, { name: "booking_user_created" }),
     db.collection("bookings").createIndex({ barberId: 1, timeSlot: 1, status: 1 }, { name: "booking_barber_time_status" }),
+    // Drop old sparse indexes if migrating to partialFilterExpression
+    await Promise.allSettled([
+      db.collection("bookings").dropIndex("uniq_barber_active_minutes"),
+      db.collection("bookings").dropIndex("uniq_user_active_minutes"),
+    ]),
     db.collection("bookings").createIndex(
       { barberId: 1, reservationKeys: 1 },
-      { unique: true, sparse: true, name: "uniq_barber_active_minutes" },
+      {
+        unique: true,
+        partialFilterExpression: { "reservationKeys.0": { $exists: true } },
+        name: "uniq_barber_active_minutes",
+      },
     ),
     db.collection("bookings").createIndex(
       { userId: 1, reservationKeys: 1 },
-      { unique: true, sparse: true, name: "uniq_user_active_minutes" },
+      {
+        unique: true,
+        partialFilterExpression: { "reservationKeys.0": { $exists: true } },
+        name: "uniq_user_active_minutes",
+      },
     ),
     db.collection("notifications").createIndex({ userId: 1, createdAt: -1 }, { name: "notification_user_created" }),
     db.collection("rate_limits").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "rate_limit_ttl" }),
@@ -35,6 +75,9 @@ async function main() {
     db.collection("email_verification_tokens").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "email_verification_ttl" }),
     db.collection("email_verification_tokens").createIndex({ tokenHash: 1 }, { unique: true, name: "uniq_email_verification_token" }),
     db.collection("audit_logs").createIndex({ createdAt: -1 }, { name: "audit_created" }),
+    db.collection("reviews").createIndex({ bookingId: 1 }, { unique: true, name: "uniq_review_booking" }),
+    db.collection("reviews").createIndex({ barberId: 1, createdAt: -1 }, { name: "review_barber_created" }),
+    db.collection("reviews").createIndex({ userId: 1, createdAt: -1 }, { name: "review_user_created" }),
   ]);
 
   console.log(`Indexes ensured for database '${dbName}'.`);

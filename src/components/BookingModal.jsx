@@ -35,6 +35,7 @@ export default function BookingModal({ barber, onClose, initialServiceKey = "" }
     [services, serviceKey]
   );
   const [date, setDate] = useState(() => today);
+  const [isClosedDay, setIsClosedDay] = useState(false);
   const [slots, setSlots] = useState([]);
   const [slot, setSlot] = useState("");
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
@@ -50,6 +51,7 @@ export default function BookingModal({ barber, onClose, initialServiceKey = "" }
     if (!selectedService || !date) {
       setSlots([]);
       setSlot("");
+      setIsClosedDay(false);
       return;
     }
 
@@ -58,6 +60,7 @@ export default function BookingModal({ barber, onClose, initialServiceKey = "" }
       setAvailabilityLoading(true);
       setSlot("");
       setMsg("");
+      setIsClosedDay(false);
       try {
         const params = new URLSearchParams({ date });
         if (selectedService.id) params.set("serviceId", selectedService.id);
@@ -66,9 +69,11 @@ export default function BookingModal({ barber, onClose, initialServiceKey = "" }
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Unable to load available times.");
         setSlots(data.slots || []);
+        setIsClosedDay(Boolean(data.isClosedDay));
       } catch (error) {
         if (error.name !== "AbortError") {
           setSlots([]);
+          setIsClosedDay(false);
           setMsg(error.message);
         }
       } finally {
@@ -177,7 +182,16 @@ export default function BookingModal({ barber, onClose, initialServiceKey = "" }
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground py-3">No available slots for this service on the selected date.</p>
+                  <div className="rounded-2xl border border-dashed p-5 text-center space-y-1.5 bg-muted/20">
+                    <p className="text-sm font-medium">
+                      {isClosedDay
+                        ? "The shop is closed on this day."
+                        : date === today
+                          ? "No remaining slots available today (past shop hours or fully booked)."
+                          : "No available slots for this service on the selected date."}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Please select another date on the calendar above.</p>
+                  </div>
                 )}
               </fieldset>
 

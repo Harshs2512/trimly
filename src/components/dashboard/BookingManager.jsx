@@ -8,8 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Calendar, Clock, Scissors, Check, X, User, AlertCircle, CheckCircle2, UserX } from "lucide-react";
 
-function formatBookingDate(value, timeZone, options) {
-  return new Intl.DateTimeFormat(undefined, { timeZone, ...options }).format(new Date(value));
+function formatBookingDate(value, timeZone = "Asia/Kolkata", options) {
+  try {
+    return new Intl.DateTimeFormat(undefined, { timeZone: timeZone || "Asia/Kolkata", ...options }).format(new Date(value));
+  } catch {
+    return new Intl.DateTimeFormat(undefined, options).format(new Date(value));
+  }
 }
 
 export default function BookingManager({ barberId, timezone = "Asia/Kolkata" }) {
@@ -81,7 +85,16 @@ export default function BookingManager({ barberId, timezone = "Asia/Kolkata" }) 
         {badge(booking.status)}
         {mode === "pending" && <><Button variant="outline" className="text-red-600" onClick={() => { setReason(""); setDecision({ booking, status: "declined" }); }}><X className="w-4 h-4 mr-1" />Decline</Button><Button onClick={() => updateStatus(booking._id, "confirmed")} disabled={actionLoading === booking._id}><Check className="w-4 h-4 mr-1" />Accept</Button></>}
         {mode === "upcoming" && <Button variant="outline" className="text-red-600" onClick={() => { setReason(""); setDecision({ booking, status: "cancelled" }); }}>Cancel</Button>}
-        {mode === "complete" && <><Button variant="outline" onClick={() => updateStatus(booking._id, "no_show")} disabled={actionLoading === booking._id}><UserX className="w-4 h-4 mr-1" />No show</Button><Button onClick={() => updateStatus(booking._id, "completed")} disabled={actionLoading === booking._id || new Date(booking.endTime || booking.timeSlot).getTime() > Date.now()} title={new Date(booking.endTime || booking.timeSlot).getTime() > Date.now() ? "Completion is available after the scheduled service end time." : undefined}><CheckCircle2 className="w-4 h-4 mr-1" />Complete</Button></>}
+        {mode === "complete" && (() => {
+          const endMs = booking.endTime ? new Date(booking.endTime).getTime() : new Date(booking.timeSlot).getTime() + (booking.duration || 30) * 60000;
+          const isFuture = endMs > Date.now();
+          return (
+            <>
+              <Button variant="outline" onClick={() => updateStatus(booking._id, "no_show")} disabled={actionLoading === booking._id}><UserX className="w-4 h-4 mr-1" />No show</Button>
+              <Button onClick={() => updateStatus(booking._id, "completed")} disabled={actionLoading === booking._id || isFuture} title={isFuture ? "Completion is available after the scheduled service end time." : undefined}><CheckCircle2 className="w-4 h-4 mr-1" />Complete</Button>
+            </>
+          );
+        })()}
       </div>
     </div>
   );

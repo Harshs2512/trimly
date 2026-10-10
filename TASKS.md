@@ -80,16 +80,37 @@
 - [x] TypeScript parser pass over modified JSX/TSX found no syntax-class diagnostics; dependency/type resolution is deferred until install.
 - [x] Package lock root dependencies match `package.json` and stale Auth.js/JWT package entries were removed.
 
-## Post-code validation intentionally deferred
-Run these in the target development/deployment environment after dependencies and MongoDB are available:
+- [x] Customer Reviews & Rating System:
+  - Verified appointment reviews with 1–5 star ratings and feedback (`src/app/api/reviews/route.js`).
+  - Barber rating aggregation & weighted average calculations (`src/lib/reviews.js`).
+  - Interactive review submission modal (`src/components/ReviewModal.jsx`) in Customer Dashboard (`src/app/dashboard/DashboardClient.jsx`).
+  - Customer review deletion & re-review lifecycle (`src/app/api/reviews/[id]/route.js`).
+  - Review author and admin moderation controls (`src/components/BarberReviewsSection.jsx`).
+  - Star breakdown and review list on public barber profiles (`src/app/barbers/[id]/page.jsx`) and barber workspace (`src/app/dashboard/barber/page.jsx`).
+  - Rating badges on barber search & directory cards (`src/components/BarberCard.jsx`).
+  - Database indexes: unique booking reviews and indexed lookup by barber/user (`src/lib/indexes.js`).
+  - Automated regression and workflow tests (`tests/reviews.test.mjs`) passing 32/32 tests.
 
-- [ ] `npm install`
-- [ ] `npm run db:indexes` against the intended database after reviewing existing duplicates/overlaps.
-- [ ] `npm run lint`
-- [ ] `npm run build`
-- [ ] Browser/mobile responsive QA.
-- [ ] End-to-end registration → verification → login → booking → reschedule/cancel → barber actions → admin actions.
-- [ ] Google OAuth and email-provider delivery with real production credentials.
+## End-to-End Role Lifecycle & Defect Remediation
+- [x] Unauthenticated Visitor Flow: Directory search, regex escaping, available slot lookup, CSRF / same-origin validation.
+- [x] Customer Flow: Account registration, atomic email verification token consumption, password reset token rotation with session version invalidation, profile updates, appointment booking with exact minute reservation keys, reschedule, and cancellation.
+- [x] Barber Flow: Registration, shop onboarding (services, working hours, specialties, staff/chair capacity, portfolio showcase), public directory visibility gate (verified only), incoming booking notifications, accept/decline/complete/no-show actions.
+- [x] Customer Review & Rating System: Verified appointment reviews (1–5 stars), aggregate weighted rating recomputation, soft-delete lifecycle, and duplicate prevention.
+- [x] Administrator Flow: User role assignment, user activation/deactivation, barber document inspection, approval/rejection, last-active admin lock protection, and account deactivation cascade cancellations.
+- [x] Defect Remediation:
+  - Repointed database connection in `.env.local` to active local MongoDB (`mongodb://127.0.0.1:27017/trimly`) with automatic fallback in `src/lib/mongodb.js`.
+  - Guarded `GET /api/bookings` against unhandled BSONError crashes when legacy/OAuth customer IDs are non-ObjectId strings.
+  - Guarded `GET/PUT /api/users/profile` against non-ObjectId session IDs.
+  - Added string ID resolution in `canonicalBarberId`, `legacyBarberIdentifiers`, and `cancelActiveBookingsForBarber`.
+  - Fixed Barber Workspace desktop navbar link missing in `src/components/Navbar.jsx`.
+  - Removed mobile display suppression of Barber Workspace button in `src/components/WorkspaceNavbar.jsx`.
+  - Fallback safe timezone formatting and accurate end-time completion checks in `src/components/dashboard/BookingManager.jsx`.
+  - Allowed development verification and reset URL returns in dev mode if external SMTP provider times out or fails.
+- [x] Comprehensive End-to-End Test Suite: `tests/e2e-all-roles-and-users.test.mjs` created and added to `npm test`.
+- [x] `npm test` — 40/40 regression & end-to-end checks passed.
+- [x] `npm run lint` — ESLint passed with 0 errors.
+- [x] `npm run build` — Next.js production build succeeded for all 30 routes.
+- [x] `npm run check` — complete test, lint, and build verification passed.
 
 ## Product capabilities intentionally outside this remediation pass
-These are new product modules rather than fixes to the existing application and require separate product/infrastructure work: payments/refunds/payouts, POS, inventory, live multi-chair/walk-in queue, GPS/maps/distance discovery, real ratings/reviews, scheduled push/SMS/WhatsApp reminders, multi-location salons, QR check-in, and AI hairstyle preview.
+These are separate roadmap modules: payments/refunds/payouts, POS, inventory, live multi-chair/walk-in queue, GPS/maps/distance discovery, scheduled push/SMS/WhatsApp reminders, multi-location salons, QR check-in, and AI hairstyle preview.

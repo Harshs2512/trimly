@@ -15,7 +15,7 @@ export default function WorkspaceNavbar() {
         <nav className="flex items-center gap-2">
           <Link href="/barbers" className="hidden sm:block"><Button variant="ghost" size="sm">Browse</Button></Link>
           <Link href="/dashboard"><Button variant="ghost" size="sm">Dashboard</Button></Link>
-          {session?.user?.role === "barber" && <Link href="/dashboard/barber" className="hidden md:block"><Button variant="ghost" size="sm">Barber</Button></Link>}
+          {session?.user?.role === "barber" && <Link href="/dashboard/barber"><Button variant="ghost" size="sm">Barber</Button></Link>}
           {session?.user?.role === "admin" && <Link href="/admin"><Button variant="outline" size="sm">Admin</Button></Link>}
           {session && <NotificationsMenu />}
           {session && <Button variant="ghost" size="sm" onClick={() => signOut({ callbackUrl: "/" })}>Log out</Button>}

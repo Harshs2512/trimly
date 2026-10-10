@@ -1,6 +1,6 @@
 import { MongoClient } from "mongodb";
 
-const uri = process.env.MONGODB_URI;
+const uri = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/trimly";
 if (!uri) throw new Error("Please add MONGODB_URI to env");
 
 export const DB_NAME = process.env.MONGODB_DB || "trimly";

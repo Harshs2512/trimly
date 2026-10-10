@@ -7,7 +7,8 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, Clock, Scissors, MapPin, ArrowRight, UserCircle2 } from "lucide-react";
+import { Calendar, Clock, Scissors, MapPin, ArrowRight, UserCircle2, Star, Sparkles, Trash2 } from "lucide-react";
+import ReviewModal from "@/components/ReviewModal";
 
 const RESCHEDULABLE = new Set(["declined", "cancelled", "expired"]);
 const ACTIVE = new Set(["pending", "confirmed"]);
@@ -33,13 +34,16 @@ function formatBookingDate(value, timeZone, options) {
   return new Intl.DateTimeFormat(undefined, { timeZone: timeZone || "Asia/Kolkata", ...options }).format(new Date(value));
 }
 
-export default function DashboardClient({ user, bookings }) {
+export default function DashboardClient({ user, bookings, initialReviewedMap = {} }) {
   const router = useRouter();
   const [cancelBooking, setCancelBooking] = useState(null);
   const [rescheduleBooking, setRescheduleBooking] = useState(null);
+  const [reviewBooking, setReviewBooking] = useState(null);
+  const [reviewedMap, setReviewedMap] = useState(initialReviewedMap);
   const [date, setDate] = useState(dateInputInTimeZone());
   const [slots, setSlots] = useState([]);
   const [slot, setSlot] = useState("");
+  const [deleteReviewTarget, setDeleteReviewTarget] = useState(null);
   const [loading, setLoading] = useState(false);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [error, setError] = useState("");
@@ -69,6 +73,23 @@ export default function DashboardClient({ user, bookings }) {
       router.refresh();
     } catch (err) {
       setError(typeof err.response?.data?.error === "string" ? err.response.data.error : "Failed to cancel booking.");
+    } finally { setLoading(false); }
+  }
+
+  async function removeReview() {
+    if (!deleteReviewTarget) return;
+    setLoading(true); setError("");
+    try {
+      await axios.delete(`/api/reviews/${deleteReviewTarget.reviewId}`);
+      setReviewedMap((prev) => {
+        const copy = { ...prev };
+        delete copy[deleteReviewTarget.bookingId];
+        return copy;
+      });
+      setDeleteReviewTarget(null);
+      router.refresh();
+    } catch (err) {
+      setError(typeof err.response?.data?.error === "string" ? err.response.data.error : "Failed to remove review.");
     } finally { setLoading(false); }
   }
 
@@ -105,27 +126,77 @@ export default function DashboardClient({ user, bookings }) {
     } finally { setLoading(false); }
   }
 
-  const BookingCard = ({ booking }) => (
-    <div className="group bg-card/60 border border-border/60 hover:border-primary/40 rounded-2xl p-6 flex flex-col md:flex-row justify-between gap-6 shadow-sm">
-      <div className="flex items-start gap-4">
-        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0"><Scissors className="w-6 h-6" /></div>
-        <div className="space-y-2">
-          <div><h3 className="font-bold text-lg">{booking.service}</h3><p className="font-medium text-sm">{booking.shopName}</p></div>
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />{formatBookingDate(booking.timeSlot, booking.shopTimezone, { weekday: "short", month: "short", day: "numeric" })}</span>
-            <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" />{formatBookingDate(booking.timeSlot, booking.shopTimezone, { hour: "2-digit", minute: "2-digit" })}</span>
-            {booking.shopAddress && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{booking.shopAddress}</span>}
+  const BookingCard = ({ booking }) => {
+    const isCompleted = booking.status === "completed" ||
+      (booking.status === "confirmed" && new Date(booking.timeSlot).getTime() < now);
+    const existingReview = reviewedMap[booking._id];
+
+    return (
+      <div className="group bg-card/60 border border-border/60 hover:border-primary/40 rounded-2xl p-6 flex flex-col md:flex-row justify-between gap-6 shadow-sm">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shrink-0"><Scissors className="w-6 h-6" /></div>
+          <div className="space-y-2">
+            <div><h3 className="font-bold text-lg">{booking.service}</h3><p className="font-medium text-sm">{booking.shopName}</p></div>
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" />{formatBookingDate(booking.timeSlot, booking.shopTimezone, { weekday: "short", month: "short", day: "numeric" })}</span>
+              <span className="flex items-center gap-1.5"><Clock className="w-4 h-4" />{formatBookingDate(booking.timeSlot, booking.shopTimezone, { hour: "2-digit", minute: "2-digit" })}</span>
+              {booking.shopAddress && <span className="flex items-center gap-1.5"><MapPin className="w-4 h-4" />{booking.shopAddress}</span>}
+            </div>
+            {booking.cancelReason && <p className="text-xs text-red-600 bg-red-500/10 px-2.5 py-1 rounded-md w-fit">{booking.cancelReason}</p>}
           </div>
-          {booking.cancelReason && <p className="text-xs text-red-600 bg-red-500/10 px-2.5 py-1 rounded-md w-fit">{booking.cancelReason}</p>}
+        </div>
+        <div className="flex flex-wrap items-center gap-2.5 self-stretch md:self-center">
+          <span className={`px-3 py-1 rounded-full border text-xs font-semibold uppercase ${statusClass(booking.status)}`}>{booking.status.replace("_", " ")}</span>
+          
+          {ACTIVE.has(booking.status) && new Date(booking.timeSlot).getTime() >= now && (
+            <Button variant="ghost" size="sm" className="text-red-600" onClick={() => { setError(""); setCancelBooking(booking); }}>
+              Cancel
+            </Button>
+          )}
+
+          {RESCHEDULABLE.has(booking.status) && (
+            <Button variant="outline" size="sm" onClick={() => openReschedule(booking)}>
+              Reschedule
+            </Button>
+          )}
+
+          {/* Review actions for completed bookings */}
+          {isCompleted && (
+            existingReview ? (
+              <div className="flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-yellow-500/10 text-yellow-600 border border-yellow-500/20">
+                  <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" /> Rated {existingReview.rating}★
+                </span>
+                {existingReview._id && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-red-600 rounded-lg"
+                    title="Remove review"
+                    onClick={() => {
+                      setError("");
+                      setDeleteReviewTarget({ bookingId: booking._id, reviewId: existingReview._id });
+                    }}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs text-primary border-primary/40 hover:bg-primary/10 rounded-xl"
+                onClick={() => setReviewBooking(booking)}
+              >
+                <Sparkles className="w-3.5 h-3.5 text-yellow-500" /> Rate & Review
+              </Button>
+            )
+          )}
         </div>
       </div>
-      <div className="flex items-center gap-3 self-stretch md:self-center">
-        <span className={`px-3 py-1 rounded-full border text-xs font-semibold uppercase ${statusClass(booking.status)}`}>{booking.status.replace("_", " ")}</span>
-        {ACTIVE.has(booking.status) && new Date(booking.timeSlot).getTime() >= Date.now() && <Button variant="ghost" size="sm" className="text-red-600" onClick={() => { setError(""); setCancelBooking(booking); }}>Cancel</Button>}
-        {RESCHEDULABLE.has(booking.status) && <Button variant="outline" size="sm" onClick={() => openReschedule(booking)}>Reschedule</Button>}
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -154,6 +225,46 @@ export default function DashboardClient({ user, bookings }) {
       <Dialog open={!!rescheduleBooking} onOpenChange={(open) => !open && setRescheduleBooking(null)}>
         <DialogContent className="sm:max-w-lg"><DialogHeader><DialogTitle>Reschedule appointment</DialogTitle><DialogDescription>Select a new available time. The new request will return to pending until the barber accepts it.</DialogDescription></DialogHeader><div className="space-y-4"><input type="date" value={date} min={rescheduleBooking ? dateInputInTimeZone(new Date(), rescheduleBooking.shopTimezone) : dateInputInTimeZone()} max={rescheduleBooking ? addCalendarDays(dateInputInTimeZone(new Date(), rescheduleBooking.shopTimezone), rescheduleBooking.shopBookingHorizonDays || 90) : undefined} onChange={(event) => { setDate(event.target.value); loadAvailability(rescheduleBooking, event.target.value); }} className="w-full h-11 rounded-lg border bg-background px-3" />{availabilityLoading ? <p className="text-sm text-muted-foreground">Checking availability...</p> : <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">{slots.map((item) => <Button type="button" key={item.value} variant={slot === item.value ? "default" : "outline"} onClick={() => setSlot(item.value)}>{item.label}</Button>)}</div>}{!availabilityLoading && !slots.length && <p className="text-sm text-muted-foreground">No available times on this date.</p>}{error && <p className="text-sm text-red-600">{error}</p>}</div><DialogFooter><Button variant="outline" onClick={() => setRescheduleBooking(null)}>Cancel</Button><Button onClick={reschedule} disabled={!slot || loading}>{loading ? "Rescheduling..." : "Send new request"}</Button></DialogFooter></DialogContent>
       </Dialog>
+
+      {/* Delete Review Dialog */}
+      <Dialog open={!!deleteReviewTarget} onOpenChange={(open) => !open && setDeleteReviewTarget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove your review?</DialogTitle>
+            <DialogDescription>
+              This will remove your rating and feedback for this appointment. You will be able to submit a new review if you wish.
+            </DialogDescription>
+          </DialogHeader>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteReviewTarget(null)}>Keep review</Button>
+            <Button variant="destructive" disabled={loading} onClick={removeReview}>
+              {loading ? "Removing..." : "Remove review"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Review Modal */}
+      {reviewBooking && (
+        <ReviewModal
+          booking={reviewBooking}
+          onClose={() => setReviewBooking(null)}
+          onSuccess={(res) => {
+            if (reviewBooking?._id) {
+              setReviewedMap((prev) => ({
+                ...prev,
+                [reviewBooking._id]: {
+                  _id: res?.review?._id,
+                  rating: res?.review?.rating || 5,
+                  comment: res?.review?.comment || "",
+                },
+              }));
+            }
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }
