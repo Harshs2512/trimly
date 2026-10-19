@@ -15,6 +15,8 @@ export async function ensureIndexes() {
       const db = await getDb();
       const indexDefinitions = [
         { col: "users", spec: { email: 1 }, opts: { unique: true, name: "uniq_users_email" } },
+        { col: "users", spec: { googleSub: 1 }, opts: { unique: true, sparse: true, name: "uniq_users_google_sub" } },
+        { col: "users", spec: { appleSub: 1 }, opts: { unique: true, sparse: true, name: "uniq_users_apple_sub" } },
         { col: "barbers", spec: { userId: 1 }, opts: { unique: true, name: "uniq_barber_owner" } },
         { col: "barbers", spec: { verificationStatus: 1, createdAt: -1 }, opts: { name: "barber_verification_created" } },
         { col: "bookings", spec: { userId: 1, createdAt: -1 }, opts: { name: "booking_user_created" } },
