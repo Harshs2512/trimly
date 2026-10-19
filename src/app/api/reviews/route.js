@@ -94,89 +94,29 @@ export async function POST(request) {
     const { barberId, bookingId, rating, comment } = validation.data;
     const db = await getDb();
 
-    // Verify booking
-    const bookingQuery = ObjectId.isValid(bookingId)
-      ? { _id: new ObjectId(bookingId) }
-      : { _id: bookingId };
+    const { createReview } = await import("@/lib/reviews");
+    const result = await createReview(db, {
+      user: session.user,
+      barberId,
+      bookingId,
+      rating,
+      comment,
+    });
 
-    const booking = await db.collection("bookings").findOne(bookingQuery);
-    if (!booking) {
-      return Response.json({ error: "Appointment booking not found." }, { status: 404 });
+    if (!result.ok) {
+      return Response.json({ error: result.error }, { status: result.status });
     }
-
-    if (String(booking.userId) !== String(session.user.id)) {
-      return Response.json({ error: "You can only review your own appointments." }, { status: 403 });
-    }
-
-    const isCompleted = booking.status === "completed" ||
-      (booking.status === "confirmed" && new Date(booking.timeSlot).getTime() <= Date.now());
-
-    if (!isCompleted) {
-      return Response.json(
-        { error: "You can only review appointments that have been completed." },
-        { status: 400 }
-      );
-    }
-
-    // Check duplicate review
-    const existing = await db.collection("reviews").findOne({ bookingId: String(bookingId) });
-    if (existing && !existing.deletedAt) {
-      return Response.json(
-        { error: "You have already submitted a review for this appointment." },
-        { status: 409 }
-      );
-    }
-
-    // Resolve barber canonical profile id
-    const targetBarber = await db.collection("barbers").findOne(
-      ObjectId.isValid(barberId)
-        ? { $or: [{ _id: new ObjectId(barberId) }, { userId: barberId }] }
-        : { userId: barberId }
-    );
-
-    const canonicalBarberId = targetBarber ? targetBarber._id.toString() : barberId;
-    const now = new Date();
-
-    const newReviewDoc = {
-      barberId: canonicalBarberId,
-      bookingId: String(bookingId),
-      userId: session.user.id,
-      userName: session.user.name || "Customer",
-      serviceName: booking.service || "Grooming Service",
-      rating: Number(rating),
-      comment: comment || "",
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    let reviewId;
-    if (existing?.deletedAt) {
-      await db.collection("reviews").updateOne(
-        { _id: existing._id },
-        {
-          $set: { ...newReviewDoc, updatedAt: now },
-          $unset: { deletedAt: "" },
-        }
-      );
-      reviewId = existing._id.toString();
-    } else {
-      const insertResult = await db.collection("reviews").insertOne(newReviewDoc);
-      reviewId = insertResult.insertedId.toString();
-    }
-
-    // Recalculate aggregate stats
-    const stats = await recalculateBarberRating(db, canonicalBarberId);
 
     return Response.json(
       {
         ok: true,
         message: "Review submitted successfully",
         review: {
-          _id: reviewId,
-          rating: Number(rating),
-          comment: comment || "",
+          _id: result.review._id.toString(),
+          rating: Number(result.review.rating),
+          comment: result.review.comment || "",
         },
-        stats,
+        stats: result.stats,
       },
       { status: 201 }
     );

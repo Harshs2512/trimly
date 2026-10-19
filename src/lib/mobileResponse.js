@@ -94,3 +94,165 @@ export function checkEtag(request, contentString) {
   const isMatch = ifNoneMatch === hash;
   return { etag: hash, isMatch };
 }
+
+export const APP_CONFIG = {
+  minSupportedAppVersion: {
+    ios: process.env.MIN_APP_VERSION_IOS || "1.0.0",
+    android: process.env.MIN_APP_VERSION_ANDROID || "1.0.0",
+  },
+  latestVersion: {
+    ios: process.env.LATEST_APP_VERSION_IOS || "1.0.0",
+    android: process.env.LATEST_APP_VERSION_ANDROID || "1.0.0",
+  },
+  maintenance: process.env.MAINTENANCE_MODE === "true",
+  featureFlags: {
+    socialLogin: true,
+    geoSearch: true,
+    pushNotifications: true,
+    mediaStorage: true,
+  },
+  legalUrls: {
+    terms: "https://trimly.app/terms",
+    privacy: "https://trimly.app/privacy",
+  },
+};
+
+export function compareSemver(v1, v2) {
+  const p1 = (v1 || "0.0.0").split(".").map(Number);
+  const p2 = (v2 || "0.0.0").split(".").map(Number);
+  for (let i = 0; i < 3; i++) {
+    const n1 = p1[i] || 0;
+    const n2 = p2[i] || 0;
+    if (n1 > n2) return 1;
+    if (n1 < n2) return -1;
+  }
+  return 0;
+}
+
+export function enforceAppVersion(request) {
+  const clientVersion = request.headers.get("x-app-version");
+  const platform = (request.headers.get("x-platform") || "").toLowerCase();
+  const requestId = getRequestId(request);
+
+  if (APP_CONFIG.maintenance) {
+    return mobileError({
+      code: "MAINTENANCE_MODE",
+      message: "The service is temporarily undergoing scheduled maintenance. Please check back shortly.",
+      status: 503,
+      requestId,
+    });
+  }
+
+  if (clientVersion && (platform === "ios" || platform === "android")) {
+    const minVersion = APP_CONFIG.minSupportedAppVersion[platform];
+    if (minVersion && compareSemver(clientVersion, minVersion) < 0) {
+      return mobileError({
+        code: "UPGRADE_REQUIRED",
+        message: "Your application version is no longer supported. Please update to continue.",
+        status: 426,
+        details: { minVersion, currentVersion: clientVersion, platform },
+        requestId,
+      });
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Minimal Response Serializers:
+ * Explicit allow-lists preventing credential, token, reservation key or PII leaks.
+ */
+
+export function serializeBarber(barber) {
+  if (!barber) return null;
+  return {
+    id: barber._id?.toString() || barber.id,
+    userId: barber.userId ? String(barber.userId) : null,
+    name: barber.name || "",
+    shopName: barber.shopName || "",
+    address: barber.address || "",
+    city: barber.city || null,
+    area: barber.area || null,
+    location: barber.location || null,
+    phone: barber.phone || null,
+    services: (barber.services || []).map((s) => ({
+      id: s.id,
+      name: s.name,
+      price: s.price,
+      duration: s.duration,
+    })),
+    workingHours: barber.workingHours || { open: "09:00", close: "17:00" },
+    closedDays: barber.closedDays || [],
+    slotIntervalMinutes: barber.slotIntervalMinutes || 30,
+    rating: barber.rating || 0,
+    reviewCount: barber.reviewCount || 0,
+    waitingTime: barber.waitingTime || 0,
+    workPhotos: (barber.workPhotos || []).map((p) => (typeof p === "string" ? p : p.url)),
+    shopExteriorImage: barber.shopExteriorImage || null,
+    shopInteriorImage: barber.shopInteriorImage || null,
+    verificationStatus: barber.verificationStatus || "pending",
+    distanceKm: barber.distanceKm !== undefined ? barber.distanceKm : null,
+  };
+}
+
+export function serializeBooking(booking) {
+  if (!booking) return null;
+  return {
+    id: booking._id?.toString() || booking.id,
+    barberId: booking.barberId ? String(booking.barberId) : "",
+    barberName: booking.barberName || null,
+    barberShopName: booking.barberShopName || null,
+    userId: booking.userId ? String(booking.userId) : "",
+    customerName: booking.customerName || null,
+    service: booking.service || "",
+    serviceId: booking.serviceId || null,
+    price: booking.price,
+    duration: booking.duration,
+    timeSlot: booking.timeSlot,
+    endTime: booking.endTime || null,
+    status: booking.status,
+    cancelReason: booking.cancelReason || null,
+    rescheduleReason: booking.rescheduleReason || null,
+    createdAt: booking.createdAt,
+    updatedAt: booking.updatedAt,
+  };
+}
+
+export function serializeReview(review) {
+  if (!review) return null;
+  return {
+    id: review._id?.toString() || review.id,
+    bookingId: review.bookingId ? String(review.bookingId) : null,
+    barberId: review.barberId ? String(review.barberId) : null,
+    userId: review.userId ? String(review.userId) : null,
+    customerName: review.customerName || "Customer",
+    rating: review.rating,
+    comment: review.comment || "",
+    createdAt: review.createdAt,
+  };
+}
+
+export function serializeNotification(notification) {
+  if (!notification) return null;
+  return {
+    id: notification._id?.toString() || notification.id,
+    type: notification.type,
+    message: notification.message,
+    bookingId: notification.bookingId ? String(notification.bookingId) : null,
+    read: Boolean(notification.read),
+    createdAt: notification.createdAt,
+  };
+}
+
+export function serializeUserProfile(user) {
+  if (!user) return null;
+  return {
+    id: user._id?.toString() || user.id,
+    name: user.name || "",
+    email: user.email || "",
+    role: user.role || "user",
+    phone: user.phone || null,
+    createdAt: user.createdAt,
+  };
+}
