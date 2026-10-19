@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { getMobileSession } from "@/lib/mobileAuth";
 import { reviewCreateSchema } from "@/lib/validations";
+import { enforceMobileRateLimit } from "@/lib/rateLimit";
 import { createReview } from "@/lib/reviews";
 import {
   enforceAppVersion,
@@ -94,6 +95,17 @@ export async function POST(request) {
         requestId,
       });
     }
+
+    const userId = auth.session.user.id;
+
+    // Rate limit review posting (5 per 10 minutes)
+    const rateLimitError = await enforceMobileRateLimit(
+      `mobile:reviews:create:${userId}`,
+      5,
+      10 * 60 * 1000,
+      { requestId, message: "Too many reviews submitted. Please wait before posting again." }
+    );
+    if (rateLimitError) return rateLimitError;
 
     let body;
     try {

@@ -2,17 +2,23 @@ import bcrypt from "bcryptjs";
 import { getDb } from "@/lib/mongodb";
 import { mobileLoginSchema } from "@/lib/validations";
 import { normalizeEmail } from "@/lib/security";
-import { rateLimit } from "@/lib/rateLimit";
+import { enforceMobileRateLimit, rateLimit } from "@/lib/rateLimit";
 import { ensureIndexes } from "@/lib/indexes";
 import { createMobileSession } from "@/lib/mobileAuth";
 import { getMobileClientIp, getRequestId, mobileError, mobileSuccess } from "@/lib/mobileResponse";
 import { writeAuditLog } from "@/lib/audit";
+import { logger } from "@/lib/logger";
+import { enforceDeviceAttestation } from "@/lib/attestation";
 
 export async function POST(request) {
   const requestId = getRequestId(request);
   try {
     await ensureIndexes();
     const ip = getMobileClientIp(request);
+
+    // Optional device attestation hook (feature flagged)
+    const attestationError = await enforceDeviceAttestation(request, { action: "login", requestId });
+    if (attestationError) return attestationError;
 
     let body;
     try {
@@ -40,37 +46,31 @@ export async function POST(request) {
     const { password, deviceId, platform, appVersion } = validation.data;
     const email = normalizeEmail(validation.data.email);
 
-    // Multi-tier rate limiting: IP, Email, and Device
-    const ipLimiter = await rateLimit(`mobile:login:ip:${ip}`, 20, 15 * 60 * 1000);
-    if (!ipLimiter.allowed) {
-      return mobileError({
-        code: "RATE_LIMIT_EXCEEDED",
-        message: "Too many login attempts from this network. Please try again later.",
-        status: 429,
-        requestId,
-      });
-    }
+    // Multi-tier rate limiting with Retry-After headers: IP, Email, and Device
+    const ipLimitError = await enforceMobileRateLimit(
+      `mobile:login:ip:${ip}`,
+      20,
+      15 * 60 * 1000,
+      { requestId, message: "Too many login attempts from this network. Please try again later." }
+    );
+    if (ipLimitError) return ipLimitError;
 
-    const emailLimiter = await rateLimit(`mobile:login:email:${email}`, 10, 15 * 60 * 1000);
-    if (!emailLimiter.allowed) {
-      return mobileError({
-        code: "RATE_LIMIT_EXCEEDED",
-        message: "Too many login attempts for this account. Please try again later.",
-        status: 429,
-        requestId,
-      });
-    }
+    const emailLimitError = await enforceMobileRateLimit(
+      `mobile:login:email:${email}`,
+      10,
+      15 * 60 * 1000,
+      { requestId, message: "Too many login attempts for this account. Please try again later." }
+    );
+    if (emailLimitError) return emailLimitError;
 
     if (deviceId) {
-      const devLimiter = await rateLimit(`mobile:login:device:${deviceId}`, 15, 15 * 60 * 1000);
-      if (!devLimiter.allowed) {
-        return mobileError({
-          code: "RATE_LIMIT_EXCEEDED",
-          message: "Too many login attempts from this device. Please try again later.",
-          status: 429,
-          requestId,
-        });
-      }
+      const devLimitError = await enforceMobileRateLimit(
+        `mobile:login:device:${deviceId}`,
+        15,
+        15 * 60 * 1000,
+        { requestId, message: "Too many login attempts from this device. Please try again later." }
+      );
+      if (devLimitError) return devLimitError;
     }
 
     const db = await getDb();
@@ -82,6 +82,7 @@ export async function POST(request) {
     const isPasswordValid = await bcrypt.compare(password, passwordHash);
 
     if (!user || !isPasswordValid) {
+      // Record failed attempt
       await writeAuditLog(db, {
         actorId: user?._id?.toString() || "anonymous",
         action: "auth.mobile.login_failed",
@@ -89,6 +90,21 @@ export async function POST(request) {
         targetId: email,
         metadata: { ip, deviceId, platform },
       });
+
+      // Detect login failure bursts (e.g. 5 failed logins within 5 minutes)
+      const burstCheck = await rateLimit(`burst:login:fail:${ip}`, 5, 5 * 60 * 1000);
+      if (!burstCheck.allowed) {
+        await writeAuditLog(db, {
+          actorId: "system",
+          action: "auth.mobile.login_failure_burst",
+          targetType: "network",
+          targetId: ip,
+          metadata: { ip, email, deviceId, platform, burstCount: 5 },
+        });
+        logger.warn("Login failure burst detected", { requestId, ip, email, platform, deviceId });
+      }
+
+      logger.warn("Mobile login failed: invalid credentials", { requestId, ip, email, platform });
 
       return mobileError({
         code: "INVALID_CREDENTIALS",
@@ -136,6 +152,13 @@ export async function POST(request) {
       metadata: { ip, deviceId, platform, sessionId: sessionResult.sessionId },
     });
 
+    logger.info("Mobile login successful", {
+      requestId,
+      userId: user._id.toString(),
+      role: user.role,
+      platform,
+    });
+
     return mobileSuccess(
       {
         accessToken: sessionResult.accessToken,
@@ -151,7 +174,7 @@ export async function POST(request) {
       { requestId }
     );
   } catch (error) {
-    console.error("[mobile-login]", error);
+    logger.error("Mobile login unexpected error", { requestId, error });
     return mobileError({
       code: "INTERNAL_ERROR",
       message: "An error occurred during authentication.",

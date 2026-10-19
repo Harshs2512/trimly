@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { getMobileSession } from "@/lib/mobileAuth";
 import { getRequestId, mobileError, mobileSuccess } from "@/lib/mobileResponse";
+import { writeAuditLog } from "@/lib/audit";
 
 export async function DELETE(request, { params }) {
   const requestId = getRequestId(request);
@@ -38,6 +39,14 @@ export async function DELETE(request, { params }) {
       { _id: new ObjectId(id) },
       { $set: { isRevoked: true, revokedAt: new Date(), revocationReason: "manual_user_revocation" } }
     );
+
+    await writeAuditLog(db, {
+      actorId: session.user.id,
+      action: "auth.mobile.session_revoked",
+      targetType: "mobile_session",
+      targetId: id,
+      metadata: { deviceId: targetSession.deviceId },
+    });
 
     return mobileSuccess({ message: "Session successfully revoked." }, { requestId });
   } catch (error) {

@@ -1,6 +1,7 @@
 import { getDb } from "@/lib/mongodb";
 import { getMobileSession } from "@/lib/mobileAuth";
 import { mobileDeviceSchema } from "@/lib/validations";
+import { enforceMobileRateLimit } from "@/lib/rateLimit";
 import {
   enforceAppVersion,
   getRequestId,
@@ -23,6 +24,17 @@ export async function POST(request) {
         requestId,
       });
     }
+
+    const userId = auth.session.user.id;
+
+    // Rate limit device registration per user (10 per 15 minutes)
+    const rateLimitError = await enforceMobileRateLimit(
+      `mobile:devices:register:${userId}`,
+      10,
+      15 * 60 * 1000,
+      { requestId, message: "Too many device registrations. Please wait a few minutes." }
+    );
+    if (rateLimitError) return rateLimitError;
 
     let body;
     try {
@@ -48,7 +60,6 @@ export async function POST(request) {
     }
 
     const { deviceId, pushToken, platform, appVersion, locale, enabled } = validation.data;
-    const userId = auth.session.user.id;
     const db = await getDb();
     const now = new Date();
 

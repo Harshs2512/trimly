@@ -1,12 +1,14 @@
 import bcrypt from "bcryptjs";
 import { userSchema } from "@/lib/validations";
-import { rateLimit } from "@/lib/rateLimit";
+import { enforceMobileRateLimit } from "@/lib/rateLimit";
 import { getDb } from "@/lib/mongodb";
 import { hashToken, normalizeEmail, randomToken } from "@/lib/security";
 import { ensureIndexes } from "@/lib/indexes";
 import { isEmailDeliveryConfigured, sendVerificationEmail } from "@/lib/email";
 import { getMobileClientIp, getRequestId, mobileError, mobileSuccess } from "@/lib/mobileResponse";
 import { checkBreachedPassword } from "@/lib/mobileAuth";
+import { logger } from "@/lib/logger";
+import { enforceDeviceAttestation } from "@/lib/attestation";
 
 export async function POST(request) {
   const requestId = getRequestId(request);
@@ -14,15 +16,17 @@ export async function POST(request) {
     await ensureIndexes();
     const ip = getMobileClientIp(request);
 
-    const limiter = await rateLimit(`mobile:register:${ip}`, 5, 15 * 60 * 1000);
-    if (!limiter.allowed) {
-      return mobileError({
-        code: "RATE_LIMIT_EXCEEDED",
-        message: "Too many registration attempts. Please try again later.",
-        status: 429,
-        requestId,
-      });
-    }
+    // Optional device attestation hook (feature flagged)
+    const attestationError = await enforceDeviceAttestation(request, { action: "register", requestId });
+    if (attestationError) return attestationError;
+
+    const rateLimitError = await enforceMobileRateLimit(
+      `mobile:register:${ip}`,
+      5,
+      15 * 60 * 1000,
+      { requestId, message: "Too many registration attempts. Please try again later." }
+    );
+    if (rateLimitError) return rateLimitError;
 
     let body;
     try {

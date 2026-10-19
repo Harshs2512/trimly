@@ -2,6 +2,8 @@ import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { getMobileSession } from "@/lib/mobileAuth";
 import { bookingCreateSchema } from "@/lib/validations";
+import { enforceMobileRateLimit } from "@/lib/rateLimit";
+import { enforceDeviceAttestation } from "@/lib/attestation";
 import {
   canonicalBarberId,
   expirePendingBookings,
@@ -17,6 +19,7 @@ import { createNotification } from "@/lib/notifications";
 import { checkIdempotency, saveIdempotency } from "@/lib/idempotency";
 import {
   enforceAppVersion,
+  getMobileClientIp,
   getRequestId,
   mobileError,
   mobileSuccess,
@@ -40,6 +43,29 @@ export async function POST(request) {
     }
 
     const userId = auth.session.user.id;
+    const ip = getMobileClientIp(request);
+
+    // Optional device attestation hook (feature flagged)
+    const attestationError = await enforceDeviceAttestation(request, { action: "booking_create", requestId });
+    if (attestationError) return attestationError;
+
+    // Rate limiting for booking creation: per-user and per-IP
+    const userRateLimitError = await enforceMobileRateLimit(
+      `mobile:booking:create:user:${userId}`,
+      15,
+      15 * 60 * 1000,
+      { requestId, message: "Too many booking attempts. Please wait a few minutes before trying again." }
+    );
+    if (userRateLimitError) return userRateLimitError;
+
+    const ipRateLimitError = await enforceMobileRateLimit(
+      `mobile:booking:create:ip:${ip}`,
+      30,
+      15 * 60 * 1000,
+      { requestId, message: "Too many booking attempts from this network. Please wait a few minutes." }
+    );
+    if (ipRateLimitError) return ipRateLimitError;
+
     const db = await getDb();
 
     // Idempotency check

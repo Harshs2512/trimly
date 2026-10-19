@@ -3,9 +3,11 @@ import { getDb } from "@/lib/mongodb";
 import { ensureIndexes } from "@/lib/indexes";
 import { calculateDistanceKm, isValidCoordinate } from "@/lib/geo";
 import { getZonedParts, resolveBarberTimezone, timeToMinutes } from "@/lib/booking";
+import { enforceMobileRateLimit } from "@/lib/rateLimit";
 import {
   checkEtag,
   enforceAppVersion,
+  getMobileClientIp,
   getRequestId,
   mobileError,
   mobileSuccess,
@@ -19,6 +21,16 @@ export async function GET(request) {
   const requestId = getRequestId(request);
   try {
     await ensureIndexes();
+    const ip = getMobileClientIp(request);
+
+    // Search and list rate limiting: 120 requests per minute per IP
+    const rateLimitError = await enforceMobileRateLimit(
+      `mobile:barbers:search:ip:${ip}`,
+      120,
+      60 * 1000,
+      { requestId, message: "Too many search requests. Please slow down." }
+    );
+    if (rateLimitError) return rateLimitError;
     const { searchParams } = new URL(request.url);
 
     const search = (searchParams.get("search") || "").trim();

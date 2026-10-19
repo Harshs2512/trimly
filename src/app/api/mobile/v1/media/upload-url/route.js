@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import { getMobileSession } from "@/lib/mobileAuth";
 import { mediaUploadUrlSchema } from "@/lib/validations";
-import { rateLimit } from "@/lib/rateLimit";
+import { enforceMobileRateLimit } from "@/lib/rateLimit";
 import { storage } from "@/lib/storage";
 import {
   enforceAppVersion,
@@ -28,16 +28,14 @@ export async function POST(request) {
 
     const userId = auth.session.user.id;
 
-    // Per-user upload rate limiting (max 20 per 15 mins)
-    const limiter = await rateLimit(`media:upload:${userId}`, 20, 15 * 60 * 1000);
-    if (!limiter.allowed) {
-      return mobileError({
-        code: "RATE_LIMIT_EXCEEDED",
-        message: "Upload rate limit reached. Please wait before uploading more files.",
-        status: 429,
-        requestId,
-      });
-    }
+    // Per-user upload rate limiting with Retry-After header
+    const rateLimitError = await enforceMobileRateLimit(
+      `media:upload:${userId}`,
+      20,
+      15 * 60 * 1000,
+      { requestId, message: "Upload rate limit reached. Please wait before uploading more files." }
+    );
+    if (rateLimitError) return rateLimitError;
 
     let body;
     try {
