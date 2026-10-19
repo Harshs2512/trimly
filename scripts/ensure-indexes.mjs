@@ -78,6 +78,16 @@ async function main() {
     db.collection("reviews").createIndex({ bookingId: 1 }, { unique: true, name: "uniq_review_booking" }),
     db.collection("reviews").createIndex({ barberId: 1, createdAt: -1 }, { name: "review_barber_created" }),
     db.collection("reviews").createIndex({ userId: 1, createdAt: -1 }, { name: "review_user_created" }),
+    db.collection("mobile_sessions").createIndex({ refreshHash: 1 }, { unique: true, sparse: true, name: "uniq_mobile_session_refresh" }),
+    db.collection("mobile_sessions").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "mobile_session_ttl" }),
+    db.collection("mobile_sessions").createIndex({ userId: 1, isRevoked: 1 }, { name: "mobile_session_user_revoked" }),
+    db.collection("mobile_sessions").createIndex({ familyId: 1 }, { name: "mobile_session_family" }),
+    db.collection("devices").createIndex({ userId: 1, deviceId: 1 }, { unique: true, name: "uniq_user_device" }),
+    db.collection("devices").createIndex({ pushToken: 1 }, { sparse: true, name: "idx_devices_push_token" }),
+    db.collection("idempotency_keys").createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: "idempotency_key_ttl" }),
+    db.collection("favourites").createIndex({ userId: 1, barberId: 1 }, { unique: true, name: "uniq_user_favourite" }),
+    db.collection("consents").createIndex({ userId: 1, createdAt: -1 }, { name: "consent_user_created" }),
+    db.collection("barbers").createIndex({ location: "2dsphere" }, { name: "barber_geo_2dsphere", sparse: true }),
   ]);
 
   console.log(`Indexes ensured for database '${dbName}'.`);

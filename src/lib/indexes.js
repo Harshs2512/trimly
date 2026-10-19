@@ -52,6 +52,16 @@ export async function ensureIndexes() {
         { col: "reviews", spec: { bookingId: 1 }, opts: { unique: true, name: "uniq_review_booking" } },
         { col: "reviews", spec: { barberId: 1, createdAt: -1 }, opts: { name: "review_barber_created" } },
         { col: "reviews", spec: { userId: 1, createdAt: -1 }, opts: { name: "review_user_created" } },
+        { col: "mobile_sessions", spec: { refreshHash: 1 }, opts: { unique: true, sparse: true, name: "uniq_mobile_session_refresh" } },
+        { col: "mobile_sessions", spec: { expiresAt: 1 }, opts: { expireAfterSeconds: 0, name: "mobile_session_ttl" } },
+        { col: "mobile_sessions", spec: { userId: 1, isRevoked: 1 }, opts: { name: "mobile_session_user_revoked" } },
+        { col: "mobile_sessions", spec: { familyId: 1 }, opts: { name: "mobile_session_family" } },
+        { col: "devices", spec: { userId: 1, deviceId: 1 }, opts: { unique: true, name: "uniq_user_device" } },
+        { col: "devices", spec: { pushToken: 1 }, opts: { sparse: true, name: "idx_devices_push_token" } },
+        { col: "idempotency_keys", spec: { expiresAt: 1 }, opts: { expireAfterSeconds: 0, name: "idempotency_key_ttl" } },
+        { col: "favourites", spec: { userId: 1, barberId: 1 }, opts: { unique: true, name: "uniq_user_favourite" } },
+        { col: "consents", spec: { userId: 1, createdAt: -1 }, opts: { name: "consent_user_created" } },
+        { col: "barbers", spec: { location: "2dsphere" }, opts: { name: "barber_geo_2dsphere", sparse: true } },
       ];
 
       const results = await Promise.allSettled(

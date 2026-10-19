@@ -20,7 +20,12 @@ if (process.env.NODE_ENV === "development") {
 }
 
 export async function getDb() {
-  const connectedClient = await clientPromise;
+  let connectedClient = await clientPromise;
+  if (!connectedClient || connectedClient.topology?.isDestroyed?.() || connectedClient.topology?.isClosed?.()) {
+    client = new MongoClient(uri);
+    clientPromise = client.connect();
+    connectedClient = await clientPromise;
+  }
   return connectedClient.db(DB_NAME);
 }
 
