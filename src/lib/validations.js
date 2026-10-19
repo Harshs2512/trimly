@@ -168,3 +168,14 @@ export const mobileSocialLoginSchema = z.object({
   platform: z.enum(["ios", "android", "unknown"]).optional().default("unknown"),
 });
 
+export const mediaUploadUrlSchema = z.object({
+  purpose: z.enum(["work_photo", "shop_exterior", "shop_interior", "id_document"]),
+  contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
+  fileSize: z.number().int().positive().max(5 * 1024 * 1024, "File size must not exceed 5 MB"),
+});
+
+export const mediaCompleteSchema = z.object({
+  objectKey: z.string().trim().min(1).max(255),
+  purpose: z.enum(["work_photo", "shop_exterior", "shop_interior", "id_document"]),
+});
+
