@@ -399,8 +399,8 @@ export async function updateBookingStatus(db, { bookingId, user, status, cancelR
 
   let actor = null;
   if (user.role === "admin") actor = "admin";
-  else if (user.role === "barber" && barber.userId === user.id) actor = "barber";
-  else if (existing.userId === user.id) actor = "customer";
+  else if (user.role === "barber" && String(barber.userId) === String(user.id)) actor = "barber";
+  else if (String(existing.userId) === String(user.id)) actor = "customer";
   if (!actor) {
     return { ok: false, status: 403, code: "FORBIDDEN", error: "Forbidden" };
   }
