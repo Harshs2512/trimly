@@ -38,6 +38,7 @@ export async function GET(request) {
         ...(ObjectId.isValid(barberId) ? [{ barberId: new ObjectId(barberId) }] : []),
       ],
       deletedAt: { $exists: false },
+      moderationStatus: { $ne: "flagged" },
     };
 
     if (cursor && ObjectId.isValid(cursor)) {

@@ -27,7 +27,7 @@ export async function DELETE(request) {
     let confirmPassword = null;
     try {
       const body = await request.json();
-      confirmPassword = body?.confirmPassword || null;
+      confirmPassword = body?.confirmPassword || body?.password || null;
     } catch {
       // Optional if social login
     }
