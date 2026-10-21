@@ -183,7 +183,45 @@ test("Customer Review & Rating System Workflow Test", async (t) => {
     assert.equal(updatedBarber.reviewCount, 1);
   });
 
-  await t.test("6. Cleanup test fixtures", async () => {
+  await t.test("6. UGC Moderation: reporting review and auto-flagging on threshold", async () => {
+    const modReviewId = new ObjectId();
+    await db.collection("reviews").insertOne({
+      _id: modReviewId,
+      barberId: barberProfileId.toString(),
+      bookingId: new ObjectId().toString(),
+      userId: customerId,
+      userName: "Spam User",
+      rating: 1,
+      comment: "Inappropriate content",
+      reportCount: 0,
+      createdAt: new Date(),
+    });
+
+    // 1st & 2nd report
+    await db.collection("review_reports").insertOne({
+      reviewId: modReviewId,
+      reporterId: new ObjectId().toString(),
+      reason: "offensive",
+      createdAt: new Date(),
+    });
+    await db.collection("reviews").updateOne({ _id: modReviewId }, { $inc: { reportCount: 1 } });
+
+    // 3rd report triggers auto-quarantine (moderationStatus: "flagged")
+    await db.collection("reviews").updateOne(
+      { _id: modReviewId },
+      { $inc: { reportCount: 2 }, $set: { moderationStatus: "flagged", flaggedAt: new Date() } }
+    );
+
+    const flaggedReview = await db.collection("reviews").findOne({ _id: modReviewId });
+    assert.equal(flaggedReview.reportCount, 3);
+    assert.equal(flaggedReview.moderationStatus, "flagged");
+
+    // Clean up moderation test fixtures
+    await db.collection("reviews").deleteOne({ _id: modReviewId });
+    await db.collection("review_reports").deleteMany({ reviewId: modReviewId });
+  });
+
+  await t.test("7. Cleanup test fixtures", async () => {
     await db.collection("reviews").deleteMany({ barberId: barberProfileId.toString() });
     await db.collection("bookings").deleteMany({ _id: { $in: [new ObjectId(booking1Id), new ObjectId(booking2Id)] } });
     await db.collection("barbers").deleteOne({ _id: barberProfileId });

@@ -1,0 +1,437 @@
+### Trimly Mobile API v1 — HTTP Test Collection
+### Compatible with VS Code REST Client, JetBrains HTTP Client, and Bruno/Postman import.
+
+@baseUrl = http://localhost:3000/api/mobile/v1
+@rootUrl = http://localhost:3000
+@authToken = your_access_token_here
+@refreshToken = your_refresh_token_here
+@barberId = 654c2a1e8f3b2a0012345678
+@bookingId = 654c2a1e8f3b2a0087654321
+@deviceId = dev-iphone-15-pro-01
+
+### 1. HEALTH CHECKS
+
+# Liveness probe
+GET {{rootUrl}}/healthz
+Accept: application/json
+
+###
+
+# Readiness probe (Database ping)
+GET {{rootUrl}}/readyz
+Accept: application/json
+
+###
+
+# Configuration & Version Enforcement
+GET {{baseUrl}}/config
+Accept: application/json
+X-App-Version: 1.0.0
+X-Platform: ios
+
+---
+
+### 2. AUTHENTICATION & SESSIONS
+
+# Register New Customer
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+X-Platform: ios
+
+{
+  "name": "Jane Doe",
+  "email": "jane.doe@example.com",
+  "password": "Password123!Secure",
+  "role": "user"
+}
+
+###
+
+# Mobile Login (Bearer Token Issuance)
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+X-Platform: ios
+X-App-Version: 1.0.0
+
+{
+  "email": "jane.doe@example.com",
+  "password": "Password123!Secure",
+  "deviceId": "{{deviceId}}",
+  "platform": "ios",
+  "appVersion": "1.0.0"
+}
+
+###
+
+# Rotate Refresh Token
+POST {{baseUrl}}/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}",
+  "deviceId": "{{deviceId}}"
+}
+
+###
+
+# List Active Mobile Sessions
+GET {{baseUrl}}/auth/sessions
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+# Revoke a Specific Mobile Session
+DELETE {{baseUrl}}/auth/sessions/{{deviceId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+# Logout Current Session
+POST {{baseUrl}}/auth/logout
+Authorization: Bearer {{authToken}}
+
+###
+
+# Logout All Devices & Sessions
+POST {{baseUrl}}/auth/logout-all
+Authorization: Bearer {{authToken}}
+
+###
+
+# Google Native Sign-In (Server-Verified)
+POST {{baseUrl}}/auth/google
+Content-Type: application/json
+
+{
+  "idToken": "google_id_token_from_native_sdk",
+  "deviceId": "{{deviceId}}",
+  "platform": "android"
+}
+
+###
+
+# Apple Native Sign-In (Server-Verified)
+POST {{baseUrl}}/auth/apple
+Content-Type: application/json
+
+{
+  "idToken": "apple_identity_token_from_native_sdk",
+  "rawNonce": "nonce_matching_sha256",
+  "fullName": "Jane Apple",
+  "deviceId": "{{deviceId}}",
+  "platform": "ios"
+}
+
+---
+
+### 3. BARBER DISCOVERY & GEO SEARCH
+
+# List / Search Barbers (Coordinates + Distance + Filters)
+GET {{baseUrl}}/barbers?lat=37.7749&lng=-122.4194&radiusKm=15&openNow=true&minRating=4.0&sort=distance
+Accept: application/json
+
+###
+
+# Get Barber Details (with ETag caching)
+GET {{baseUrl}}/barbers/{{barberId}}
+Accept: application/json
+If-None-Match: "optional_previous_etag"
+
+###
+
+# Get Barber Slot Availability
+GET {{baseUrl}}/barbers/{{barberId}}/availability?date=2026-11-20
+Accept: application/json
+
+###
+
+# Barber Profile Self-Management (Barber role required)
+GET {{baseUrl}}/barber/profile
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+PUT {{baseUrl}}/barber/profile
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "shopName": "Downtown Fades Studio",
+  "address": "123 Market St, Suite 400",
+  "phone": "+14155552671",
+  "city": "San Francisco",
+  "services": [
+    { "id": "srv_cut", "name": "Classic Haircut", "price": 40, "duration": 30 },
+    { "id": "srv_beard", "name": "Beard Trim & Shape", "price": 25, "duration": 20 }
+  ],
+  "workingHours": {
+    "monday": { "isOpen": true, "start": "09:00", "end": "18:00" },
+    "tuesday": { "isOpen": true, "start": "09:00", "end": "18:00" },
+    "wednesday": { "isOpen": true, "start": "09:00", "end": "18:00" },
+    "thursday": { "isOpen": true, "start": "09:00", "end": "18:00" },
+    "friday": { "isOpen": true, "start": "09:00", "end": "19:00" },
+    "saturday": { "isOpen": true, "start": "10:00", "end": "17:00" },
+    "sunday": { "isOpen": false, "start": "10:00", "end": "16:00" }
+  }
+}
+
+---
+
+### 4. APPOINTMENT BOOKINGS
+
+# Create Appointment Booking (with Idempotency-Key)
+POST {{baseUrl}}/bookings
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+Idempotency-Key: idemp-req-0001-booking
+
+{
+  "barberId": "{{barberId}}",
+  "service": "Classic Haircut",
+  "serviceId": "srv_cut",
+  "timeSlot": "2026-11-20T14:00:00.000Z"
+}
+
+###
+
+# List Customer Bookings (Cursor Paginated)
+GET {{baseUrl}}/bookings?limit=10&status=confirmed
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+# Get Booking Detail
+GET {{baseUrl}}/bookings/{{bookingId}}
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+# Transition Booking Status (Customer Cancel)
+PATCH {{baseUrl}}/bookings/{{bookingId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "status": "cancelled",
+  "cancelReason": "Schedule conflict"
+}
+
+###
+
+# Transition Booking Status (Customer Reschedule)
+PATCH {{baseUrl}}/bookings/{{bookingId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "status": "pending",
+  "timeSlot": "2026-11-21T15:00:00.000Z"
+}
+
+---
+
+### 5. REVIEWS & RATINGS
+
+# List Reviews for a Barber
+GET {{baseUrl}}/reviews?barberId={{barberId}}&limit=10
+Accept: application/json
+
+###
+
+# Submit Appointment Review
+POST {{baseUrl}}/reviews
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "barberId": "{{barberId}}",
+  "bookingId": "{{bookingId}}",
+  "rating": 5,
+  "comment": "Exceptional precision fade and great atmosphere!"
+}
+
+---
+
+### 6. MEDIA & STORAGE PIPELINE
+
+# Request Presigned Upload URL
+POST {{baseUrl}}/media/upload-url
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "purpose": "portfolio",
+  "fileName": "work_photo_fade.webp",
+  "mimeType": "image/webp",
+  "sizeBytes": 1048576
+}
+
+###
+
+# Direct Binary Upload (Sanitizes & Strips EXIF/GPS)
+PUT {{baseUrl}}/media/upload?key=portfolio/unique_key.webp
+Authorization: Bearer {{authToken}}
+Content-Type: image/webp
+
+< ./test-fixtures/sample-photo.webp
+
+###
+
+# Finalize Media Upload
+POST {{baseUrl}}/media/complete
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "key": "portfolio/unique_key.webp",
+  "purpose": "portfolio",
+  "contentType": "image/webp",
+  "sizeBytes": 1048576
+}
+
+###
+
+# Read Private ID Document (Admin Only or Short-Lived Signed URL)
+GET {{baseUrl}}/media/private/verification_docs/admin_doc.webp
+Authorization: Bearer {{authToken}}
+
+---
+
+### 7. PUSH NOTIFICATIONS & DEVICES
+
+# Register Device Push Token
+POST {{baseUrl}}/devices
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "deviceId": "{{deviceId}}",
+  "pushToken": "fcm_or_apns_token_string_here",
+  "platform": "ios",
+  "appVersion": "1.0.0",
+  "locale": "en-US",
+  "enabled": true
+}
+
+###
+
+# Unregister Device on Logout
+DELETE {{baseUrl}}/devices/{{deviceId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get Notification Preferences
+GET {{baseUrl}}/notification-preferences
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+# Update Notification Preferences
+PUT {{baseUrl}}/notification-preferences
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "pushEnabled": true,
+  "emailEnabled": true,
+  "reminders24h": true,
+  "reminders1h": true,
+  "marketing": false,
+  "quietHours": {
+    "enabled": true,
+    "start": "22:00",
+    "end": "08:00"
+  }
+}
+
+###
+
+# Trigger Automated Appointment Reminders (Protected Cron Endpoint)
+POST {{baseUrl}}/jobs/reminders
+x-job-secret: your_internal_cron_secret_here
+
+---
+
+### 8. FAVORITES
+
+# List Favorite Barbers
+GET {{baseUrl}}/favorites
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+# Add Barber to Favorites
+POST {{baseUrl}}/favorites/{{barberId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+# Remove Barber from Favorites
+DELETE {{baseUrl}}/favorites/{{barberId}}
+Authorization: Bearer {{authToken}}
+
+---
+
+### 9. USER PROFILE & PRIVACY LIFECYCLE
+
+# Get Profile
+GET {{baseUrl}}/users/profile
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+# Update Profile
+PATCH {{baseUrl}}/users/profile
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Jane D. Smith",
+  "phone": "+14155559876"
+}
+
+###
+
+# Export Personal Data (DPDP / GDPR Compliance)
+GET {{baseUrl}}/account/export
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+# List Recorded Consents
+GET {{baseUrl}}/account/consents
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+# Record Policy Agreement Consent
+POST {{baseUrl}}/account/consents
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "policyVersion": "2026-10-v1",
+  "purposes": ["terms_of_service", "privacy_policy", "location_processing"]
+}
+
+###
+
+# Delete Account (Requires Password Confirmation)
+DELETE {{baseUrl}}/account
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "password": "Password123!Secure"
+}

@@ -1,0 +1,12 @@
+title = "Trimly Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Ignore example env files and test mock values"
+paths = [
+  '''^\.env\.example$''',
+  '''^tests/.*''',
+  '''^node_modules/.*'''
+]

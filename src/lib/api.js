@@ -9,7 +9,12 @@ export function safeInternalError(error, context = "api") {
 
 export function getClientIp(request) {
   const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",").at(-1)?.trim() || "unknown";
+  if (forwarded) {
+    const ips = forwarded.split(",").map((ip) => ip.trim()).filter(Boolean);
+    const hops = parseInt(process.env.TRUSTED_PROXY_HOPS || "1", 10);
+    const targetIdx = Math.max(0, ips.length - hops);
+    return ips[targetIdx] || ips[0] || "unknown";
+  }
   return request.headers.get("x-real-ip") || "unknown";
 }
 

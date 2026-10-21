@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:indexes": "node scripts/ensure-indexes.mjs",
-    "test": "node --env-file-if-exists=.env.local --test tests/security-regression.test.mjs tests/role-flows.test.mjs tests/reviews.test.mjs tests/e2e-all-roles-and-users.test.mjs",
+    "test": "node --env-file-if-exists=.env.local --test tests/security-regression.test.mjs tests/role-flows.test.mjs tests/reviews.test.mjs tests/e2e-all-roles-and-users.test.mjs tests/mobile-auth.test.mjs tests/mobile-social.test.mjs tests/mobile-api.test.mjs tests/mobile-media.test.mjs tests/mobile-push.test.mjs tests/mobile-geo.test.mjs tests/mobile-lifecycle.test.mjs tests/mobile-observability.test.mjs tests/mobile-security-matrix.test.mjs",
     "check": "npm run test && npm run lint && npm run build"
   },
   "dependencies": {

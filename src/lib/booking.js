@@ -281,3 +281,324 @@ export function getSlotIntervalMinutes(barber) {
   if (Number.isFinite(value) && value >= 5 && value <= 120) return value;
   return DEFAULT_SLOT_INTERVAL_MINUTES;
 }
+
+export async function getBarberAvailability(db, { barber, date, serviceId, serviceName }) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "")) {
+    return { ok: false, status: 400, code: "INVALID_DATE", error: "A valid date (YYYY-MM-DD) is required" };
+  }
+  const [inputYear, inputMonth, inputDay] = date.split("-").map(Number);
+  const normalizedDate = new Date(Date.UTC(inputYear, inputMonth - 1, inputDay)).toISOString().slice(0, 10);
+  if (normalizedDate !== date) {
+    return { ok: false, status: 400, code: "INVALID_DATE", error: "A valid date is required" };
+  }
+
+  const service = getService(barber, { serviceId, serviceName });
+  if (!service) {
+    return { ok: false, status: 400, code: "SERVICE_NOT_FOUND", error: "Selected service is not available" };
+  }
+
+  const timezone = resolveBarberTimezone(barber);
+  const dateAtNoon = zonedDateTimeToUtc(date, "12:00", timezone);
+  if (!dateAtNoon) {
+    return { ok: false, status: 400, code: "INVALID_DATE", error: "Invalid date" };
+  }
+  const weekday = getZonedParts(dateAtNoon, timezone).weekday;
+  if ((barber.closedDays || []).map((day) => String(day).toLowerCase()).includes(weekday)) {
+    return {
+      ok: true,
+      data: {
+        date,
+        timezone,
+        isClosedDay: true,
+        service: { id: service.id, name: service.name, duration: service.duration, price: service.price },
+        slots: [],
+      },
+    };
+  }
+
+  const openMinutes = timeToMinutes(barber.workingHours?.open || "09:00");
+  const closeMinutes = timeToMinutes(barber.workingHours?.close || "17:00");
+  if (openMinutes === null || closeMinutes === null || openMinutes >= closeMinutes) {
+    return { ok: false, status: 409, code: "HOURS_MISCONFIGURED", error: "Barber working hours are not configured correctly" };
+  }
+
+  const interval = getSlotIntervalMinutes(barber);
+  const duration = service.duration;
+  const dayStart = zonedDateTimeToUtc(date, "00:00", timezone);
+  const nextDateString = new Date(Date.UTC(inputYear, inputMonth - 1, inputDay + 1)).toISOString().slice(0, 10);
+  const dayEnd = zonedDateTimeToUtc(nextDateString, "00:00", timezone);
+
+  await expirePendingBookings(db, { barberId: { $in: legacyBarberIdentifiers(barber) } });
+
+  const active = await db
+    .collection("bookings")
+    .find(
+      {
+        barberId: { $in: legacyBarberIdentifiers(barber) },
+        status: { $in: ACTIVE_BOOKING_STATUSES },
+        timeSlot: { $gte: dayStart.toISOString(), $lt: dayEnd.toISOString() },
+      },
+      { projection: { timeSlot: 1, endTime: 1, duration: 1 } }
+    )
+    .toArray();
+
+  const slots = [];
+  for (let minute = openMinutes; minute + duration <= closeMinutes; minute += interval) {
+    const hh = String(Math.floor(minute / 60)).padStart(2, "0");
+    const mm = String(minute % 60).padStart(2, "0");
+    const start = zonedDateTimeToUtc(date, `${hh}:${mm}`, timezone);
+    const end = new Date(start.getTime() + duration * 60000);
+    const validation = validateBookingWindow(barber, start, duration);
+    if (!validation.ok) continue;
+
+    const overlap = active.some((booking) => {
+      const bStart = new Date(booking.timeSlot);
+      const bEnd = new Date(booking.endTime || new Date(bStart.getTime() + (booking.duration || 30) * 60000));
+      return start < bEnd && end > bStart;
+    });
+    if (overlap) continue;
+
+    slots.push({
+      value: start.toISOString(),
+      label: new Intl.DateTimeFormat("en-IN", { timeZone: timezone, hour: "2-digit", minute: "2-digit" }).format(start),
+    });
+  }
+
+  return {
+    ok: true,
+    data: {
+      date,
+      timezone,
+      isClosedDay: false,
+      service: { id: service.id, name: service.name, duration: service.duration, price: service.price },
+      slots,
+    },
+  };
+}
+
+/**
+ * Shared domain logic for updating booking status across web and mobile.
+ */
+export async function updateBookingStatus(db, { bookingId, user, status, cancelReason, timeSlot }) {
+  if (!ObjectId.isValid(bookingId)) {
+    return { ok: false, status: 400, code: "INVALID_BOOKING_ID", error: "Invalid booking ID" };
+  }
+
+  const bookings = db.collection("bookings");
+  const bookingObjectId = new ObjectId(bookingId);
+  await expirePendingBookings(db, { _id: bookingObjectId });
+  const existing = await bookings.findOne({ _id: bookingObjectId });
+  if (!existing) {
+    return { ok: false, status: 404, code: "BOOKING_NOT_FOUND", error: "Booking not found" };
+  }
+
+  const barber = await resolveBarber(db, existing.barberId);
+  if (!barber) {
+    return { ok: false, status: 404, code: "BARBER_NOT_FOUND", error: "Barber profile not found" };
+  }
+
+  let actor = null;
+  if (user.role === "admin") actor = "admin";
+  else if (user.role === "barber" && String(barber.userId) === String(user.id)) actor = "barber";
+  else if (String(existing.userId) === String(user.id)) actor = "customer";
+  if (!actor) {
+    return { ok: false, status: 403, code: "FORBIDDEN", error: "Forbidden" };
+  }
+
+  if (!canTransition(actor, existing.status, status)) {
+    return {
+      ok: false,
+      status: 409,
+      code: "INVALID_TRANSITION",
+      error: `A ${actor} cannot change a booking from ${existing.status} to ${status}.`,
+    };
+  }
+
+  const scheduledStart = new Date(existing.timeSlot);
+  const now = new Date();
+  if (actor === "customer" && status === "cancelled" && scheduledStart <= now) {
+    return {
+      ok: false,
+      status: 409,
+      code: "CANCEL_AFTER_START",
+      error: "An appointment cannot be cancelled after its scheduled start time.",
+    };
+  }
+  if (actor === "barber" && status === "no_show" && scheduledStart > now) {
+    return {
+      ok: false,
+      status: 409,
+      code: "NO_SHOW_FUTURE",
+      error: "A future appointment cannot be marked no show.",
+    };
+  }
+  const scheduledEnd = new Date(existing.endTime || new Date(scheduledStart.getTime() + (existing.duration || 30) * 60000));
+  if (actor === "barber" && status === "completed" && scheduledEnd > now) {
+    return {
+      ok: false,
+      status: 409,
+      code: "COMPLETE_BEFORE_END",
+      error: "An appointment cannot be completed before its scheduled service end time.",
+    };
+  }
+
+  if (actor === "customer" && status === "pending" && !timeSlot) {
+    return {
+      ok: false,
+      status: 400,
+      code: "RESCHEDULE_TIME_REQUIRED",
+      error: "A new time slot is required when rescheduling.",
+    };
+  }
+
+  if (actor === "customer" && status === "pending") {
+    if (barber.deletedAt || barber.verificationStatus !== "verified") {
+      return {
+        ok: false,
+        status: 409,
+        code: "BARBER_NOT_AVAILABLE",
+        error: "This barber profile is no longer available for booking.",
+      };
+    }
+    const currentService = getService(barber, {
+      serviceId: existing.serviceId,
+      serviceName: existing.service,
+    });
+    if (!currentService) {
+      return {
+        ok: false,
+        status: 409,
+        code: "SERVICE_NOT_OFFERED",
+        error: "This service is no longer offered. Please create a new booking with an available service.",
+      };
+    }
+  }
+
+  if (actor !== "customer" && timeSlot) {
+    return {
+      ok: false,
+      status: 403,
+      code: "FORBIDDEN",
+      error: "Only the customer can choose a new time while rescheduling.",
+    };
+  }
+
+  const updateFields = { status, updatedAt: new Date() };
+  const unsetFields = {};
+  let newStart = new Date(existing.timeSlot);
+  let newEnd = new Date(existing.endTime || new Date(newStart.getTime() + (existing.duration || 30) * 60000));
+
+  if (timeSlot) {
+    newStart = new Date(timeSlot);
+    newEnd = new Date(newStart.getTime() + (existing.duration || 30) * 60000);
+    const windowValidation = validateBookingWindow(barber, newStart, existing.duration || 30);
+    if (!windowValidation.ok) {
+      return {
+        ok: false,
+        status: windowValidation.status,
+        code: "INVALID_BOOKING_WINDOW",
+        error: windowValidation.error,
+      };
+    }
+
+    const conflict = await hasBookingConflict(db, {
+      barber,
+      userId: existing.userId,
+      start: newStart,
+      end: newEnd,
+      excludeBookingId: bookingId,
+    });
+    if (conflict.conflict) {
+      return {
+        ok: false,
+        status: 409,
+        code: conflict.type === "user" ? "USER_CONFLICT" : "SLOT_TAKEN",
+        error:
+          conflict.type === "user"
+            ? "You already have another appointment during this time."
+            : "This time slot is no longer available.",
+      };
+    }
+
+    updateFields.timeSlot = newStart.toISOString();
+    updateFields.endTime = newEnd.toISOString();
+    updateFields.reservationKeys = getReservationKeys(newStart, newEnd);
+  } else if (status === "confirmed" && !existing.reservationKeys) {
+    const conflict = await hasBookingConflict(db, {
+      barber,
+      userId: existing.userId,
+      start: newStart,
+      end: newEnd,
+      excludeBookingId: bookingId,
+    });
+    if (conflict.conflict) {
+      return {
+        ok: false,
+        status: 409,
+        code: "BOOKING_CONFLICT",
+        error: "This booking now conflicts with another appointment.",
+      };
+    }
+    updateFields.reservationKeys = getReservationKeys(newStart, newEnd);
+  }
+
+  if (["cancelled", "declined"].includes(status)) {
+    updateFields.cancelReason = cancelReason || (status === "declined" ? "Declined by barber" : `Cancelled by ${actor}`);
+    unsetFields.reservationKeys = "";
+  } else if (["completed", "no_show"].includes(status)) {
+    unsetFields.reservationKeys = "";
+    unsetFields.cancelReason = "";
+  } else {
+    unsetFields.cancelReason = "";
+  }
+
+  const updateQuery = { $set: updateFields };
+  if (Object.keys(unsetFields).length) updateQuery.$unset = unsetFields;
+
+  const updateResult = await bookings.updateOne(
+    { _id: existing._id, status: existing.status },
+    updateQuery
+  );
+
+  if (!updateResult.matchedCount) {
+    return {
+      ok: false,
+      status: 409,
+      code: "BOOKING_CHANGED",
+      error: "This booking changed while your request was being processed. Refresh and try again.",
+    };
+  }
+
+  const canonicalId = canonicalBarberId(barber);
+  const { updateBarberWaitingTime } = await import("./waitingTime.js");
+  const { createNotification } = await import("./notifications.js");
+
+  await updateBarberWaitingTime(db, canonicalId);
+
+  if (actor === "customer") {
+    await createNotification(db, {
+      userId: barber.userId,
+      type: "booking_update",
+      message:
+        status === "pending"
+          ? `A customer rescheduled their ${existing.service} booking request.`
+          : `A customer cancelled their ${existing.service} booking.`,
+      bookingId,
+    });
+  } else {
+    let message = `Your ${existing.service} booking is now ${status.replace("_", " ")}.`;
+    if (["cancelled", "declined"].includes(status) && updateFields.cancelReason) {
+      message += ` Reason: ${updateFields.cancelReason}`;
+    }
+    await createNotification(db, {
+      userId: existing.userId,
+      type: "booking_update",
+      message,
+      bookingId,
+    });
+  }
+
+  const updatedBooking = await bookings.findOne({ _id: existing._id });
+  return { ok: true, status, booking: updatedBooking };
+}
+

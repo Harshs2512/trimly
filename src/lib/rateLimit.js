@@ -1,4 +1,5 @@
 import { getDb } from "./mongodb.js";
+import { mobileError } from "./mobileResponse.js";
 
 export async function rateLimit(key, limit = 5, windowMs = 15 * 60 * 1000) {
   const db = await getDb();
@@ -38,4 +39,26 @@ export async function rateLimit(key, limit = 5, windowMs = 15 * 60 * 1000) {
     remaining: Math.max(0, limit - count),
     resetAt: current?.expiresAt || nextExpiry,
   };
+}
+
+export async function enforceMobileRateLimit(
+  key,
+  limit,
+  windowMs,
+  { requestId = null, message = "Too many requests. Please try again later." } = {}
+) {
+  const limiter = await rateLimit(key, limit, windowMs);
+  if (!limiter.allowed) {
+    const retryAfter = Math.max(1, Math.ceil((new Date(limiter.resetAt).getTime() - Date.now()) / 1000));
+    return mobileError({
+      code: "RATE_LIMIT_EXCEEDED",
+      message,
+      status: 429,
+      headers: {
+        "Retry-After": String(retryAfter),
+      },
+      requestId,
+    });
+  }
+  return null;
 }

@@ -137,3 +137,45 @@ export const reviewUpdateSchema = z.object({
   comment: z.string().trim().max(1000, "Comment cannot exceed 1000 characters").optional(),
 });
 
+export const mobileLoginSchema = z.object({
+  email: z.string().trim().email("Invalid email address").max(254),
+  password: z.string().min(1, "Password is required").max(128),
+  deviceId: z.string().trim().max(100).optional(),
+  platform: z.enum(["ios", "android", "unknown"]).optional().default("unknown"),
+  appVersion: z.string().trim().max(20).optional().default("1.0.0"),
+});
+
+export const mobileRefreshSchema = z.object({
+  refreshToken: z.string().min(1, "Refresh token is required"),
+  deviceId: z.string().trim().max(100).optional(),
+});
+
+export const mobileDeviceSchema = z.object({
+  deviceId: z.string().trim().min(1).max(100),
+  pushToken: z.string().trim().min(1).max(500),
+  platform: z.enum(["ios", "android"]),
+  appVersion: z.string().trim().max(20).optional().default("1.0.0"),
+  locale: z.string().trim().max(10).optional().default("en"),
+  enabled: z.boolean().optional().default(true),
+});
+
+export const mobileSocialLoginSchema = z.object({
+  idToken: z.string().min(1, "ID token is required"),
+  provider: z.enum(["google", "apple"]),
+  rawNonce: z.string().optional(),
+  fullName: z.string().trim().max(100).optional(),
+  deviceId: z.string().trim().max(100).optional(),
+  platform: z.enum(["ios", "android", "unknown"]).optional().default("unknown"),
+});
+
+export const mediaUploadUrlSchema = z.object({
+  purpose: z.enum(["work_photo", "shop_exterior", "shop_interior", "id_document"]),
+  contentType: z.enum(["image/jpeg", "image/png", "image/webp"]),
+  fileSize: z.number().int().positive().max(5 * 1024 * 1024, "File size must not exceed 5 MB"),
+});
+
+export const mediaCompleteSchema = z.object({
+  objectKey: z.string().trim().min(1).max(255),
+  purpose: z.enum(["work_photo", "shop_exterior", "shop_interior", "id_document"]),
+});
+
