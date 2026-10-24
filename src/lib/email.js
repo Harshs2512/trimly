@@ -86,16 +86,46 @@ export async function sendPasswordResetEmail({ to, token }) {
   });
 }
 
-export async function sendVerificationEmail({ to, token }) {
+export async function sendVerificationEmail({ to, token, code }) {
   const appUrl = getAppUrl();
   const verifyUrl = `${appUrl}/verify-email?token=${encodeURIComponent(token)}&email=${encodeURIComponent(to)}`;
+  const displayCode = code || (token && token.length >= 6 ? token.substring(0, 6).toUpperCase() : "");
+
+  const codeHtml = displayCode
+    ? `<div style="margin: 24px 0; text-align: center;">
+         <div style="font-size: 14px; color: #555; margin-bottom: 8px;">Your 6-Digit Verification Code:</div>
+         <span style="display: inline-block; font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #106766; background: #e6f3f3; padding: 12px 28px; border-radius: 8px; font-family: monospace;">${displayCode}</span>
+       </div>`
+    : "";
+
   return {
     ...(await sendEmail({
       to,
-      subject: "Verify your Trimlly email",
-      html: `<p>Verify your email address to activate your Trimlly account.</p><p><a href="${verifyUrl.replace(/&/g, "&amp;")}">Verify email</a></p><p>This link expires in 24 hours.</p>`,
-      text: `Verify your Trimlly email: ${verifyUrl}\n\nThis link expires in 24 hours.`,
+      subject: displayCode ? `Your Trimly Verification Code: ${displayCode}` : "Verify your Trimly email",
+      html: `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px;">
+          <h2 style="color: #106766; margin-top: 0; text-align: center;">Verify Your Trimly Account</h2>
+          <p style="color: #374151; font-size: 15px; line-height: 1.5; text-align: center;">
+            Thank you for registering with Trimly! Enter the 6-digit code below into your mobile app:
+          </p>
+          ${codeHtml}
+          <p style="color: #6b7280; font-size: 14px; text-align: center; margin-top: 16px;">
+            This code expires in 24 hours.
+          </p>
+          <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+          <p style="color: #6b7280; font-size: 13px; text-align: center;">
+            Alternatively, click the link below to verify directly in your browser:<br/>
+            <a href="${verifyUrl.replace(/&/g, "&amp;")}" style="color: #106766; font-weight: 600; text-decoration: underline; display: inline-block; margin-top: 8px;">
+              Verify Email Address
+            </a>
+          </p>
+        </div>
+      `,
+      text: displayCode
+        ? `Your Trimly verification code is: ${displayCode}\n\nOr click here to verify: ${verifyUrl}\n\nThis code expires in 24 hours.`
+        : `Verify your Trimly email: ${verifyUrl}\n\nThis link expires in 24 hours.`,
     })),
     verifyUrl,
+    code: displayCode,
   };
 }

@@ -60,7 +60,7 @@ export async function POST(request) {
       });
     }
 
-    const { name, password, role } = validation.data;
+    const { name, password, role, phone } = validation.data;
     const email = normalizeEmail(validation.data.email);
 
     // Breached password check via HIBP
@@ -92,6 +92,7 @@ export async function POST(request) {
       email,
       password: hashedPassword,
       role: role === "barber" ? "barber" : "user",
+      phone: phone || null,
       active: true,
       emailVerified: false,
       sessionVersion: 0,
@@ -101,16 +102,20 @@ export async function POST(request) {
 
     const token = randomToken(32);
     const tokenHash = hashToken(token);
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeHash = hashToken(code);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await db.collection("email_verification_tokens").insertOne({
       tokenHash,
+      code,
+      codeHash,
       userId: userResult.insertedId.toString(),
       email,
       expiresAt,
       createdAt: now,
     });
 
-    const delivery = await sendVerificationEmail({ to: email, token });
+    const delivery = await sendVerificationEmail({ to: email, token, code });
     if (!delivery.sent) {
       if (process.env.NODE_ENV !== "production") {
         return mobileSuccess(

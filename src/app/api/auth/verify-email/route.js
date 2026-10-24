@@ -16,16 +16,26 @@ export async function POST(request) {
       return Response.json({ error: "Too many verification attempts. Please try again later." }, { status: 429 });
     }
 
-    const validation = verifyEmailSchema.safeParse(await request.json());
-    if (!validation.success) return Response.json({ error: validation.error.flatten() }, { status: 400 });
+    const body = await request.json().catch(() => ({}));
+    const rawToken = body.token || body.code;
+    const rawEmail = body.email;
 
-    const email = normalizeEmail(validation.data.email);
-    const tokenHash = hashToken(validation.data.token);
+    if (!rawEmail || !rawToken) {
+      return Response.json({ error: "Email and verification token are required." }, { status: 400 });
+    }
+
+    const email = normalizeEmail(rawEmail);
+    const tokenHash = hashToken(rawToken);
     const db = await getDb();
     const now = new Date();
 
     const verification = await db.collection("email_verification_tokens").findOneAndUpdate(
-      { tokenHash, email, expiresAt: { $gt: now }, usedAt: { $exists: false } },
+      {
+        email,
+        $or: [{ tokenHash }, { code: rawToken }, { codeHash: tokenHash }],
+        expiresAt: { $gt: now },
+        usedAt: { $exists: false },
+      },
       { $set: { usedAt: now } },
       { returnDocument: "after" },
     );

@@ -39,8 +39,9 @@ const workingHoursSchema = z.object({
 export const userSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
   email: z.string().trim().email("Invalid email address").max(254),
-  password: z.string().min(8, "Password must be at least 8 characters").max(128),
+  password: z.string().min(6, "Password must be at least 6 characters").max(128),
   role: z.enum(["user", "barber"]).optional(),
+  phone: z.string().trim().optional(),
 });
 
 export const profileUpdateSchema = z.object({

@@ -33,24 +33,40 @@ export async function POST(request) {
       });
     }
 
-    const validation = verifyEmailSchema.safeParse(body);
-    if (!validation.success) {
+    const rawCode = body.code ? String(body.code).trim() : "";
+    const rawToken = body.token ? String(body.token).trim() : "";
+    const rawEmail = body.email ? String(body.email).trim() : "";
+
+    if (!rawEmail || (!rawCode && !rawToken)) {
       return mobileError({
         code: "VALIDATION_ERROR",
-        message: "Validation failed.",
-        details: validation.error.flatten(),
+        message: "Email and verification code are required.",
         status: 400,
         requestId,
       });
     }
 
-    const email = normalizeEmail(validation.data.email);
-    const tokenHash = hashToken(validation.data.token);
+    const email = normalizeEmail(rawEmail);
     const db = await getDb();
     const now = new Date();
 
+    const queryConditions = [];
+    if (rawCode) {
+      queryConditions.push({ code: rawCode });
+      queryConditions.push({ codeHash: hashToken(rawCode) });
+    }
+    if (rawToken) {
+      queryConditions.push({ tokenHash: hashToken(rawToken) });
+      queryConditions.push({ code: rawToken });
+    }
+
     const verification = await db.collection("email_verification_tokens").findOneAndUpdate(
-      { tokenHash, email, expiresAt: { $gt: now }, usedAt: { $exists: false } },
+      {
+        email,
+        $or: queryConditions,
+        expiresAt: { $gt: now },
+        usedAt: { $exists: false },
+      },
       { $set: { usedAt: now } },
       { returnDocument: "after" }
     );
@@ -58,7 +74,7 @@ export async function POST(request) {
     if (!verification || !ObjectId.isValid(verification.userId)) {
       return mobileError({
         code: "TOKEN_INVALID",
-        message: "This verification link is invalid or has expired.",
+        message: "This verification code is invalid or has expired.",
         status: 400,
         requestId,
       });
