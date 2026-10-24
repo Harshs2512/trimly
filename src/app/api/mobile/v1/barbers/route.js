@@ -1,9 +1,12 @@
+import crypto from "crypto";
 import { ObjectId } from "mongodb";
 import { getDb } from "@/lib/mongodb";
 import { ensureIndexes } from "@/lib/indexes";
 import { calculateDistanceKm, isValidCoordinate } from "@/lib/geo";
 import { getZonedParts, resolveBarberTimezone, timeToMinutes } from "@/lib/booking";
 import { enforceMobileRateLimit } from "@/lib/rateLimit";
+import { getMobileSession } from "@/lib/mobileAuth";
+import { barberSchema } from "@/lib/validations";
 import {
   checkEtag,
   enforceAppVersion,
@@ -13,6 +16,22 @@ import {
   mobileSuccess,
   serializeBarber,
 } from "@/lib/mobileResponse";
+
+function normalizeServices(services = []) {
+  const names = new Set();
+  return services.map((service) => {
+    const name = (service.name || "").trim();
+    const key = name.toLowerCase();
+    if (names.has(key)) throw new Error(`Duplicate service: ${name}`);
+    names.add(key);
+    return {
+      id: service.id || crypto.randomUUID(),
+      name,
+      price: Number(service.price) || 0,
+      duration: Number(service.duration || service.durationMinutes) || 30,
+    };
+  });
+}
 
 export async function GET(request) {
   const versionError = enforceAppVersion(request);
@@ -184,3 +203,112 @@ export async function GET(request) {
     });
   }
 }
+
+export async function POST(request) {
+  const versionError = enforceAppVersion(request);
+  if (versionError) return versionError;
+
+  const requestId = getRequestId(request);
+  try {
+    await ensureIndexes();
+    const auth = await getMobileSession(request, ["barber"]);
+    if (!auth.session) {
+      return mobileError({
+        code: auth.error.code,
+        message: auth.error.message,
+        status: auth.error.status,
+        requestId,
+      });
+    }
+
+    let body;
+    try {
+      body = await request.json();
+    } catch {
+      return mobileError({
+        code: "INVALID_JSON",
+        message: "Invalid JSON request body.",
+        status: 400,
+        requestId,
+      });
+    }
+
+    // Adapt mobile payload: support bio as description, durationMinutes as duration
+    if (body.bio !== undefined && body.description === undefined) {
+      body.description = body.bio;
+    }
+    if (Array.isArray(body.services)) {
+      body.services = body.services.map((s) => ({
+        ...s,
+        duration: s.duration || s.durationMinutes || 30,
+      }));
+    }
+
+    const validation = barberSchema.safeParse(body);
+    if (!validation.success) {
+      return mobileError({
+        code: "VALIDATION_ERROR",
+        message: "Validation failed.",
+        details: validation.error.flatten(),
+        status: 400,
+        requestId,
+      });
+    }
+
+    const db = await getDb();
+    const existing = await db.collection("barbers").findOne({
+      userId: auth.session.user.id,
+      deletedAt: { $exists: false },
+    });
+    if (existing) {
+      return mobileError({
+        code: "BARBER_ALREADY_EXISTS",
+        message: "A barber profile already exists for this account.",
+        status: 409,
+        requestId,
+      });
+    }
+
+    let services = [];
+    try {
+      services = normalizeServices(validation.data.services || []);
+    } catch (err) {
+      return mobileError({
+        code: "DUPLICATE_SERVICE",
+        message: err.message,
+        status: 400,
+        requestId,
+      });
+    }
+
+    const now = new Date();
+    const newBarber = {
+      ...validation.data,
+      userId: auth.session.user.id,
+      services,
+      waitingTime: 0,
+      rating: 0,
+      reviewCount: 0,
+      verificationStatus: "pending",
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const insertResult = await db.collection("barbers").insertOne(newBarber);
+    const created = await db.collection("barbers").findOne({ _id: insertResult.insertedId });
+
+    return mobileSuccess(serializeBarber(created), {
+      status: 201,
+      requestId,
+    });
+  } catch (error) {
+    console.error("[mobile-barbers-create]", error);
+    return mobileError({
+      code: "INTERNAL_ERROR",
+      message: "Failed to create barber profile.",
+      status: 500,
+      requestId,
+    });
+  }
+}
+

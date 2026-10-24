@@ -21,6 +21,7 @@ import {
   XCircle,
   Clock,
   MapPin,
+  RotateCcw,
 } from "lucide-react";
 
 export default function AdminClient({ adminUser, initialUsers, initialBarbers, totals, pageSize }) {
@@ -51,6 +52,18 @@ export default function AdminClient({ adminUser, initialUsers, initialBarbers, t
       const response = await axios.get(`/api/admin/barbers?page=${page}&limit=${pageSize}`);
       setBarbers(response.data.barbers); setBarberPage(page);
     } catch (err) { setError(err.response?.data?.error || "Failed to load barbers."); } finally { setActionLoading(null); }
+  }
+
+  async function inspectBarberDocs(b) {
+    setInspectedBarber(b);
+    try {
+      const res = await axios.get(`/api/barbers/${b._id}`);
+      if (res.data) {
+        setInspectedBarber((prev) => (prev && prev._id === b._id ? { ...prev, ...res.data } : prev));
+      }
+    } catch {
+      // keep existing b
+    }
   }
 
   async function applyUserChange() {
@@ -105,16 +118,29 @@ export default function AdminClient({ adminUser, initialUsers, initialBarbers, t
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="container mx-auto px-6 pt-12 max-w-6xl">
-        <div className="mb-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-4 border">
-            <ShieldCheck className="w-4 h-4" /> Admin Console
+        <div className="mb-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-4 border">
+              <ShieldCheck className="w-4 h-4" /> Admin Console
+            </div>
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
+              System <span className="text-primary">Overview</span>
+            </h1>
+            <p className="mt-2 text-lg text-muted-foreground">
+              Manage accounts, review ID & shop documents, and verify barber registrations.
+            </p>
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
-            System <span className="text-primary">Overview</span>
-          </h1>
-          <p className="mt-2 text-lg text-muted-foreground">
-            Manage accounts, review ID & shop documents, and verify barber registrations.
-          </p>
+          <div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => { loadBarbers(barberPage); loadUsers(userPage); }}
+              className="rounded-xl gap-2 shadow-sm"
+              disabled={actionLoading !== null}
+            >
+              <RotateCcw className="w-4 h-4 text-primary" /> Refresh Data
+            </Button>
+          </div>
         </div>
 
         {error && <div className="mb-6 rounded-xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-600">{error}</div>}
@@ -196,7 +222,7 @@ export default function AdminClient({ adminUser, initialUsers, initialBarbers, t
                       size="sm"
                       variant="outline"
                       className="gap-1.5 text-xs rounded-xl"
-                      onClick={() => setInspectedBarber(b)}
+                      onClick={() => inspectBarberDocs(b)}
                     >
                       <Eye className="w-3.5 h-3.5 text-primary" /> Review Docs
                     </Button>

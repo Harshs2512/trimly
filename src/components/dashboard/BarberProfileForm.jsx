@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Store,
@@ -53,11 +53,47 @@ const ID_TYPES = [
   { value: "trade_license", label: "Trade / Shop License" },
 ];
 
+function compressImage(file, maxWidth = 1280, maxHeight = 1280, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith("image/")) {
+      reject(new Error("Please select a valid image file (PNG, JPG, WebP)"));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("Failed to read image file"));
+    reader.onload = (e) => {
+      const img = new window.Image();
+      img.onerror = () => reject(new Error("Failed to load image file"));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth || height > maxHeight) {
+          const ratio = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const dataUrl = canvas.toDataURL("image/jpeg", quality);
+        resolve(dataUrl);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 function ImageUploadField({ label, description, icon: Icon, value, onChange, error }) {
   const fileInputRef = useRef(null);
   const [fileError, setFileError] = useState("");
+  const [compressing, setCompressing] = useState(false);
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -66,17 +102,16 @@ function ImageUploadField({ label, description, icon: Icon, value, onChange, err
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      setFileError("File size must be under 2 MB");
-      return;
-    }
-
     setFileError("");
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      onChange(event.target.result);
-    };
-    reader.readAsDataURL(file);
+    setCompressing(true);
+    try {
+      const compressed = await compressImage(file, 1280, 1280, 0.82);
+      onChange(compressed);
+    } catch (err) {
+      setFileError(err.message || "Failed to process photo");
+    } finally {
+      setCompressing(false);
+    }
   };
 
   return (
@@ -113,8 +148,8 @@ function ImageUploadField({ label, description, icon: Icon, value, onChange, err
           <div className="w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
             <Upload className="w-5 h-5" />
           </div>
-          <div className="text-xs font-semibold">Click to upload photo</div>
-          <div className="text-[11px] text-muted-foreground">PNG, JPG, WebP up to 2MB</div>
+          <div className="text-xs font-semibold">{compressing ? "Optimizing photo..." : "Click to upload photo"}</div>
+          <div className="text-[11px] text-muted-foreground">{compressing ? "Resizing & preparing..." : "PNG, JPG, WebP (auto-optimized)"}</div>
         </div>
       )}
 
@@ -163,22 +198,44 @@ export default function BarberProfileForm({ initialData }) {
     },
   });
 
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        shopName: initialData.shopName || "",
+        address: initialData.address || "",
+        description: initialData.description || "",
+        services: initialData.services || [],
+        workingHours: initialData.workingHours || { open: "09:00", close: "17:00" },
+        closedDays: initialData.closedDays || [],
+        timezone: initialData.timezone || "Asia/Kolkata",
+        leadTimeMinutes: initialData.leadTimeMinutes ?? 30,
+        bookingHorizonDays: initialData.bookingHorizonDays ?? 90,
+        slotIntervalMinutes: initialData.slotIntervalMinutes ?? 30,
+        staffCount: initialData.staffCount ?? 1,
+        chairsCount: initialData.chairsCount ?? 1,
+        specialties: initialData.specialties || [],
+        idType: initialData.idType || "aadhaar",
+        idNumber: initialData.idNumber || "",
+        idDocumentImage: initialData.idDocumentImage || "",
+        shopExteriorImage: initialData.shopExteriorImage || "",
+        shopInteriorImage: initialData.shopInteriorImage || "",
+        workPhotos: initialData.workPhotos || [],
+      });
+    }
+  }, [initialData, form]);
+
   const closedDays = form.watch("closedDays") || [];
   const selectedSpecialties = form.watch("specialties") || [];
   const workPhotos = form.watch("workPhotos") || [];
   const [showcaseError, setShowcaseError] = useState("");
   const showcaseInputRef = useRef(null);
 
-  const handleAddShowcasePhoto = (e) => {
+  const handleAddShowcasePhoto = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
       setShowcaseError("Please select an image file (PNG, JPG, WebP)");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      setShowcaseError("Photo size must be under 2 MB");
       return;
     }
     if (workPhotos.length >= 12) {
@@ -187,19 +244,20 @@ export default function BarberProfileForm({ initialData }) {
     }
 
     setShowcaseError("");
-    const reader = new FileReader();
-    reader.onload = (event) => {
+    try {
+      const compressedDataUrl = await compressImage(file, 1280, 1280, 0.82);
       const newPhoto = {
         id: `wp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-        url: event.target.result,
+        url: compressedDataUrl,
         caption: "",
         category: "Haircut",
         createdAt: new Date().toISOString(),
       };
       form.setValue("workPhotos", [...workPhotos, newPhoto], { shouldDirty: true, shouldValidate: true });
       if (showcaseInputRef.current) showcaseInputRef.current.value = "";
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      setShowcaseError(err.message || "Failed to process photo");
+    }
   };
 
   const handleUpdateShowcasePhoto = (index, updates) => {

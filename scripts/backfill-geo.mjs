@@ -55,6 +55,7 @@ async function backfill() {
   const cursor = barbersCol.find({
     $or: [
       { location: { $exists: false } },
+      { location: null },
       { "location.coordinates": { $exists: false } },
     ],
   });
@@ -69,18 +70,27 @@ async function backfill() {
     const coords = resolveCityCoordinates(barber.city || barber.address);
     if (coords) {
       backfilled++;
+      const detectedCity = barber.city || (
+        (barber.address || "").toLowerCase().includes("bhopal") ? "Bhopal" :
+        (barber.address || "").toLowerCase().includes("indore") ? "Indore" :
+        (barber.address || "").toLowerCase().includes("delhi") ? "New Delhi" :
+        (barber.address || "").toLowerCase().includes("mumbai") ? "Mumbai" :
+        null
+      );
       if (!isDryRun) {
+        const updateFields = {
+          location: {
+            type: "Point",
+            coordinates: coords,
+          },
+          updatedAt: new Date(),
+        };
+        if (detectedCity && !barber.city) {
+          updateFields.city = detectedCity;
+        }
         await barbersCol.updateOne(
           { _id: barber._id },
-          {
-            $set: {
-              location: {
-                type: "Point",
-                coordinates: coords,
-              },
-              updatedAt: new Date(),
-            },
-          }
+          { $set: updateFields }
         );
       }
     }

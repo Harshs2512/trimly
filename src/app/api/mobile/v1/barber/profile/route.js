@@ -51,7 +51,7 @@ export async function GET(request) {
       });
     }
 
-    return mobileSuccess(serializeBarber(barber), { requestId });
+    return mobileSuccess(serializeBarber(barber, { isOwnerOrAdmin: true }), { requestId });
   } catch (error) {
     console.error("[mobile-barber-profile-get]", error);
     return mobileError({
@@ -116,13 +116,13 @@ export async function PUT(request) {
       });
     }
 
-    // Mass-assignment protection: allow only permitted fields
     const allowed = [
       "shopName",
       "address",
       "city",
       "area",
       "phone",
+      "description",
       "services",
       "workingHours",
       "closedDays",
@@ -132,6 +132,13 @@ export async function PUT(request) {
       "workPhotos",
       "shopExteriorImage",
       "shopInteriorImage",
+      "staffCount",
+      "chairsCount",
+      "specialties",
+      "idType",
+      "idNumber",
+      "idDocumentImage",
+      "timezone",
     ];
 
     const updateDoc = {};
@@ -159,7 +166,7 @@ export async function PUT(request) {
     await db.collection("barbers").updateOne({ _id: barber._id }, { $set: updateDoc });
     const updated = await db.collection("barbers").findOne({ _id: barber._id });
 
-    return mobileSuccess(serializeBarber(updated), { requestId });
+    return mobileSuccess(serializeBarber(updated, { isOwnerOrAdmin: true }), { requestId });
   } catch (error) {
     console.error("[mobile-barber-profile-put]", error);
     return mobileError({

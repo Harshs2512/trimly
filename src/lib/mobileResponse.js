@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { getZonedParts, resolveBarberTimezone, timeToMinutes } from "./booking.js";
 
 export function getRequestId(request) {
   return request.headers.get("x-request-id") || crypto.randomUUID();
@@ -164,8 +165,40 @@ export function enforceAppVersion(request) {
  * Explicit allow-lists preventing credential, token, reservation key or PII leaks.
  */
 
-export function serializeBarber(barber) {
+export function serializeBarber(barber, { isOwnerOrAdmin = false } = {}) {
   if (!barber) return null;
+
+  // Compute isOpen based on barber's working hours & closed days in their timezone
+  let isOpen = false;
+  try {
+    const tz = resolveBarberTimezone(barber);
+    const now = new Date();
+    const parts = getZonedParts(now, tz);
+    const isClosedDay = (barber.closedDays || [])
+      .map((d) => d.toLowerCase())
+      .includes(parts.weekday);
+    if (!isClosedDay) {
+      const currentMinutes = parts.hour * 60 + parts.minute;
+      const openMin = timeToMinutes(barber.workingHours?.open || "09:00");
+      const closeMin = timeToMinutes(barber.workingHours?.close || "17:00");
+      isOpen =
+        openMin !== null &&
+        closeMin !== null &&
+        currentMinutes >= openMin &&
+        currentMinutes < closeMin;
+    }
+  } catch {
+    isOpen = false;
+  }
+
+  // Build avatar: prefer shopExteriorImage, then shopInteriorImage, then first workPhoto
+  const workPhotos = (barber.workPhotos || []).map((p) => (typeof p === "string" ? p : p.url));
+  const avatar =
+    barber.shopExteriorImage ||
+    barber.shopInteriorImage ||
+    workPhotos[0] ||
+    null;
+
   return {
     id: barber._id?.toString() || barber.id,
     userId: barber.userId ? String(barber.userId) : null,
@@ -176,23 +209,41 @@ export function serializeBarber(barber) {
     area: barber.area || null,
     location: barber.location || null,
     phone: barber.phone || null,
+    avatar,
+    isOpen,
+    waitingTimeMinutes: barber.waitingTime ?? barber.waitingTimeMinutes ?? 0,
+    bio: barber.bio || barber.description || "",
     services: (barber.services || []).map((s) => ({
       id: s.id,
       name: s.name,
       price: s.price,
       duration: s.duration,
+      durationMinutes: s.duration || s.durationMinutes || 30,
     })),
     workingHours: barber.workingHours || { open: "09:00", close: "17:00" },
     closedDays: barber.closedDays || [],
     slotIntervalMinutes: barber.slotIntervalMinutes || 30,
     rating: barber.rating || 0,
     reviewCount: barber.reviewCount || 0,
-    waitingTime: barber.waitingTime || 0,
-    workPhotos: (barber.workPhotos || []).map((p) => (typeof p === "string" ? p : p.url)),
+    description: barber.description || "",
+    staffCount: barber.staffCount ?? 1,
+    chairsCount: barber.chairsCount ?? 1,
+    specialties: barber.specialties || [],
+    leadTimeMinutes: barber.leadTimeMinutes ?? 30,
+    bookingHorizonDays: barber.bookingHorizonDays ?? 90,
+    timezone: barber.timezone || "Asia/Kolkata",
+    workPhotos,
     shopExteriorImage: barber.shopExteriorImage || null,
     shopInteriorImage: barber.shopInteriorImage || null,
     verificationStatus: barber.verificationStatus || "pending",
     distanceKm: barber.distanceKm !== undefined ? barber.distanceKm : null,
+    ...(isOwnerOrAdmin
+      ? {
+          idType: barber.idType || "aadhaar",
+          idNumber: barber.idNumber || "",
+          idDocumentImage: barber.idDocumentImage || null,
+        }
+      : {}),
   };
 }
 

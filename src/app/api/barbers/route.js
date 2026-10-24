@@ -60,7 +60,13 @@ export async function GET(request) {
       collection.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray(),
     ]);
     const result = await Promise.all(
-      list.map(async (barber) => publicBarber(barber, await calculateBarberWaitingTime(db, barber._id.toString())))
+      list.map(async (barber) => {
+        const waitingTime = await calculateBarberWaitingTime(db, barber._id.toString());
+        if (userId) {
+          return { ...barber, waitingTime };
+        }
+        return publicBarber(barber, waitingTime);
+      })
     );
     return Response.json({
       barbers: result,
