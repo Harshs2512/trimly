@@ -292,18 +292,19 @@ export async function GET(request) {
       }
       query.barberId = { $in: legacyBarberIdentifiers(barber) };
     } else {
-      query.userId = auth.session.user.id;
+      const currentUserId = auth.session.user.id;
+      const userQueries = [currentUserId];
+      if (ObjectId.isValid(currentUserId)) {
+        userQueries.push(new ObjectId(currentUserId));
+      }
+      query.userId = { $in: userQueries };
     }
 
     if (status) {
       if (status === "upcoming") {
         query.status = { $in: ["pending", "confirmed"] };
-        query.timeSlot = { $gte: new Date().toISOString() };
       } else if (status === "past") {
-        query.$or = [
-          { status: { $in: ["completed", "cancelled", "no-show"] } },
-          { timeSlot: { $lt: new Date().toISOString() } },
-        ];
+        query.status = { $in: ["completed", "cancelled", "no-show"] };
       } else {
         query.status = status;
       }
@@ -333,7 +334,41 @@ export async function GET(request) {
       .toArray();
 
     const hasMore = bookings.length > limit;
-    const items = (hasMore ? bookings.slice(0, limit) : bookings).map(serializeBooking);
+    const rawList = hasMore ? bookings.slice(0, limit) : bookings;
+    const barberIds = [...new Set(rawList.map((b) => b.barberId).filter(Boolean).map(String))];
+    const objectBarberIds = barberIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+    const barbers = barberIds.length
+      ? await db
+          .collection("barbers")
+          .find(
+            {
+              $or: [
+                ...(objectBarberIds.length ? [{ _id: { $in: objectBarberIds } }] : []),
+                { userId: { $in: barberIds } },
+              ],
+            },
+            { projection: { name: 1, shopName: 1, avatar: 1, address: 1, userId: 1 } }
+          )
+          .toArray()
+      : [];
+
+    const barberMap = new Map();
+    for (const b of barbers) {
+      barberMap.set(b._id.toString(), b);
+      if (b.userId) barberMap.set(String(b.userId), b);
+    }
+
+    const items = rawList.map((booking) => {
+      const bInfo = barberMap.get(String(booking.barberId));
+      const enriched = {
+        ...booking,
+        barberName: booking.barberName || bInfo?.name || bInfo?.shopName || "Barber",
+        barberShopName: booking.barberShopName || bInfo?.shopName,
+        barberAvatar: booking.barberAvatar || bInfo?.avatar || null,
+        barberAddress: booking.barberAddress || bInfo?.address,
+      };
+      return serializeBooking(enriched);
+    });
     const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
 
     return mobileSuccess(
