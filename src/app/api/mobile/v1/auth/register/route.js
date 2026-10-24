@@ -64,14 +64,22 @@ export async function POST(request) {
     const email = normalizeEmail(validation.data.email);
 
     // Breached password check via HIBP
-    const breachCheck = await checkBreachedPassword(password);
-    if (breachCheck.breached) {
-      return mobileError({
-        code: "PASSWORD_BREACHED",
-        message: "This password has appeared in a known public data breach. For your security, please choose a different password.",
-        status: 400,
-        requestId,
-      });
+    try {
+      const breachCheck = await checkBreachedPassword(password);
+      if (breachCheck.breached) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn("[mobile-register] Common password used in dev mode for:", email);
+        } else {
+          return mobileError({
+            code: "PASSWORD_BREACHED",
+            message: "This password has appeared in a known public data breach. For your security, please choose a different password.",
+            status: 400,
+            requestId,
+          });
+        }
+      }
+    } catch (err) {
+      console.warn("[mobile-register] HIBP check skipped due to error:", err?.message || err);
     }
 
     const db = await getDb();
@@ -121,6 +129,7 @@ export async function POST(request) {
         return mobileSuccess(
           {
             message: "Account created. Verify email before signing in.",
+            code,
             developmentVerificationUrl: delivery.verifyUrl,
           },
           { status: 201, requestId }
@@ -138,7 +147,11 @@ export async function POST(request) {
     }
 
     return mobileSuccess(
-      { message: "Account created successfully. Check your email to verify your account." },
+      {
+        message: "Account created successfully. Check your email to verify your account.",
+        code: process.env.NODE_ENV !== "production" ? code : undefined,
+        developmentVerificationUrl: process.env.NODE_ENV !== "production" ? delivery.verifyUrl : undefined,
+      },
       { status: 201, requestId }
     );
   } catch (error) {

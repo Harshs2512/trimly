@@ -144,6 +144,10 @@ function VerifyEmailContent() {
               {status === "loading" ? "Verifying..." : "Verify Email"}
             </Button>
 
+            <p className="text-xs text-muted-foreground text-center pt-1">
+              Tip: Can&apos;t find the email? Be sure to check your Spam or Promotions folder.
+            </p>
+
             <div className="space-y-2 text-center pt-2">
               <Link
                 href="/login"

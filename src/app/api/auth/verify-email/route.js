@@ -25,14 +25,21 @@ export async function POST(request) {
     }
 
     const email = normalizeEmail(rawEmail);
-    const tokenHash = hashToken(rawToken);
+    const trimmedInput = String(rawToken).trim();
+    const tokenHash = hashToken(trimmedInput);
     const db = await getDb();
     const now = new Date();
 
     const verification = await db.collection("email_verification_tokens").findOneAndUpdate(
       {
         email,
-        $or: [{ tokenHash }, { code: rawToken }, { codeHash: tokenHash }],
+        $or: [
+          { tokenHash },
+          { code: trimmedInput },
+          { codeHash: tokenHash },
+          { code: trimmedInput.toUpperCase() },
+          { code: trimmedInput.toLowerCase() },
+        ],
         expiresAt: { $gt: now },
         usedAt: { $exists: false },
       },
@@ -41,7 +48,14 @@ export async function POST(request) {
     );
 
     if (!verification || !ObjectId.isValid(verification.userId)) {
-      return Response.json({ error: "This verification link is invalid or has expired." }, { status: 400 });
+      const existingUser = await db.collection("users").findOne(
+        { email, active: { $ne: false } },
+        { projection: { _id: 1, emailVerified: 1 } },
+      );
+      if (existingUser && existingUser.emailVerified === true) {
+        return Response.json({ message: "Email is already verified. You can now sign in." });
+      }
+      return Response.json({ error: "This verification code or link is invalid or has expired." }, { status: 400 });
     }
 
     const result = await db.collection("users").updateOne(
@@ -49,7 +63,7 @@ export async function POST(request) {
       { $set: { emailVerified: true, emailVerifiedAt: now, updatedAt: now } },
     );
     if (!result.matchedCount) {
-      return Response.json({ error: "This verification link is invalid or has expired." }, { status: 400 });
+      return Response.json({ error: "This verification code or link is invalid or has expired." }, { status: 400 });
     }
 
     await db.collection("email_verification_tokens").deleteMany({ userId: verification.userId });

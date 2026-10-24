@@ -52,20 +52,25 @@ export async function POST(req) {
 
     const token = randomToken(32);
     const tokenHash = hashToken(token);
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeHash = hashToken(code);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await db.collection("email_verification_tokens").insertOne({
       tokenHash,
+      code,
+      codeHash,
       userId: userResult.insertedId.toString(),
       email,
       expiresAt,
       createdAt: now,
     });
 
-    const delivery = await sendVerificationEmail({ to: email, token });
+    const delivery = await sendVerificationEmail({ to: email, token, code });
     if (!delivery.sent) {
       if (process.env.NODE_ENV !== "production") {
         return Response.json({
-          message: "Account created. Verify the email before signing in.",
+          message: "Account created. Verify your email before signing in.",
+          code,
           developmentVerificationUrl: delivery.verifyUrl,
         }, { status: 201 });
       }
@@ -75,7 +80,11 @@ export async function POST(req) {
       return Response.json({ error: "Verification email could not be delivered. Please try again later." }, { status: 503 });
     }
 
-    return Response.json({ message: "Account created. Check your email to verify the account before signing in." }, { status: 201 });
+    return Response.json({
+      message: "Account created. Check your email for your 6-digit code or link.",
+      code: process.env.NODE_ENV !== "production" ? code : undefined,
+      developmentVerificationUrl: process.env.NODE_ENV !== "production" ? delivery.verifyUrl : undefined,
+    }, { status: 201 });
   } catch (error) {
     if (error?.code === 11000) {
       return Response.json({ error: "An account with this email already exists." }, { status: 409 });

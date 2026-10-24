@@ -45,6 +45,8 @@ export async function POST(request) {
 
     const token = randomToken(32);
     const tokenHash = hashToken(token);
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const codeHash = hashToken(code);
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const userId = user._id.toString();
@@ -52,23 +54,34 @@ export async function POST(request) {
     await db.collection("email_verification_tokens").deleteMany({ userId });
     await db.collection("email_verification_tokens").insertOne({
       tokenHash,
+      code,
+      codeHash,
       userId,
       email,
       expiresAt,
       createdAt: now,
     });
 
-    const delivery = await sendVerificationEmail({ to: email, token });
+    const delivery = await sendVerificationEmail({ to: email, token, code });
     if (!delivery.sent) {
       await db.collection("email_verification_tokens").deleteOne({ tokenHash });
       if (process.env.NODE_ENV !== "production") {
         return Response.json({
-          message: "Development verification link generated.",
+          message: "Development verification code generated.",
+          code,
           developmentVerificationUrl: delivery.verifyUrl,
         });
       }
       // Keep the response account-neutral even if the provider fails.
       return Response.json({ message: GENERIC_MESSAGE });
+    }
+
+    if (process.env.NODE_ENV !== "production") {
+      return Response.json({
+        message: GENERIC_MESSAGE,
+        code,
+        developmentVerificationUrl: delivery.verifyUrl,
+      });
     }
 
     return Response.json({ message: GENERIC_MESSAGE });

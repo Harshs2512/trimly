@@ -54,10 +54,13 @@ export async function POST(request) {
     if (rawCode) {
       queryConditions.push({ code: rawCode });
       queryConditions.push({ codeHash: hashToken(rawCode) });
+      queryConditions.push({ code: rawCode.toUpperCase() });
+      queryConditions.push({ code: rawCode.toLowerCase() });
     }
     if (rawToken) {
       queryConditions.push({ tokenHash: hashToken(rawToken) });
       queryConditions.push({ code: rawToken });
+      queryConditions.push({ codeHash: hashToken(rawToken) });
     }
 
     const verification = await db.collection("email_verification_tokens").findOneAndUpdate(
@@ -72,6 +75,17 @@ export async function POST(request) {
     );
 
     if (!verification || !ObjectId.isValid(verification.userId)) {
+      const existingUser = await db.collection("users").findOne(
+        { email, active: { $ne: false } },
+        { projection: { _id: 1, emailVerified: 1 } }
+      );
+      if (existingUser && existingUser.emailVerified === true) {
+        return mobileSuccess(
+          { message: "Email is already verified. You can now sign in." },
+          { requestId }
+        );
+      }
+
       return mobileError({
         code: "TOKEN_INVALID",
         message: "This verification code is invalid or has expired.",
