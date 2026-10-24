@@ -83,7 +83,7 @@ function AuthPageContent() {
   return (
     <div className="flex min-h-screen bg-background">
       <div className="hidden lg:flex lg:w-1/2 relative bg-zinc-900 border-r flex-col justify-end">
-        <Image src="/auth-bg.png" alt="Premium barbershop interior" fill priority className="object-cover opacity-60" />
+        <Image src="/auth-bg.png" alt="Premium barbershop interior" fill sizes="(max-width: 1024px) 100vw, 50vw" priority className="object-cover opacity-60" />
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-900/40 to-transparent" />
         <div className="relative z-10 p-12 pb-16 space-y-6"><h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">Appointment requests with <span className="text-primary">clear availability and status.</span></h1><p className="text-zinc-300 text-lg max-w-md">Customers choose validated times. Barbers control confirmations, services and booking rules.</p><div className="space-y-3 text-zinc-300"><Point text="Server-validated available slots" /><Point text="Pending, confirmed and completed booking states" /><Point text="Protected customer, barber and admin workspaces" /></div></div>
       </div>

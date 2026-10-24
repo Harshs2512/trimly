@@ -23,7 +23,10 @@ export async function GET(request) {
       appVersion: s.appVersion || "1.0.0",
       createdAt: s.createdAt,
       lastUsedAt: s.lastUsedAt,
+      lastActive: s.lastUsedAt,
       isCurrent: s._id.toString() === session.sessionId,
+      current: s._id.toString() === session.sessionId,
+      ip: s.ip,
     }));
 
     return mobileSuccess(formatted, { requestId });
