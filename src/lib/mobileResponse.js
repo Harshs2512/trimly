@@ -249,21 +249,42 @@ export function serializeBarber(barber, { isOwnerOrAdmin = false } = {}) {
 
 export function serializeBooking(booking) {
   if (!booking) return null;
+
+  let date = booking.date;
+  if (!date && booking.timeSlot) {
+    try {
+      const d = new Date(booking.timeSlot);
+      if (!isNaN(d.getTime())) {
+        date = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(d);
+      }
+    } catch {}
+  }
+
   return {
     id: booking._id?.toString() || booking.id,
     barberId: booking.barberId ? String(booking.barberId) : "",
     barberName: booking.barberName || null,
     barberShopName: booking.barberShopName || null,
+    barberAvatar: booking.barberAvatar || null,
+    barberPhone: booking.barberPhone || null,
+    barberAddress: booking.barberAddress || null,
     userId: booking.userId ? String(booking.userId) : "",
+    customerId: booking.userId ? String(booking.userId) : "",
     customerName: booking.customerName || null,
+    customerPhone: booking.customerPhone || null,
     service: booking.service || "",
+    serviceName: booking.service || "",
     serviceId: booking.serviceId || null,
     price: booking.price,
+    servicePrice: booking.price,
     duration: booking.duration,
+    durationMinutes: booking.duration,
+    date: date || "",
     timeSlot: booking.timeSlot,
     endTime: booking.endTime || null,
     status: booking.status,
     cancelReason: booking.cancelReason || null,
+    cancellationReason: booking.cancelReason || null,
     rescheduleReason: booking.rescheduleReason || null,
     createdAt: booking.createdAt,
     updatedAt: booking.updatedAt,

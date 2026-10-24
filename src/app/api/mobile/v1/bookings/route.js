@@ -13,6 +13,7 @@ import {
   legacyBarberIdentifiers,
   resolveBarber,
   validateBookingWindow,
+  zonedDateTimeToUtc,
 } from "@/lib/booking";
 import { updateBarberWaitingTime } from "@/lib/waitingTime";
 import { createNotification } from "@/lib/notifications";
@@ -275,6 +276,7 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status")?.trim();
+    const date = searchParams.get("date")?.trim();
     const cursor = searchParams.get("cursor");
     const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "20", 10), 1), 50);
 
@@ -294,7 +296,29 @@ export async function GET(request) {
     }
 
     if (status) {
-      query.status = status;
+      if (status === "upcoming") {
+        query.status = { $in: ["pending", "confirmed"] };
+        query.timeSlot = { $gte: new Date().toISOString() };
+      } else if (status === "past") {
+        query.$or = [
+          { status: { $in: ["completed", "cancelled", "no-show"] } },
+          { timeSlot: { $lt: new Date().toISOString() } },
+        ];
+      } else {
+        query.status = status;
+      }
+    }
+
+    if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      const [y, m, d] = date.split("-").map(Number);
+      const dayStart = zonedDateTimeToUtc(date, "00:00", "Asia/Kolkata");
+      const nextDateStr = new Date(Date.UTC(y, m - 1, d + 1)).toISOString().slice(0, 10);
+      const dayEnd = zonedDateTimeToUtc(nextDateStr, "00:00", "Asia/Kolkata");
+      query.timeSlot = {
+        ...(query.timeSlot && typeof query.timeSlot === "object" ? query.timeSlot : {}),
+        $gte: dayStart.toISOString(),
+        $lt: dayEnd.toISOString(),
+      };
     }
 
     if (cursor && ObjectId.isValid(cursor)) {
