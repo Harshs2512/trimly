@@ -9,7 +9,7 @@ const cspHeader = `
   base-uri 'self';
   form-action 'self';
   frame-ancestors 'none';
-  connect-src 'self' https:;
+  connect-src 'self' https: ws: wss:;
 `.replace(/\s{2,}/g, " ").trim();
 
 const securityHeaders = [

@@ -286,6 +286,7 @@ export function serializeBooking(booking) {
     cancelReason: booking.cancelReason || null,
     cancellationReason: booking.cancelReason || null,
     rescheduleReason: booking.rescheduleReason || null,
+    hasReview: Boolean(booking.hasReview),
     createdAt: booking.createdAt,
     updatedAt: booking.updatedAt,
   };

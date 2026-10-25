@@ -33,7 +33,7 @@ export default function Navbar() {
     <nav className={`sticky top-0 z-50 transition-all py-1 duration-300 ${isScrolled ? "bg-background/95 backdrop-blur-md shadow-sm border-b" : "bg-background/80 backdrop-blur-sm"}`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between min-h-14">
-          <Link href="/" className="flex items-center" aria-label="Trimlly home"><Image src="/logo.png" width={60} height={50} alt="Trimlly" className="h-12 w-auto object-contain" /></Link>
+          <Link href="/" className="flex items-center" aria-label="Trimlly home"><Image src="/logo.png" width={60} height={50} alt="Trimlly" className="h-12 w-auto object-contain" priority /></Link>
           <div className="hidden md:flex items-center space-x-6">
             {navLinks.map((link) => <Link key={link.name} href={link.href} className="text-foreground/80 hover:text-primary font-medium transition-colors">{link.name}</Link>)}
             {session ? <div className="flex items-center gap-2">{session.user?.role === "admin" && <Link href="/admin"><Button variant="outline" size="sm">Admin</Button></Link>}{session.user?.role === "barber" && <Link href="/dashboard/barber"><Button variant="outline" size="sm">Barber Workspace</Button></Link>}<NotificationsMenu /><Link href="/dashboard"><Button size="sm">Dashboard</Button></Link><Button variant="ghost" size="sm" onClick={() => signOut({ callbackUrl: "/" })}>Log out</Button></div> : <Link href="/login"><Button size="sm">Login / Register</Button></Link>}

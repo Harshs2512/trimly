@@ -358,6 +358,15 @@ export async function GET(request) {
       if (b.userId) barberMap.set(String(b.userId), b);
     }
 
+    const bookingIds = rawList.map((b) => b._id.toString());
+    const existingReviews = bookingIds.length
+      ? await db
+          .collection("reviews")
+          .find({ bookingId: { $in: bookingIds }, deletedAt: { $exists: false } }, { projection: { bookingId: 1 } })
+          .toArray()
+      : [];
+    const reviewedSet = new Set(existingReviews.map((r) => String(r.bookingId)));
+
     const items = rawList.map((booking) => {
       const bInfo = barberMap.get(String(booking.barberId));
       const enriched = {
@@ -366,6 +375,7 @@ export async function GET(request) {
         barberShopName: booking.barberShopName || bInfo?.shopName,
         barberAvatar: booking.barberAvatar || bInfo?.avatar || null,
         barberAddress: booking.barberAddress || bInfo?.address,
+        hasReview: reviewedSet.has(booking._id.toString()),
       };
       return serializeBooking(enriched);
     });
