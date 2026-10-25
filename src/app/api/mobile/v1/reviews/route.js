@@ -87,14 +87,9 @@ export async function POST(request) {
 
   const requestId = getRequestId(request);
   try {
-    const auth = await getMobileSession(request, ["user"]);
+    const auth = await getMobileSession(request);
     if (!auth.session) {
-      return mobileError({
-        code: auth.error.code,
-        message: auth.error.message,
-        status: auth.error.status,
-        requestId,
-      });
+      return auth.error;
     }
 
     const userId = auth.session.user.id;

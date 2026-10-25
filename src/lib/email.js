@@ -129,3 +129,137 @@ export async function sendVerificationEmail({ to, token, code }) {
     code: displayCode,
   };
 }
+
+/**
+ * Sends an email for high-priority booking lifecycle events only:
+ * - New booking request (to barber)
+ * - Booking confirmed (to customer)
+ * - Booking cancelled or declined (to affected party)
+ * - Booking rescheduled (to affected party)
+ */
+export async function sendBookingNotificationEmail({
+  to,
+  recipientName = "Customer",
+  type = "booking_update",
+  booking,
+  customMessage,
+}) {
+  if (!to || !booking) return { sent: false, reason: "missing_parameters" };
+
+  const appUrl = getAppUrl();
+  const service = booking.service || "Grooming Service";
+  const barberName = booking.barberShopName || booking.barberName || "Barber";
+  const customerName = booking.customerName || "Customer";
+  const price = booking.price ? `₹${booking.price}` : "";
+  const timeSlot = booking.timeSlot
+    ? new Date(booking.timeSlot).toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+        dateStyle: "medium",
+        timeStyle: "short",
+      })
+    : "Scheduled Time";
+
+  let subject = `[Trimly] Appointment Update: ${service}`;
+  let title = "Appointment Update";
+  let badgeColor = "#106766";
+  let badgeLabel = "UPDATE";
+
+  if (type === "booking_created") {
+    subject = `[Trimly] 💈 New Booking Request: ${service} by ${customerName}`;
+    title = `New Booking Request from ${customerName}`;
+    badgeColor = "#F59E0B";
+    badgeLabel = "PENDING APPROVAL";
+  } else if (type === "booking_confirmed" || booking.status === "confirmed") {
+    subject = `[Trimly] ✅ Confirmed: Your ${service} with ${barberName}`;
+    title = "Appointment Confirmed! 🎉";
+    badgeColor = "#10B981";
+    badgeLabel = "CONFIRMED";
+  } else if (type === "booking_cancelled" || booking.status === "cancelled") {
+    subject = `[Trimly] ❌ Cancelled: ${service} with ${barberName}`;
+    title = "Appointment Cancelled";
+    badgeColor = "#EF4444";
+    badgeLabel = "CANCELLED";
+  } else if (type === "booking_declined" || booking.status === "declined") {
+    subject = `[Trimly] ⚠️ Declined: ${service} appointment request`;
+    title = "Appointment Request Declined";
+    badgeColor = "#EF4444";
+    badgeLabel = "DECLINED";
+  } else if (type === "booking_rescheduled") {
+    subject = `[Trimly] 🗓️ Rescheduled: ${service} with ${barberName}`;
+    title = "Appointment Rescheduled";
+    badgeColor = "#3B82F6";
+    badgeLabel = "RESCHEDULED";
+  }
+
+  const messageText = customMessage || `Here are the details for your appointment:`;
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 28px; border: 1px solid #e5e7eb; border-radius: 14px; background-color: #ffffff;">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <span style="font-size: 26px; font-weight: 800; color: #106766; letter-spacing: -0.5px;">TRIMLY</span>
+        <div style="font-size: 13px; color: #6b7280; margin-top: 2px;">Premium Barber Grooming Platform</div>
+      </div>
+
+      <div style="text-align: center; margin-bottom: 20px;">
+        <span style="display: inline-block; padding: 6px 14px; font-size: 12px; font-weight: 700; color: #ffffff; background-color: ${badgeColor}; border-radius: 9999px; text-transform: uppercase; letter-spacing: 0.5px;">
+          ${badgeLabel}
+        </span>
+        <h2 style="color: #111827; font-size: 20px; font-weight: 700; margin: 12px 0 6px 0;">${title}</h2>
+        <p style="color: #4b5563; font-size: 15px; line-height: 1.5; margin: 0;">
+          Hi ${recipientName}, ${messageText}
+        </p>
+      </div>
+
+      <div style="background-color: #f9fafb; border: 1px solid #f3f4f6; border-radius: 10px; padding: 18px; margin: 20px 0;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280;">Service</td>
+            <td style="padding: 8px 0; color: #111827; font-weight: 600; text-align: right;">${service}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280;">Barber Shop</td>
+            <td style="padding: 8px 0; color: #111827; font-weight: 600; text-align: right;">${barberName}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px 0; color: #6b7280;">Date & Time</td>
+            <td style="padding: 8px 0; color: #106766; font-weight: 700; text-align: right;">${timeSlot}</td>
+          </tr>
+          ${
+            price
+              ? `<tr>
+                  <td style="padding: 8px 0; color: #6b7280;">Price</td>
+                  <td style="padding: 8px 0; color: #111827; font-weight: 600; text-align: right;">${price}</td>
+                </tr>`
+              : ""
+          }
+          ${
+            booking.cancellationReason || booking.cancelReason
+              ? `<tr>
+                  <td style="padding: 8px 0; color: #ef4444;">Reason</td>
+                  <td style="padding: 8px 0; color: #ef4444; font-weight: 500; text-align: right;">${booking.cancellationReason || booking.cancelReason}</td>
+                </tr>`
+              : ""
+          }
+        </table>
+      </div>
+
+      <div style="text-align: center; margin: 26px 0 16px 0;">
+        <a href="${appUrl}" style="display: inline-block; padding: 12px 28px; background-color: #106766; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; border-radius: 8px;">
+          View in Trimly
+        </a>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0 16px 0;" />
+      <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0; line-height: 1.4;">
+        This is an automated notification for an important appointment update.<br />
+        You can adjust your notification settings anytime in the Trimly app profile.
+      </p>
+    </div>
+  `;
+
+  const text = `${title}\n\nHi ${recipientName},\n${messageText}\n\nService: ${service}\nBarber: ${barberName}\nTime: ${timeSlot}\n${price ? `Price: ${price}\n` : ""}\nView details on Trimly: ${appUrl}`;
+
+  const sendResult = await sendEmail({ to, subject, html, text });
+  console.log(`[email-notification] Dispatched to ${to} (${badgeLabel}) - Result:`, sendResult);
+  return sendResult;
+}

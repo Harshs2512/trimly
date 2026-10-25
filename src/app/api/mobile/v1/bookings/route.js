@@ -33,14 +33,9 @@ export async function POST(request) {
 
   const requestId = getRequestId(request);
   try {
-    const auth = await getMobileSession(request, ["user"]);
+    const auth = await getMobileSession(request);
     if (!auth.session) {
-      return mobileError({
-        code: auth.error.code,
-        message: auth.error.message,
-        status: auth.error.status,
-        requestId,
-      });
+      return auth.error;
     }
 
     const userId = auth.session.user.id;
@@ -266,24 +261,20 @@ export async function GET(request) {
   try {
     const auth = await getMobileSession(request);
     if (!auth.session) {
-      return mobileError({
-        code: auth.error.code,
-        message: auth.error.message,
-        status: auth.error.status,
-        requestId,
-      });
+      return auth.error;
     }
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status")?.trim();
     const date = searchParams.get("date")?.trim();
+    const roleParam = searchParams.get("role") || searchParams.get("as");
     const cursor = searchParams.get("cursor");
     const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "20", 10), 1), 50);
 
     const db = await getDb();
     const query = {};
 
-    if (auth.session.user.role === "barber") {
+    if (auth.session.user.role === "barber" && roleParam !== "customer") {
       const barber = await db
         .collection("barbers")
         .findOne({ userId: auth.session.user.id, deletedAt: { $exists: false } });
@@ -301,10 +292,17 @@ export async function GET(request) {
     }
 
     if (status) {
+      const nowISO = new Date().toISOString();
       if (status === "upcoming") {
-        query.status = { $in: ["pending", "confirmed"] };
+        query.$or = [
+          { status: "pending" },
+          { status: "confirmed", timeSlot: { $gte: nowISO } },
+        ];
       } else if (status === "past") {
-        query.status = { $in: ["completed", "cancelled", "no-show"] };
+        query.$or = [
+          { status: { $in: ["completed", "cancelled", "no-show"] } },
+          { status: "confirmed", timeSlot: { $lt: nowISO } },
+        ];
       } else {
         query.status = status;
       }

@@ -68,16 +68,25 @@ test("Account Lifecycle, Privacy & Security Headers Suite", async (t) => {
   });
 
   await t.test("2. Last Admin Deletion Protection", async () => {
-    // Ensure only 1 admin exists
-    const adminUser = await db.collection("users").findOne({ role: "admin", active: { $ne: false } });
-    if (adminUser) {
-      const delAdminRes = await deleteUserAccount(db, { userId: adminUser._id.toString() });
-      // If single admin, must be rejected
-      const count = await db.collection("users").countDocuments({ role: "admin", active: { $ne: false } });
-      if (count <= 1) {
-        assert.equal(delAdminRes.ok, false);
-        assert.equal(delAdminRes.code, "LAST_ADMIN");
-      }
+    // Ensure an active admin fixture exists
+    let adminUser = await db.collection("users").findOne({ role: "admin", active: { $ne: false } });
+    let createdFixture = false;
+    if (!adminUser) {
+      const res = await db.collection("users").insertOne({
+        name: "Test Admin",
+        email: `test-admin-${Date.now()}@trimly.local`,
+        role: "admin",
+        active: true,
+        createdAt: new Date(),
+      });
+      adminUser = { _id: res.insertedId };
+      createdFixture = true;
+    }
+    const delAdminRes = await deleteUserAccount(db, { userId: adminUser._id.toString() });
+    assert.equal(delAdminRes.ok, false);
+    assert.equal(delAdminRes.code, "LAST_ADMIN");
+    if (createdFixture) {
+      await db.collection("users").deleteOne({ _id: adminUser._id });
     }
   });
 
