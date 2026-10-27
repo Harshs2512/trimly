@@ -5,7 +5,7 @@ import axios from "axios";
 import BarberCard from "@/components/BarberCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Sparkles, AlertCircle } from "lucide-react";
+import { Search, MapPin, Scissors, AlertCircle } from "lucide-react";
 
 const PAGE_SIZE = 24;
 
@@ -54,7 +54,7 @@ export default function BarbersPage() {
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[120px] pointer-events-none -z-10" />
       <div className="relative pt-28 pb-14 px-6 container mx-auto max-w-7xl">
         <div className="flex flex-col items-center text-center space-y-6 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-bold uppercase tracking-wider border border-primary/20"><Sparkles className="w-4 h-4" /> Barber Directory</div>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-bold uppercase tracking-wider border border-primary/20"><Scissors className="w-4 h-4" /> Barber Directory</div>
           <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">Find the right <span className="text-primary">barber</span> for your next visit</h1>
           <p className="text-lg md:text-xl text-muted-foreground">Browse verified shop profiles, compare services and request an available appointment time.</p>
           <div className="w-full max-w-xl relative mt-4 shadow-lg rounded-full group">

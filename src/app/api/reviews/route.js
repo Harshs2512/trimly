@@ -10,56 +10,147 @@ export async function GET(request) {
   try {
     const url = new URL(request.url);
     const barberId = url.searchParams.get("barberId")?.trim();
-    if (!barberId) {
-      return Response.json({ error: "Barber ID is required" }, { status: 400 });
-    }
+    const userId = url.searchParams.get("userId")?.trim();
+    const ratingParam = url.searchParams.get("rating")?.trim();
+    const search = url.searchParams.get("search")?.trim();
+    const sortBy = url.searchParams.get("sortBy") || "newest";
 
     const { page, limit, skip } = parsePagination(url.searchParams, { defaultLimit: 10, maxLimit: 50 });
     const db = await getDb();
 
-    // Support both direct barberId and ObjectId matching
     const query = {
-      $or: [
-        { barberId },
-        ...(ObjectId.isValid(barberId) ? [{ barberId: new ObjectId(barberId) }] : []),
-      ],
       deletedAt: { $exists: false },
     };
+
+    let barberIdConditions = null;
+    if (barberId) {
+      const barberDoc = await db.collection("barbers").findOne({
+        $or: [
+          ...(ObjectId.isValid(barberId) ? [{ _id: new ObjectId(barberId) }] : []),
+          { userId: barberId },
+          { _id: barberId },
+        ],
+      });
+      const validBarberIds = new Set([barberId]);
+      if (barberDoc) {
+        validBarberIds.add(barberDoc._id.toString());
+        if (barberDoc.userId) validBarberIds.add(String(barberDoc.userId));
+      }
+      barberIdConditions = [];
+      validBarberIds.forEach((id) => {
+        barberIdConditions.push({ barberId: id });
+        if (ObjectId.isValid(id)) {
+          barberIdConditions.push({ barberId: new ObjectId(id) });
+        }
+      });
+      query.$or = barberIdConditions;
+    }
+
+    if (userId) {
+      query.userId = userId;
+    }
+
+    if (ratingParam) {
+      const parsedRating = parseInt(ratingParam, 10);
+      if (!isNaN(parsedRating) && parsedRating >= 1 && parsedRating <= 5) {
+        query.rating = parsedRating;
+      }
+    }
+
+    if (search) {
+      const searchRegex = { $regex: search, $options: "i" };
+      const searchConditions = [
+        { serviceName: searchRegex },
+        { comment: searchRegex },
+        { userName: searchRegex },
+      ];
+      if (query.$or) {
+        query.$and = [{ $or: query.$or }, { $or: searchConditions }];
+        delete query.$or;
+      } else {
+        query.$or = searchConditions;
+      }
+    }
+
+    let sortObj = { createdAt: -1 };
+    if (sortBy === "highest") {
+      sortObj = { rating: -1, createdAt: -1 };
+    } else if (sortBy === "lowest") {
+      sortObj = { rating: 1, createdAt: -1 };
+    } else if (sortBy === "oldest") {
+      sortObj = { createdAt: 1 };
+    }
 
     const reviewsCol = db.collection("reviews");
     const [total, list] = await Promise.all([
       reviewsCol.countDocuments(query),
-      reviewsCol.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).toArray(),
+      reviewsCol.find(query).sort(sortObj).skip(skip).limit(limit).toArray(),
     ]);
 
-    // Compute star breakdown summary
-    const allBarberReviews = await reviewsCol.find(query, { projection: { rating: 1 } }).toArray();
+    // Compute star breakdown summary for this context (base query without pagination/rating filters)
+    const baseStatsQuery = { deletedAt: { $exists: false } };
+    if (barberIdConditions) {
+      baseStatsQuery.$or = barberIdConditions;
+    }
+    if (userId) {
+      baseStatsQuery.userId = userId;
+    }
+
+    const allContextReviews = await reviewsCol.find(baseStatsQuery, { projection: { rating: 1 } }).toArray();
     const ratingBreakdown = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
     let totalScore = 0;
-    for (const r of allBarberReviews) {
+    for (const r of allContextReviews) {
       const star = Math.min(5, Math.max(1, Math.round(Number(r.rating) || 0)));
       ratingBreakdown[star] = (ratingBreakdown[star] || 0) + 1;
       totalScore += star;
     }
-    const averageRating = allBarberReviews.length > 0 ? Number((totalScore / allBarberReviews.length).toFixed(1)) : 0;
+    const averageRating = allContextReviews.length > 0 ? Number((totalScore / allContextReviews.length).toFixed(1)) : 0;
 
-    const formattedReviews = list.map((item) => ({
-      _id: item._id.toString(),
-      barberId: String(item.barberId),
-      userId: String(item.userId),
-      userName: item.userName || "Customer",
-      bookingId: String(item.bookingId),
-      serviceName: item.serviceName || "",
-      rating: item.rating,
-      comment: item.comment || "",
-      createdAt: item.createdAt?.toISOString?.() || item.createdAt,
-    }));
+    // Fetch barber info to attach shopName & address
+    const barberIds = [...new Set(list.map((r) => String(r.barberId)).filter(Boolean))];
+    const objectBarberIds = barberIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+    const barbers = barberIds.length
+      ? await db.collection("barbers").find(
+          {
+            $or: [
+              ...(objectBarberIds.length ? [{ _id: { $in: objectBarberIds } }] : []),
+              { userId: { $in: barberIds } },
+              { _id: { $in: barberIds } },
+            ],
+          },
+          { projection: { shopName: 1, address: 1, userId: 1, image: 1 } }
+        ).toArray()
+      : [];
+
+    const barberMap = new Map();
+    for (const b of barbers) {
+      barberMap.set(b._id.toString(), b);
+      if (b.userId) barberMap.set(String(b.userId), b);
+    }
+
+    const formattedReviews = list.map((item) => {
+      const barber = barberMap.get(String(item.barberId));
+      return {
+        _id: item._id.toString(),
+        barberId: String(item.barberId),
+        barberProfileId: barber?._id?.toString() || String(item.barberId),
+        barberShopName: barber?.shopName || item.barberShopName || "Barber Shop",
+        barberAddress: barber?.address || "",
+        userId: String(item.userId),
+        userName: item.userName || "Customer",
+        bookingId: String(item.bookingId),
+        serviceName: item.serviceName || "",
+        rating: item.rating,
+        comment: item.comment || "",
+        createdAt: item.createdAt?.toISOString?.() || item.createdAt,
+      };
+    });
 
     return Response.json({
       reviews: formattedReviews,
       stats: {
         averageRating,
-        reviewCount: allBarberReviews.length,
+        reviewCount: allContextReviews.length,
         ratingBreakdown,
       },
       pagination: {

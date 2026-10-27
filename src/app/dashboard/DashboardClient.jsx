@@ -7,7 +7,7 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Calendar, Clock, Scissors, MapPin, ArrowRight, UserCircle2, Star, Sparkles, Trash2 } from "lucide-react";
+import { Calendar, Clock, Scissors, MapPin, ArrowRight, UserCircle2, Star, Trash2 } from "lucide-react";
 import ReviewModal from "@/components/ReviewModal";
 
 const RESCHEDULABLE = new Set(["declined", "cancelled", "expired"]);
@@ -34,12 +34,14 @@ function formatBookingDate(value, timeZone, options) {
   return new Intl.DateTimeFormat(undefined, { timeZone: timeZone || "Asia/Kolkata", ...options }).format(new Date(value));
 }
 
-export default function DashboardClient({ user, bookings, initialReviewedMap = {} }) {
+export default function DashboardClient({ user, bookings, initialReviewedMap = {}, initialUserReviews = [] }) {
   const router = useRouter();
   const [cancelBooking, setCancelBooking] = useState(null);
   const [rescheduleBooking, setRescheduleBooking] = useState(null);
   const [reviewBooking, setReviewBooking] = useState(null);
+  const [editingReview, setEditingReview] = useState(null);
   const [reviewedMap, setReviewedMap] = useState(initialReviewedMap);
+  const [userReviews, setUserReviews] = useState(initialUserReviews);
   const [date, setDate] = useState(dateInputInTimeZone());
   const [slots, setSlots] = useState([]);
   const [slot, setSlot] = useState("");
@@ -57,6 +59,17 @@ export default function DashboardClient({ user, bookings, initialReviewedMap = {
     () => bookings.filter((booking) => !ACTIVE.has(booking.status) || new Date(booking.timeSlot).getTime() < now),
     [bookings, now]
   );
+
+  const reviewStats = useMemo(() => {
+    if (!userReviews.length) return { average: 0, count: 0, fiveStarCount: 0 };
+    const total = userReviews.reduce((acc, r) => acc + (Number(r.rating) || 0), 0);
+    const fiveStars = userReviews.filter((r) => Number(r.rating) === 5).length;
+    return {
+      average: (total / userReviews.length).toFixed(1),
+      count: userReviews.length,
+      fiveStarCount: fiveStars,
+    };
+  }, [userReviews]);
 
   function statusClass(status) {
     if (status === "confirmed" || status === "completed") return "bg-green-500/10 text-green-600 border-green-500/20";
@@ -86,6 +99,7 @@ export default function DashboardClient({ user, bookings, initialReviewedMap = {
         delete copy[deleteReviewTarget.bookingId];
         return copy;
       });
+      setUserReviews((prev) => prev.filter((r) => r._id !== deleteReviewTarget.reviewId));
       setDeleteReviewTarget(null);
       router.refresh();
     } catch (err) {
@@ -124,6 +138,17 @@ export default function DashboardClient({ user, bookings, initialReviewedMap = {
     } catch (err) {
       setError(typeof err.response?.data?.error === "string" ? err.response.data.error : "Failed to reschedule booking.");
     } finally { setLoading(false); }
+  }
+
+  function openEditReview(review) {
+    setEditingReview(review);
+    setReviewBooking({
+      _id: review.bookingId,
+      barberId: review.barberId,
+      barberProfileId: review.barberProfileId,
+      shopName: review.shopName,
+      service: review.serviceName,
+    });
   }
 
   const BookingCard = ({ booking }) => {
@@ -187,9 +212,12 @@ export default function DashboardClient({ user, bookings, initialReviewedMap = {
                 variant="outline"
                 size="sm"
                 className="gap-1.5 text-xs text-primary border-primary/40 hover:bg-primary/10 rounded-xl"
-                onClick={() => setReviewBooking(booking)}
+                onClick={() => {
+                  setEditingReview(null);
+                  setReviewBooking(booking);
+                }}
               >
-                <Sparkles className="w-3.5 h-3.5 text-yellow-500" /> Rate & Review
+                <Star className="w-3.5 h-3.5 text-yellow-500 fill-yellow-400" /> Rate & Review
               </Button>
             )
           )}
@@ -204,17 +232,175 @@ export default function DashboardClient({ user, bookings, initialReviewedMap = {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
           <div className="space-y-2">
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">Hello, <span className="text-primary">{(user.name || "there").split(" ")[0]}</span></h1>
-            <p className="text-muted-foreground text-lg flex items-center gap-2"><UserCircle2 className="w-5 h-5" />Manage your appointments</p>
+            <p className="text-muted-foreground text-lg flex items-center gap-2"><UserCircle2 className="w-5 h-5" />Manage your appointments and reviews</p>
           </div>
-          <Link href="/barbers"><Button className="h-12 px-6 rounded-full gap-2">Book New Appointment <ArrowRight className="w-4 h-4" /></Button></Link>
+          <div className="flex items-center gap-3">
+            <Link href="/reviews">
+              <Button variant="outline" className="h-12 px-5 rounded-full gap-2 border-primary/30 text-foreground hover:text-primary">
+                <Star className="w-4 h-4 text-yellow-500 fill-yellow-400" /> All Customer Reviews
+              </Button>
+            </Link>
+            <Link href="/barbers">
+              <Button className="h-12 px-6 rounded-full gap-2">Book New Appointment <ArrowRight className="w-4 h-4" /></Button>
+            </Link>
+          </div>
         </div>
 
         {user.role === "barber" && <div className="mb-10 rounded-3xl border bg-card p-6 flex flex-col md:flex-row justify-between gap-4"><div><h2 className="text-2xl font-bold">Barber Workspace</h2><p className="text-muted-foreground">Manage your requests, services and shop profile.</p></div><Link href="/dashboard/barber"><Button variant="outline">Open Workspace</Button></Link></div>}
 
         <Tabs defaultValue="upcoming">
-          <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6"><h2 className="text-2xl font-bold">Your Appointments</h2><TabsList><TabsTrigger value="upcoming">Upcoming ({upcomingBookings.length})</TabsTrigger><TabsTrigger value="past">History ({pastBookings.length})</TabsTrigger></TabsList></div>
-          <TabsContent value="upcoming" className="space-y-4">{upcomingBookings.length ? upcomingBookings.map((booking) => <BookingCard key={booking._id} booking={booking} />) : <div className="rounded-2xl border border-dashed p-12 text-center text-muted-foreground">No upcoming appointments.</div>}</TabsContent>
-          <TabsContent value="past" className="space-y-4">{pastBookings.length ? pastBookings.map((booking) => <BookingCard key={booking._id} booking={booking} />) : <div className="rounded-2xl border border-dashed p-12 text-center text-muted-foreground">No booking history yet.</div>}</TabsContent>
+          <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
+            <h2 className="text-2xl font-bold">Your Appointments & Reviews</h2>
+            <TabsList>
+              <TabsTrigger value="upcoming">Upcoming ({upcomingBookings.length})</TabsTrigger>
+              <TabsTrigger value="past">History ({pastBookings.length})</TabsTrigger>
+              <TabsTrigger value="reviews" className="gap-1.5">
+                <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" /> My Reviews ({userReviews.length})
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <TabsContent value="upcoming" className="space-y-4">
+            {upcomingBookings.length ? upcomingBookings.map((booking) => <BookingCard key={booking._id} booking={booking} />) : <div className="rounded-2xl border border-dashed p-12 text-center text-muted-foreground">No upcoming appointments.</div>}
+          </TabsContent>
+
+          <TabsContent value="past" className="space-y-4">
+            {pastBookings.length ? pastBookings.map((booking) => <BookingCard key={booking._id} booking={booking} />) : <div className="rounded-2xl border border-dashed p-12 text-center text-muted-foreground">No booking history yet.</div>}
+          </TabsContent>
+
+          {/* Customer Reviews & Ratings Tab */}
+          <TabsContent value="reviews" className="space-y-6">
+            {/* Customer Review Summary Card */}
+            {userReviews.length > 0 && (
+              <div className="bg-card/70 border border-border/80 rounded-3xl p-6 shadow-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-center text-center">
+                  <div className="p-2 sm:border-r border-border/60">
+                    <div className="text-4xl font-extrabold text-foreground flex items-center justify-center gap-1.5">
+                      {reviewStats.average}
+                      <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 font-medium">Average Rating Given</p>
+                  </div>
+                  <div className="p-2 sm:border-r border-border/60">
+                    <div className="text-4xl font-extrabold text-foreground">{reviewStats.count}</div>
+                    <p className="text-xs text-muted-foreground mt-1 font-medium">Reviews Submitted</p>
+                  </div>
+                  <div className="p-2">
+                    <div className="text-4xl font-extrabold text-foreground">{reviewStats.fiveStarCount}</div>
+                    <p className="text-xs text-muted-foreground mt-1 font-medium">5-Star Experiences</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* List of customer reviews */}
+            {userReviews.length > 0 ? (
+              <div className="space-y-4">
+                {userReviews.map((rev) => (
+                  <div
+                    key={rev._id}
+                    className="bg-card/60 border border-border/70 hover:border-primary/40 rounded-2xl p-6 space-y-4 transition shadow-sm"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+                      <div className="space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Link
+                            href={`/barbers/${rev.barberProfileId || rev.barberId}`}
+                            className="font-bold text-lg hover:text-primary transition underline-offset-4 hover:underline"
+                          >
+                            {rev.shopName}
+                          </Link>
+                          {rev.serviceName && (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-secondary/80 text-xs font-medium text-muted-foreground">
+                              <Scissors className="w-3 h-3 text-primary" /> {rev.serviceName}
+                            </span>
+                          )}
+                        </div>
+                        {rev.shopAddress && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5" /> {rev.shopAddress}
+                          </p>
+                        )}
+                        <div className="flex items-center gap-2 pt-1">
+                          <div className="flex items-center gap-0.5">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star
+                                key={star}
+                                className={`w-4 h-4 ${
+                                  star <= Number(rev.rating)
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "fill-muted text-muted-foreground/30"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <span className="text-xs font-semibold text-yellow-600 bg-yellow-500/10 px-2 py-0.5 rounded-full border border-yellow-500/20">
+                            {rev.rating} / 5 Stars
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {rev.createdAt ? new Intl.DateTimeFormat("en-IN", { month: "short", day: "numeric", year: "numeric" }).format(new Date(rev.createdAt)) : ""}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end sm:self-start shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-8 rounded-xl gap-1"
+                          onClick={() => openEditReview(rev)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs h-8 px-2 text-muted-foreground hover:text-red-600 rounded-xl"
+                          title="Remove review"
+                          onClick={() => {
+                            setError("");
+                            setDeleteReviewTarget({ bookingId: rev.bookingId, reviewId: rev._id });
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                        <Link href={`/barbers/${rev.barberProfileId || rev.barberId}`}>
+                          <Button size="sm" variant="secondary" className="text-xs h-8 rounded-xl gap-1">
+                            Visit Shop <ArrowRight className="w-3 h-3" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+
+                    {rev.comment ? (
+                      <div className="bg-background/60 p-3.5 rounded-xl border border-border/50 text-sm text-foreground/90 italic">
+                        &ldquo;{rev.comment}&rdquo;
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-foreground italic">No written comment provided.</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-3xl border border-dashed p-12 text-center space-y-4">
+                <div className="w-14 h-14 bg-yellow-500/10 rounded-2xl flex items-center justify-center mx-auto text-yellow-500">
+                  <Star className="w-7 h-7 fill-yellow-400 text-yellow-400" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">No reviews submitted yet</h3>
+                  <p className="text-muted-foreground text-sm max-w-md mx-auto mt-1">
+                    Once your haircut or grooming appointment is marked completed, you can share your rating and review here to help other customers.
+                  </p>
+                </div>
+                <Link href="/barbers">
+                  <Button className="rounded-full px-6 gap-2">
+                    Explore Barbers & Book <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -249,18 +435,58 @@ export default function DashboardClient({ user, bookings, initialReviewedMap = {
       {reviewBooking && (
         <ReviewModal
           booking={reviewBooking}
-          onClose={() => setReviewBooking(null)}
+          initialReview={editingReview}
+          onClose={() => {
+            setReviewBooking(null);
+            setEditingReview(null);
+          }}
           onSuccess={(res) => {
-            if (reviewBooking?._id) {
+            const returnedReview = res?.review;
+            if (reviewBooking?._id && returnedReview) {
+              const reviewId = returnedReview._id || editingReview?._id;
+              const newRating = Number(returnedReview.rating);
+              const newComment = returnedReview.comment || "";
+
               setReviewedMap((prev) => ({
                 ...prev,
                 [reviewBooking._id]: {
-                  _id: res?.review?._id,
-                  rating: res?.review?.rating || 5,
-                  comment: res?.review?.comment || "",
+                  _id: reviewId,
+                  rating: newRating,
+                  comment: newComment,
                 },
               }));
+
+              setUserReviews((prev) => {
+                const existingIndex = prev.findIndex((r) => r._id === reviewId || r.bookingId === reviewBooking._id);
+                if (existingIndex >= 0) {
+                  const updated = [...prev];
+                  updated[existingIndex] = {
+                    ...updated[existingIndex],
+                    rating: newRating,
+                    comment: newComment,
+                    updatedAt: new Date().toISOString(),
+                  };
+                  return updated;
+                } else {
+                  return [
+                    {
+                      _id: reviewId,
+                      bookingId: reviewBooking._id,
+                      barberId: reviewBooking.barberProfileId || reviewBooking.barberId,
+                      barberProfileId: reviewBooking.barberProfileId || reviewBooking.barberId,
+                      shopName: reviewBooking.shopName,
+                      shopAddress: reviewBooking.shopAddress || "",
+                      serviceName: reviewBooking.service,
+                      rating: newRating,
+                      comment: newComment,
+                      createdAt: new Date().toISOString(),
+                    },
+                    ...prev,
+                  ];
+                }
+              });
             }
+            setEditingReview(null);
             router.refresh();
           }}
         />

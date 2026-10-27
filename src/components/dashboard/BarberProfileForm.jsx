@@ -18,7 +18,7 @@ import {
   Calendar,
   Users,
   Armchair,
-  Sparkles,
+  Scissors,
   ShieldCheck,
   Upload,
   X,
@@ -448,7 +448,7 @@ export default function BarberProfileForm({ initialData }) {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div>
                     <h4 className="font-semibold text-sm flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-primary" /> Work Showcase & Haircut Portfolio
+                      <Camera className="w-4 h-4 text-primary" /> Work Showcase & Haircut Portfolio
                     </h4>
                     <p className="text-xs text-muted-foreground">
                       Show off your haircuts, fades, beard styling, and shop vibe ({workPhotos.length}/12 photos).
@@ -610,7 +610,7 @@ export default function BarberProfileForm({ initialData }) {
             {/* Section 4: Specialties & Services Provided */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold flex items-center gap-2 border-b pb-2">
-                <Sparkles className="w-5 h-5 text-primary" /> Specialties & Features
+                <Scissors className="w-5 h-5 text-primary" /> Specialties & Features
               </h3>
               <p className="text-xs text-muted-foreground">
                 Select the signature grooming services and perks your shop provides.

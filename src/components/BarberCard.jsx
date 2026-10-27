@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { MapPin, Clock, Scissors, ArrowRight, Users, Armchair, Sparkles, Star, Camera } from "lucide-react";
+import { MapPin, Clock, Scissors, ArrowRight, Users, Armchair, Star, Camera } from "lucide-react";
 
 export default function BarberCard({ barber, index = 0 }) {
   const waitTime = Math.max(0, barber.waitingTime || 0);
@@ -106,7 +106,7 @@ export default function BarberCard({ barber, index = 0 }) {
                 key={spec}
                 className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-[11px] font-medium flex items-center gap-1 border border-primary/20"
               >
-                <Sparkles className="w-2.5 h-2.5" />
+                <Scissors className="w-2.5 h-2.5" />
                 {spec}
               </span>
             ))}

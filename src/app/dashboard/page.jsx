@@ -33,19 +33,56 @@ export default async function Dashboard() {
   }
 
   // Find user's existing reviews
-  const userReviews = await db
+  const rawUserReviews = await db
     .collection("reviews")
     .find({ userId: session.user.id, deletedAt: { $exists: false } })
+    .sort({ createdAt: -1 })
     .toArray();
 
+  // Ensure all reviewed barbers are loaded into barberMap
+  const reviewedBarberIds = [...new Set(rawUserReviews.map((r) => String(r.barberId)).filter(Boolean))];
+  const missingBarberIds = reviewedBarberIds.filter((id) => !barberMap.has(id));
+  if (missingBarberIds.length > 0) {
+    const objectMissingIds = missingBarberIds.filter((id) => ObjectId.isValid(id)).map((id) => new ObjectId(id));
+    const extraBarbers = await db.collection("barbers").find(
+      {
+        $or: [
+          ...(objectMissingIds.length ? [{ _id: { $in: objectMissingIds } }] : []),
+          { userId: { $in: missingBarberIds } },
+          { _id: { $in: missingBarberIds } },
+        ],
+      },
+      { projection: { shopName: 1, address: 1, userId: 1, timezone: 1, bookingHorizonDays: 1 } }
+    ).toArray();
+    for (const b of extraBarbers) {
+      barberMap.set(b._id.toString(), b);
+      if (b.userId) barberMap.set(String(b.userId), b);
+    }
+  }
+
   const initialReviewedMap = {};
-  for (const r of userReviews) {
-    initialReviewedMap[String(r.bookingId)] = {
+  const userReviews = rawUserReviews.map((r) => {
+    const barber = barberMap.get(String(r.barberId));
+    const formatted = {
       _id: r._id.toString(),
+      bookingId: String(r.bookingId),
+      barberId: String(r.barberId),
+      barberProfileId: barber?._id?.toString?.() || String(r.barberId),
+      shopName: barber?.shopName || r.barberShopName || "Barber Shop",
+      shopAddress: barber?.address || "",
+      serviceName: r.serviceName || "",
       rating: r.rating,
       comment: r.comment || "",
+      createdAt: r.createdAt?.toISOString?.() || r.createdAt,
+      updatedAt: r.updatedAt?.toISOString?.() || r.updatedAt,
     };
-  }
+    initialReviewedMap[String(r.bookingId)] = {
+      _id: formatted._id,
+      rating: formatted.rating,
+      comment: formatted.comment,
+    };
+    return formatted;
+  });
 
   const bookings = rawBookings.map((booking) => {
     const barber = barberMap.get(String(booking.barberId));
@@ -62,5 +99,12 @@ export default async function Dashboard() {
     };
   });
 
-  return <DashboardClient user={session.user} bookings={bookings} initialReviewedMap={initialReviewedMap} />;
+  return (
+    <DashboardClient
+      user={session.user}
+      bookings={bookings}
+      initialReviewedMap={initialReviewedMap}
+      initialUserReviews={userReviews}
+    />
+  );
 }

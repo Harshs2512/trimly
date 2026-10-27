@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
-import { Star, Scissors, Store, Sparkles } from "lucide-react";
+import { Star, Scissors, Store } from "lucide-react";
 
 const RATING_LABELS = {
   1: "Disappointing",
@@ -16,14 +16,15 @@ const RATING_LABELS = {
   5: "Outstanding!",
 };
 
-export default function ReviewModal({ booking, onClose, onSuccess }) {
+export default function ReviewModal({ booking, initialReview, onClose, onSuccess }) {
   const { toast } = useToast();
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState(initialReview?.rating || 5);
   const [hoverRating, setHoverRating] = useState(0);
-  const [comment, setComment] = useState("");
+  const [comment, setComment] = useState(initialReview?.comment || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const isEditing = Boolean(initialReview?._id);
   const activeStars = hoverRating || rating;
 
   async function handleSubmit(e) {
@@ -37,17 +38,28 @@ export default function ReviewModal({ booking, onClose, onSuccess }) {
     setError("");
 
     try {
-      const response = await axios.post("/api/reviews", {
-        barberId: booking.barberProfileId || booking.barberId,
-        bookingId: booking._id,
-        rating,
-        comment: comment.trim(),
-      });
-
-      toast({
-        title: "Review Submitted!",
-        description: "Thank you for sharing your feedback with the community.",
-      });
+      let response;
+      if (isEditing) {
+        response = await axios.put(`/api/reviews/${initialReview._id}`, {
+          rating,
+          comment: comment.trim(),
+        });
+        toast({
+          title: "Review Updated!",
+          description: "Your review and rating have been updated.",
+        });
+      } else {
+        response = await axios.post("/api/reviews", {
+          barberId: booking.barberProfileId || booking.barberId,
+          bookingId: booking._id,
+          rating,
+          comment: comment.trim(),
+        });
+        toast({
+          title: "Review Submitted!",
+          description: "Thank you for sharing your feedback with the community.",
+        });
+      }
 
       if (onSuccess) onSuccess(response.data);
       onClose();
@@ -66,11 +78,12 @@ export default function ReviewModal({ booking, onClose, onSuccess }) {
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-yellow-500" /> Rate Your Experience
+            <Star className="w-5 h-5 text-yellow-500 fill-yellow-400" />
+            {isEditing ? "Edit Your Review" : "Rate Your Experience"}
           </DialogTitle>
           <DialogDescription>
-            Share your feedback for your appointment at{" "}
-            <span className="font-semibold text-foreground">{booking.shopName}</span>.
+            {isEditing ? "Update your rating and feedback for " : "Share your feedback for your appointment at "}
+            <span className="font-semibold text-foreground">{booking.shopName || booking.barberShopName}</span>.
           </DialogDescription>
         </DialogHeader>
 
@@ -149,7 +162,7 @@ export default function ReviewModal({ booking, onClose, onSuccess }) {
               Cancel
             </Button>
             <Button type="submit" disabled={loading} className="gap-1.5 rounded-xl">
-              {loading ? "Submitting..." : "Submit Review"}
+              {loading ? (isEditing ? "Updating..." : "Submitting...") : (isEditing ? "Save Changes" : "Submit Review")}
             </Button>
           </DialogFooter>
         </form>

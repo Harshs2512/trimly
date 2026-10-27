@@ -17,7 +17,6 @@ import {
   ShieldCheck,
   Users,
   Armchair,
-  Sparkles,
   Camera,
   Eye,
   Star,
@@ -32,6 +31,7 @@ export default function BarberDetail() {
   const [previewImage, setPreviewImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [liveStats, setLiveStats] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -73,8 +73,12 @@ export default function BarberDetail() {
   const waitText = waitTime === 0 ? "Available now" : `Approximately ${waitTime} minutes`;
   const closedDays = barber.closedDays || [];
   const hasPhotos = barber.shopExteriorImage || barber.shopInteriorImage;
-  const reviewCount = Number(barber.reviewCount || 0);
-  const averageRating = Number(barber.averageRating || 0);
+  const displayReviewCount = liveStats ? liveStats.reviewCount : Number(barber.reviewCount || 0);
+  const displayAverageRating = liveStats && liveStats.reviewCount > 0 ? liveStats.averageRating : Number(barber.averageRating || 0);
+
+  const displayAddress = barber.city && barber.address?.toLowerCase().includes(barber.city.toLowerCase())
+    ? barber.address
+    : [barber.address, barber.city].filter(Boolean).join(", ");
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -88,8 +92,12 @@ export default function BarberDetail() {
 
           <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6">
             <div className="flex items-start md:items-end gap-5">
-              <div className="w-20 h-20 md:w-28 md:h-28 rounded-3xl bg-zinc-900 border-4 border-background shadow-xl flex items-center justify-center text-white font-bold text-3xl uppercase shrink-0">
-                {barber.shopName?.substring(0, 2) || "TR"}
+              <div className="w-20 h-20 md:w-28 md:h-28 rounded-3xl overflow-hidden bg-gradient-to-br from-primary/20 via-zinc-900 to-zinc-950 border-4 border-background shadow-xl flex items-center justify-center text-white font-bold text-3xl uppercase shrink-0">
+                {barber.avatar ? (
+                  <img src={barber.avatar} alt={barber.shopName} className="w-full h-full object-cover" />
+                ) : (
+                  barber.shopName?.substring(0, 2) || "TR"
+                )}
               </div>
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2.5">
@@ -99,9 +107,12 @@ export default function BarberDetail() {
                   {/* Rating Badge */}
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-yellow-500/10 text-yellow-600 border border-yellow-500/20">
                     <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
-                    {reviewCount > 0 ? (
+                    {displayReviewCount > 0 ? (
                       <span>
-                        {averageRating.toFixed(1)} <span className="font-normal text-muted-foreground">({reviewCount} reviews)</span>
+                        {displayAverageRating.toFixed(1)}{" "}
+                        <span className="font-normal text-muted-foreground">
+                          ({displayReviewCount} {displayReviewCount === 1 ? "review" : "reviews"})
+                        </span>
                       </span>
                     ) : (
                       <span>New on Trimly</span>
@@ -110,7 +121,7 @@ export default function BarberDetail() {
                 </div>
                 <p className="flex items-center gap-1.5 text-muted-foreground text-sm">
                   <MapPin className="w-4 h-4 shrink-0 text-muted-foreground/80" />
-                  {barber.address}
+                  {displayAddress}
                 </p>
 
                 {/* Team & Capacity Badges */}
@@ -203,7 +214,7 @@ export default function BarberDetail() {
           {!!barber.specialties?.length && (
             <div className="space-y-3">
               <h3 className="font-bold text-lg flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" /> Signature Specialties
+                <Scissors className="w-4 h-4 text-primary" /> Signature Specialties
               </h3>
               <div className="flex flex-wrap gap-2">
                 {barber.specialties.map((tag) => (
@@ -316,7 +327,7 @@ export default function BarberDetail() {
 
           {/* Customer Reviews Section */}
           <section>
-            <BarberReviewsSection barberId={barber._id} />
+            <BarberReviewsSection barberId={barber._id} onStatsLoaded={setLiveStats} />
           </section>
         </div>
       </div>

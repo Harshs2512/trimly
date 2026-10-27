@@ -15,7 +15,6 @@ import {
   FileText,
   Store,
   Armchair,
-  Sparkles,
   Eye,
   CheckCircle2,
   XCircle,
@@ -407,7 +406,7 @@ export default function AdminClient({ adminUser, initialUsers, initialBarbers, t
               {!!inspectedBarber.specialties?.length && (
                 <div className="space-y-2">
                   <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-primary" /> Signature Specialties
+                    <Scissors className="w-3.5 h-3.5 text-primary" /> Signature Specialties
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {inspectedBarber.specialties.map((tag) => (

@@ -299,11 +299,17 @@ export function serializeReview(review) {
     id: review._id?.toString() || review.id,
     bookingId: review.bookingId ? String(review.bookingId) : null,
     barberId: review.barberId ? String(review.barberId) : null,
+    barberProfileId: review.barberProfileId ? String(review.barberProfileId) : (review.barberId ? String(review.barberId) : null),
+    barberShopName: review.barberShopName || review.shopName || "Barber Shop",
+    barberAddress: review.barberAddress || review.shopAddress || "",
+    serviceName: review.serviceName || review.service || "",
     userId: review.userId ? String(review.userId) : null,
-    customerName: review.customerName || "Customer",
+    customerId: review.userId ? String(review.userId) : null,
+    customerName: review.userName || review.customerName || "Customer",
     rating: review.rating,
     comment: review.comment || "",
-    createdAt: review.createdAt,
+    createdAt: review.createdAt?.toISOString?.() || review.createdAt,
+    updatedAt: review.updatedAt?.toISOString?.() || review.updatedAt,
   };
 }
 

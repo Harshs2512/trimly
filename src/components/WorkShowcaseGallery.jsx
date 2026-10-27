@@ -8,7 +8,6 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  Sparkles,
   Scissors,
   CalendarCheck,
 } from "lucide-react";
