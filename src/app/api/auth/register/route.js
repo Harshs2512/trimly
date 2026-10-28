@@ -23,7 +23,10 @@ export async function POST(req) {
       return Response.json({ error: validation.error.flatten() }, { status: 400 });
     }
 
-    if (process.env.NODE_ENV === "production" && !isEmailDeliveryConfigured()) {
+    const emailConfigured = isEmailDeliveryConfigured();
+    const requireVerification = process.env.REQUIRE_EMAIL_VERIFICATION === "true";
+
+    if (process.env.NODE_ENV === "production" && !emailConfigured && requireVerification) {
       return Response.json({ error: "Account registration is temporarily unavailable because email verification is not configured." }, { status: 503 });
     }
 
@@ -36,6 +39,7 @@ export async function POST(req) {
       return Response.json({ error: "An account with this email already exists." }, { status: 409 });
     }
 
+    const autoVerify = !emailConfigured && !requireVerification;
     const hashedPassword = await bcrypt.hash(password, 12);
     const now = new Date();
     const userResult = await db.collection("users").insertOne({
@@ -44,11 +48,19 @@ export async function POST(req) {
       password: hashedPassword,
       role: role === "barber" ? "barber" : "user",
       active: true,
-      emailVerified: false,
+      emailVerified: autoVerify ? true : false,
+      emailVerifiedAt: autoVerify ? now : null,
       sessionVersion: 0,
       createdAt: now,
       updatedAt: now,
     });
+
+    if (autoVerify) {
+      return Response.json({
+        message: "Account created successfully! You can now sign in.",
+        autoVerified: true,
+      }, { status: 201 });
+    }
 
     const token = randomToken(32);
     const tokenHash = hashToken(token);
@@ -72,6 +84,19 @@ export async function POST(req) {
           message: "Account created. Verify your email before signing in.",
           code,
           developmentVerificationUrl: delivery.verifyUrl,
+        }, { status: 201 });
+      }
+
+      if (!requireVerification) {
+        console.warn("[web-register] Email delivery failed in production, falling back to auto-verify for:", email);
+        await db.collection("email_verification_tokens").deleteMany({ userId: userResult.insertedId.toString() });
+        await db.collection("users").updateOne(
+          { _id: userResult.insertedId },
+          { $set: { emailVerified: true, emailVerifiedAt: now, updatedAt: now } }
+        );
+        return Response.json({
+          message: "Account created successfully! You can now sign in.",
+          autoVerified: true,
         }, { status: 201 });
       }
 

@@ -51,7 +51,10 @@ export async function POST(request) {
       });
     }
 
-    if (process.env.NODE_ENV === "production" && !isEmailDeliveryConfigured()) {
+    const emailConfigured = isEmailDeliveryConfigured();
+    const requireVerification = process.env.REQUIRE_EMAIL_VERIFICATION === "true";
+
+    if (process.env.NODE_ENV === "production" && !emailConfigured && requireVerification) {
       return mobileError({
         code: "SERVICE_UNAVAILABLE",
         message: "Account registration is temporarily unavailable because email verification is not configured.",
@@ -93,6 +96,7 @@ export async function POST(request) {
       });
     }
 
+    const autoVerify = !emailConfigured && !requireVerification;
     const hashedPassword = await bcrypt.hash(password, 12);
     const now = new Date();
     const userResult = await db.collection("users").insertOne({
@@ -102,11 +106,22 @@ export async function POST(request) {
       role: role === "barber" ? "barber" : "user",
       phone: phone || null,
       active: true,
-      emailVerified: false,
+      emailVerified: autoVerify ? true : false,
+      emailVerifiedAt: autoVerify ? now : null,
       sessionVersion: 0,
       createdAt: now,
       updatedAt: now,
     });
+
+    if (autoVerify) {
+      return mobileSuccess(
+        {
+          message: "Account created successfully.",
+          autoVerified: true,
+        },
+        { status: 201, requestId }
+      );
+    }
 
     const token = randomToken(32);
     const tokenHash = hashToken(token);
@@ -131,6 +146,22 @@ export async function POST(request) {
             message: "Account created. Verify email before signing in.",
             code,
             developmentVerificationUrl: delivery.verifyUrl,
+          },
+          { status: 201, requestId }
+        );
+      }
+
+      if (!requireVerification) {
+        console.warn("[mobile-register] Email delivery failed in production, falling back to auto-verify for:", email);
+        await db.collection("email_verification_tokens").deleteMany({ userId: userResult.insertedId.toString() });
+        await db.collection("users").updateOne(
+          { _id: userResult.insertedId },
+          { $set: { emailVerified: true, emailVerifiedAt: now, updatedAt: now } }
+        );
+        return mobileSuccess(
+          {
+            message: "Account created successfully.",
+            autoVerified: true,
           },
           { status: 201, requestId }
         );

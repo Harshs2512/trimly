@@ -59,15 +59,6 @@ export async function POST(request) {
       });
     }
 
-    if (process.env.NODE_ENV === "production" && !isEmailDeliveryConfigured()) {
-      return mobileError({
-        code: "SERVICE_UNAVAILABLE",
-        message: "Email verification service is currently unavailable.",
-        status: 503,
-        requestId,
-      });
-    }
-
     const db = await getDb();
     const user = await db.collection("users").findOne(
       { email, active: { $ne: false } },
@@ -77,6 +68,33 @@ export async function POST(request) {
     // Account enumeration safe
     if (!user || user.emailVerified !== false) {
       return mobileSuccess({ message: GENERIC_MESSAGE }, { requestId });
+    }
+
+    const emailConfigured = isEmailDeliveryConfigured();
+    const requireVerification = process.env.REQUIRE_EMAIL_VERIFICATION === "true";
+
+    if (!emailConfigured) {
+      if (process.env.NODE_ENV === "production" && requireVerification) {
+        return mobileError({
+          code: "SERVICE_UNAVAILABLE",
+          message: "Email verification service is currently unavailable.",
+          status: 503,
+          requestId,
+        });
+      }
+      const now = new Date();
+      await db.collection("users").updateOne(
+        { _id: user._id },
+        { $set: { emailVerified: true, emailVerifiedAt: now, updatedAt: now } }
+      );
+      await db.collection("email_verification_tokens").deleteMany({ userId: user._id.toString() });
+      return mobileSuccess(
+        {
+          message: "Your email has been verified. You can now sign in.",
+          autoVerified: true,
+        },
+        { requestId }
+      );
     }
 
     const token = randomToken(32);

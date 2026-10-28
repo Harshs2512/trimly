@@ -27,10 +27,6 @@ export async function POST(request) {
     const emailLimiter = await rateLimit(`resend-verification:email:${email}`, 5, 60 * 60 * 1000);
     if (!emailLimiter.allowed) return Response.json({ error: "Too many verification requests. Please try again later." }, { status: 429 });
 
-    if (process.env.NODE_ENV === "production" && !isEmailDeliveryConfigured()) {
-      return Response.json({ error: "Email verification service is currently unavailable." }, { status: 503 });
-    }
-
     const db = await getDb();
     const user = await db.collection("users").findOne(
       { email, active: { $ne: false } },
@@ -41,6 +37,22 @@ export async function POST(request) {
     // account-enumeration oracle.
     if (!user || user.emailVerified !== false) {
       return Response.json({ message: GENERIC_MESSAGE });
+    }
+
+    const emailConfigured = isEmailDeliveryConfigured();
+    const requireVerification = process.env.REQUIRE_EMAIL_VERIFICATION === "true";
+
+    if (!emailConfigured) {
+      if (process.env.NODE_ENV === "production" && requireVerification) {
+        return Response.json({ error: "Email verification service is currently unavailable." }, { status: 503 });
+      }
+      const now = new Date();
+      await db.collection("users").updateOne(
+        { _id: user._id },
+        { $set: { emailVerified: true, emailVerifiedAt: now, updatedAt: now } },
+      );
+      await db.collection("email_verification_tokens").deleteMany({ userId: user._id.toString() });
+      return Response.json({ message: "Your email has been verified. You can now sign in.", autoVerified: true });
     }
 
     const token = randomToken(32);
