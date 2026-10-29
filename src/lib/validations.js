@@ -45,7 +45,28 @@ export const userSchema = z.object({
 });
 
 export const profileUpdateSchema = z.object({
-  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100).optional(),
+  phone: z.string().trim().regex(/^(\+?[1-9]\d{7,14}|\d{10})$/, "Invalid phone number format").optional().or(z.literal("")),
+}).refine((data) => data.name !== undefined || data.phone !== undefined, {
+  message: "At least one field must be provided to update",
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(6, "New password must be at least 6 characters").max(128),
+});
+
+export const sendOtpSchema = z.object({
+  phone: z.string().trim().regex(/^(\+?[1-9]\d{7,14}|\d{10})$/, "Please enter a valid phone number"),
+});
+
+export const verifyOtpSchema = z.object({
+  phone: z.string().trim().regex(/^(\+?[1-9]\d{7,14}|\d{10})$/, "Please enter a valid phone number"),
+  code: z.string().trim().length(6, "OTP must be exactly 6 digits"),
+  name: z.string().trim().max(100).optional(),
+  deviceId: z.string().trim().max(100).optional(),
+  platform: z.string().trim().max(20).optional(),
+  appVersion: z.string().trim().max(20).optional(),
 });
 
 export const workPhotoSchema = z.object({
@@ -91,9 +112,11 @@ export const bookingCreateSchema = z.object({
 });
 
 export const bookingUpdateSchema = z.object({
-  status: z.enum(["pending", "confirmed", "completed", "cancelled", "declined", "no_show"]),
+  status: z.enum(["pending", "confirmed", "completed", "cancelled", "declined", "no_show"]).optional(),
   cancelReason: z.string().trim().max(500).optional(),
   timeSlot: z.string().datetime({ offset: true }, "Invalid date/time format").optional(),
+}).refine((data) => data.status !== undefined || data.timeSlot !== undefined, {
+  message: "Either status or timeSlot must be provided",
 });
 
 export const adminUserUpdateSchema = z.object({

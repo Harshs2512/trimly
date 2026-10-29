@@ -7,7 +7,7 @@ import { writeAuditLog } from "./audit.js";
 
 const JWT_ISSUER = "trimly-api";
 const JWT_AUDIENCE = "trimly-mobile";
-const ACCESS_TOKEN_TTL_SECONDS = 15 * 60; // 15 minutes
+const ACCESS_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days long-lived mobile access token
 const REFRESH_TOKEN_TTL_DAYS = 30; // 30 days idle timeout
 const ABSOLUTE_SESSION_MAX_DAYS = 60; // 60 days hard max lifetime
 
@@ -253,7 +253,7 @@ export async function rotateMobileSession(db, { refreshToken, deviceId = null, i
       : { _id: activeSession.userId }
   );
 
-  if (!user || user.active === false || user.emailVerified === false) {
+  if (!user || user.active === false || (user.emailVerified === false && user.phoneVerified !== true)) {
     await sessionsCol.updateOne({ _id: activeSession._id }, { $set: { isRevoked: true, revokedAt: now } });
     return { ok: false, status: 401, code: "ACCOUNT_INACTIVE", error: "Account is no longer active." };
   }

@@ -31,6 +31,14 @@ const providers = [
       const user = await db.collection("users").findOne({ email });
       if (!user || user.active === false || !user.password) return null;
 
+      if (user.role === "admin") {
+        const adminLimiter = await rateLimit(`login:admin:${email}`, 5, 30 * 60 * 1000);
+        if (!adminLimiter.allowed) throw new Error("Too many admin login attempts. Account temporarily locked for 30 minutes.");
+      } else if (user.role === "barber") {
+        const barberLimiter = await rateLimit(`login:barber:${email}`, 5, 15 * 60 * 1000);
+        if (!barberLimiter.allowed) throw new Error("Too many barber login attempts. Please wait 15 minutes.");
+      }
+
       const isValid = await bcrypt.compare(password, user.password);
       if (!isValid) return null;
 

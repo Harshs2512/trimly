@@ -76,6 +76,25 @@ export async function POST(request) {
     const db = await getDb();
     const user = await db.collection("users").findOne({ email });
 
+    // Enforce heightened security for privileged roles (Admin & Barber)
+    if (user && user.role === "admin") {
+      const adminLimit = await enforceMobileRateLimit(
+        `mobile:login:admin:${email}`,
+        5,
+        30 * 60 * 1000,
+        { requestId, message: "Too many admin login attempts. Account temporarily locked for 30 minutes for security." }
+      );
+      if (adminLimit) return adminLimit;
+    } else if (user && user.role === "barber") {
+      const barberLimit = await enforceMobileRateLimit(
+        `mobile:login:barber:${email}`,
+        5,
+        15 * 60 * 1000,
+        { requestId, message: "Too many barber login attempts. Please wait 15 minutes." }
+      );
+      if (barberLimit) return barberLimit;
+    }
+
     // Defend against user enumeration and timing attacks: compute dummy hash if user not found
     const DUMMY_HASH = "$2a$12$e8k899s6X50s706qE5qGFeYfQ5vV8d1a1b1c1d1e1f1g1h1i1j1k1";
     const passwordHash = user?.password || DUMMY_HASH;

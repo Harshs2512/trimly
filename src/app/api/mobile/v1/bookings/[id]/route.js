@@ -136,7 +136,7 @@ async function handleUpdate(request, params) {
     const result = await updateBookingStatus(db, {
       bookingId: id,
       user: auth.session.user,
-      status: validation.data.status,
+      status: validation.data.status || (validation.data.timeSlot ? "pending" : undefined),
       cancelReason: validation.data.cancelReason,
       timeSlot: validation.data.timeSlot,
     });
