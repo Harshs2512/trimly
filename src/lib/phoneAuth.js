@@ -24,7 +24,8 @@ export function normalizePhone(rawPhone = "") {
 }
 
 /**
- * Sends a 6-digit OTP to the given phone number.
+ * Sends a 6-digit OTP to the given phone number via SMS Gateway (Fast2SMS / Twilio)
+ * or provides a test OTP when no SMS provider is configured.
  */
 export async function sendPhoneOtp(db, { phone, ip }) {
   const normalizedPhone = normalizePhone(phone);
@@ -79,11 +80,13 @@ export async function sendPhoneOtp(db, { phone, ip }) {
 
   console.log(`[PHONE-OTP] OTP for ${normalizedPhone}: ${otp}`);
 
-  // Dispatch via SMS gateway if configured (e.g. Fast2SMS / Twilio)
+  let smsSentSuccessfully = false;
+
+  // 1. Dispatch via Fast2SMS (Preferred for India +91 numbers)
   if (process.env.FAST2SMS_API_KEY) {
     try {
       const pureDigits = normalizedPhone.replace(/\D/g, "").slice(-10);
-      await fetch("https://www.fast2sms.com/dev/bulkV2", {
+      const res = await fetch("https://www.fast2sms.com/dev/bulkV2", {
         method: "POST",
         headers: {
           authorization: process.env.FAST2SMS_API_KEY,
@@ -95,16 +98,67 @@ export async function sendPhoneOtp(db, { phone, ip }) {
           numbers: pureDigits,
         }),
       });
+      const data = await res.json().catch(() => null);
+      if (data && data.return === true) {
+        smsSentSuccessfully = true;
+        console.log(`[PHONE-OTP] Fast2SMS delivered to ${pureDigits}`);
+      } else {
+        console.warn("[PHONE-OTP] Fast2SMS dispatch warning:", data);
+      }
     } catch (smsErr) {
-      console.warn("[PHONE-OTP] SMS gateway dispatch warning:", smsErr);
+      console.warn("[PHONE-OTP] Fast2SMS network error:", smsErr);
     }
   }
 
+  // 2. Dispatch via Twilio (Global carrier SMS)
+  if (!smsSentSuccessfully && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_PHONE_NUMBER) {
+    try {
+      const twilioAuth = Buffer.from(
+        `${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`
+      ).toString("base64");
+
+      const twilioBody = new URLSearchParams({
+        To: normalizedPhone,
+        From: process.env.TWILIO_PHONE_NUMBER,
+        Body: `Your Trimly verification code is ${otp}. Valid for 10 minutes.`,
+      });
+
+      const twilioRes = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${process.env.TWILIO_ACCOUNT_SID}/Messages.json`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${twilioAuth}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: twilioBody.toString(),
+        }
+      );
+
+      if (twilioRes.ok) {
+        smsSentSuccessfully = true;
+        console.log(`[PHONE-OTP] Twilio delivered to ${normalizedPhone}`);
+      } else {
+        const twilioJson = await twilioRes.json().catch(() => null);
+        console.warn("[PHONE-OTP] Twilio dispatch warning:", twilioJson);
+      }
+    } catch (twilioErr) {
+      console.warn("[PHONE-OTP] Twilio network error:", twilioErr);
+    }
+  }
+
+  // If real SMS was dispatched, do NOT expose dev code to mobile app!
+  // Only expose dev code if NO SMS gateway is configured and in development mode.
   const isDev = process.env.NODE_ENV !== "production";
+  const shouldReturnDevCode = !smsSentSuccessfully && isDev;
+
   return {
     ok: true,
-    message: `OTP sent successfully to ${normalizedPhone}.`,
-    developmentCode: isDev ? otp : undefined,
+    message: smsSentSuccessfully
+      ? `OTP text message sent to ${normalizedPhone}.`
+      : `Test OTP generated for ${normalizedPhone}.`,
+    developmentCode: shouldReturnDevCode ? otp : undefined,
+    smsDelivered: smsSentSuccessfully,
   };
 }
 
@@ -255,4 +309,3 @@ export async function verifyPhoneOtpAndLogin(db, { phone, code, name, deviceId, 
     },
   };
 }
-
