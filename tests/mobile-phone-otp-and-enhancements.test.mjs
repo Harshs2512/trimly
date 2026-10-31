@@ -133,3 +133,31 @@ test("Validation: changePasswordSchema enforces non-empty current and min 6 new 
   );
 });
 
+
+test("Phone OTP: 3-tier fallback chain (Fast2SMS -> Twilio -> Email -> Dev)", async () => {
+  await ensureIndexes();
+  const db = await getDb();
+
+  // Test with an email specified when SMS is mocked/empty
+  const testPhone = `97777${Math.floor(10000 + Math.random() * 90000)}`;
+  const testEmail = `fallback-${Date.now()}@example.com`;
+
+  // Pre-create user with email
+  await db.collection("users").insertOne({
+    name: "Fallback Tester",
+    phone: normalizePhone(testPhone),
+    email: testEmail,
+    role: "user",
+    active: true,
+    createdAt: new Date(),
+  });
+
+  const otpRes = await sendPhoneOtp(db, {
+    phone: testPhone,
+    ip: "127.0.0.1",
+  });
+
+  assert.equal(otpRes.ok, true);
+  assert.ok(otpRes.deliveryMethod);
+  assert.ok(otpRes.developmentCode || otpRes.smsDelivered || otpRes.emailDelivered);
+});

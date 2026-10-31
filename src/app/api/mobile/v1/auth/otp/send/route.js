@@ -31,7 +31,11 @@ export async function POST(request) {
 
     const ip = getMobileClientIp(request);
     const db = await getDb();
-    const result = await sendPhoneOtp(db, { phone: validation.data.phone, ip });
+    const result = await sendPhoneOtp(db, {
+      phone: validation.data.phone,
+      email: validation.data.email,
+      ip,
+    });
 
     if (!result.ok) {
       return mobileError({
@@ -45,7 +49,12 @@ export async function POST(request) {
     return mobileSuccess(
       {
         message: result.message,
+        deliveryMethod: result.deliveryMethod,
+        smsDelivered: result.smsDelivered,
+        emailDelivered: result.emailDelivered,
+        targetEmail: result.targetEmail,
         developmentCode: result.developmentCode,
+        gatewayWarning: result.gatewayWarning,
       },
       { requestId }
     );
@@ -59,4 +68,3 @@ export async function POST(request) {
     });
   }
 }
-

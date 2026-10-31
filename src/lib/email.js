@@ -263,3 +263,47 @@ export async function sendBookingNotificationEmail({
   console.log(`[email-notification] Dispatched to ${to} (${badgeLabel}) - Result:`, sendResult);
   return sendResult;
 }
+
+
+/**
+ * Sends a 6-digit OTP code to a user's email address.
+ * Used as a resilient fallback when SMS gateways are unavailable or unconfigured.
+ */
+export async function sendOtpEmail({ to, otp, phone }) {
+  if (!to) return { sent: false, reason: "missing_to" };
+
+  const appUrl = getAppUrl();
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 28px; border: 1px solid #e5e7eb; border-radius: 12px; background-color: #ffffff;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <h1 style="color: #106766; font-size: 26px; margin: 0; font-weight: 800;">Trimly</h1>
+        <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Smart Barber Booking</p>
+      </div>
+      <p style="color: #374151; font-size: 15px; line-height: 1.5; text-align: center;">
+        Here is your 6-digit login verification code for <strong>${phone || "your Trimly account"}</strong>:
+      </p>
+      <div style="margin: 24px 0; text-align: center;">
+        <span style="display: inline-block; font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #106766; background: #e6f3f3; padding: 12px 28px; border-radius: 8px; font-family: monospace;">${otp}</span>
+      </div>
+      <p style="color: #6b7280; font-size: 13px; text-align: center; margin-top: 16px;">
+        This code is valid for 10 minutes. Never share this code with anyone.
+      </p>
+      <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0 16px 0;" />
+      <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
+        If you did not request this login code, you can safely ignore this email.
+      </p>
+    </div>
+  `;
+
+  const text = `Your Trimly login verification code is: ${otp}\n\nValid for 10 minutes for ${phone || "your Trimly account"}. Never share this code with anyone.`;
+
+  const sendResult = await sendEmail({
+    to,
+    subject: `Your Trimly Verification Code: ${otp}`,
+    html,
+    text,
+  });
+
+  console.log(`[otp-email] Dispatched OTP to ${to} - Result:`, sendResult);
+  return sendResult;
+}

@@ -58,12 +58,14 @@ export const changePasswordSchema = z.object({
 
 export const sendOtpSchema = z.object({
   phone: z.string().trim().regex(/^(\+?[1-9]\d{7,14}|\d{10})$/, "Please enter a valid phone number"),
+  email: z.string().trim().email("Please enter a valid email address").optional().or(z.literal("")),
 });
 
 export const verifyOtpSchema = z.object({
   phone: z.string().trim().regex(/^(\+?[1-9]\d{7,14}|\d{10})$/, "Please enter a valid phone number"),
   code: z.string().trim().length(6, "OTP must be exactly 6 digits"),
   name: z.string().trim().max(100).optional(),
+  email: z.string().trim().email("Please enter a valid email address").optional().or(z.literal("")),
   deviceId: z.string().trim().max(100).optional(),
   platform: z.string().trim().max(20).optional(),
   appVersion: z.string().trim().max(20).optional(),

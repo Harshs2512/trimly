@@ -35,6 +35,7 @@ export async function POST(request) {
       phone: validation.data.phone,
       code: validation.data.code,
       name: validation.data.name,
+      email: validation.data.email,
       deviceId: validation.data.deviceId,
       platform: validation.data.platform,
       appVersion: validation.data.appVersion,
@@ -61,4 +62,3 @@ export async function POST(request) {
     });
   }
 }
-
