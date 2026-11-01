@@ -340,6 +340,22 @@ export async function verifyPhoneOtpAndLogin(db, { phone, code, name, email, dev
     user.phoneVerified = true;
   }
 
+  if (user.role === "admin") {
+    await writeAuditLog(db, {
+      actorId: user._id.toString(),
+      action: "auth.mobile.admin_login_blocked",
+      targetType: "user",
+      targetId: user._id.toString(),
+      metadata: { phone: normalizedPhone, ip, deviceId, platform, method: "phone_otp" },
+    });
+    return {
+      ok: false,
+      status: 403,
+      code: "ADMIN_LOGIN_FORBIDDEN",
+      error: "Administrator accounts cannot sign in via the mobile application. Please use the Web Admin Portal.",
+    };
+  }
+
   if (user.active === false) {
     return {
       ok: false,

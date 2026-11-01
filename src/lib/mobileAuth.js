@@ -138,6 +138,9 @@ export async function createMobileSession(db, {
   sessionVersion = 0,
   role = "user",
 }) {
+  if (role === "admin") {
+    throw new Error("ADMIN_CANNOT_HAVE_MOBILE_SESSION: Administrator accounts cannot sign in via the mobile application.");
+  }
   const refreshToken = randomToken(32); // 256 bits of entropy
   const refreshHash = hashToken(refreshToken);
   const familyId = crypto.randomUUID();
@@ -256,6 +259,26 @@ export async function rotateMobileSession(db, { refreshToken, deviceId = null, i
   if (!user || user.active === false || (user.emailVerified === false && user.phoneVerified !== true)) {
     await sessionsCol.updateOne({ _id: activeSession._id }, { $set: { isRevoked: true, revokedAt: now } });
     return { ok: false, status: 401, code: "ACCOUNT_INACTIVE", error: "Account is no longer active." };
+  }
+
+  if (user.role === "admin") {
+    await sessionsCol.updateMany(
+      { familyId: activeSession.familyId },
+      { $set: { isRevoked: true, revokedAt: now, revocationReason: "admin_mobile_prohibited" } },
+    );
+    await writeAuditLog(db, {
+      actorId: user._id.toString(),
+      action: "auth.mobile.admin_session_revoked",
+      targetType: "user",
+      targetId: user._id.toString(),
+      metadata: { ip, deviceId },
+    });
+    return {
+      ok: false,
+      status: 403,
+      code: "ADMIN_LOGIN_FORBIDDEN",
+      error: "Administrator accounts cannot sign in via the mobile application. Please use the Web Admin Portal.",
+    };
   }
 
   // Generate new refresh token for rotation
@@ -387,6 +410,20 @@ export async function getMobileSession(request, allowedRoles = []) {
 
     // Check Role Authorization
     const role = user.role || "user";
+    if (role === "admin") {
+      return {
+        session: null,
+        error: Response.json(
+          {
+            error: {
+              code: "ADMIN_LOGIN_FORBIDDEN",
+              message: "Administrator accounts cannot sign in via the mobile application. Please use the Web Admin Portal.",
+            },
+          },
+          { status: 403 }
+        ),
+      };
+    }
     if (allowedRoles.length > 0 && !allowedRoles.includes(role)) {
       return {
         session: null,

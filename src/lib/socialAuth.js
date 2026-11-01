@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { normalizeEmail } from "./security.js";
+import { writeAuditLog } from "./audit.js";
 
 let googleJwksCache = null;
 let googleJwksExpiresAt = 0;
@@ -209,6 +210,22 @@ export async function processSocialLogin(db, {
   let user = await db.collection("users").findOne({ [subField]: verifiedUser.sub });
 
   if (user) {
+    if (user.role === "admin") {
+      await writeAuditLog(db, {
+        actorId: user._id.toString(),
+        action: "auth.mobile.admin_login_blocked",
+        targetType: "user",
+        targetId: user._id.toString(),
+        metadata: { ip, deviceId, platform, provider, method: "social_login" },
+      });
+      return {
+        error: {
+          code: "ADMIN_LOGIN_FORBIDDEN",
+          message: "Administrator accounts cannot sign in via the mobile application. Please use the Web Admin Portal.",
+          status: 403,
+        },
+      };
+    }
     if (user.active === false) {
       return {
         error: {
@@ -223,6 +240,22 @@ export async function processSocialLogin(db, {
     if (verifiedUser.email) {
       user = await db.collection("users").findOne({ email: verifiedUser.email });
       if (user) {
+        if (user.role === "admin") {
+          await writeAuditLog(db, {
+            actorId: user._id.toString(),
+            action: "auth.mobile.admin_login_blocked",
+            targetType: "user",
+            targetId: user._id.toString(),
+            metadata: { ip, deviceId, platform, provider, method: "social_login" },
+          });
+          return {
+            error: {
+              code: "ADMIN_LOGIN_FORBIDDEN",
+              message: "Administrator accounts cannot sign in via the mobile application. Please use the Web Admin Portal.",
+              status: 403,
+            },
+          };
+        }
         if (user.active === false) {
           return {
             error: {

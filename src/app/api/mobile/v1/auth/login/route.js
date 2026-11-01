@@ -133,6 +133,28 @@ export async function POST(request) {
       });
     }
 
+    if (user.role === "admin") {
+      await writeAuditLog(db, {
+        actorId: user._id.toString(),
+        action: "auth.mobile.admin_login_blocked",
+        targetType: "user",
+        targetId: user._id.toString(),
+        metadata: { ip, deviceId, platform },
+      });
+      logger.warn("Admin mobile login attempt blocked", {
+        requestId,
+        userId: user._id.toString(),
+        ip,
+        platform,
+      });
+      return mobileError({
+        code: "ADMIN_LOGIN_FORBIDDEN",
+        message: "Administrator accounts cannot sign in via the mobile application. Please use the Web Admin Portal.",
+        status: 403,
+        requestId,
+      });
+    }
+
     if (user.active === false) {
       return mobileError({
         code: "ACCOUNT_DEACTIVATED",
