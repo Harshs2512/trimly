@@ -124,7 +124,8 @@ export const bookingUpdateSchema = z.object({
 export const adminUserUpdateSchema = z.object({
   role: z.enum(["user", "barber", "admin"]).optional(),
   active: z.boolean().optional(),
-}).refine((data) => data.role !== undefined || data.active !== undefined, {
+  action: z.enum(["revoke_sessions"]).optional(),
+}).refine((data) => data.role !== undefined || data.active !== undefined || data.action !== undefined, {
   message: "No valid update fields supplied",
 });
 

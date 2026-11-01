@@ -266,7 +266,11 @@ export function allowedTransitionsForActor(actor, currentStatus) {
     },
     admin: {
       pending: ["confirmed", "declined", "cancelled"],
-      confirmed: ["completed", "no_show", "cancelled"],
+      confirmed: ["completed", "no_show", "cancelled", "pending"],
+      declined: ["pending", "confirmed", "cancelled"],
+      cancelled: ["pending", "confirmed"],
+      expired: ["pending", "confirmed"],
+      no_show: ["pending", "confirmed"],
     },
   };
   return table[actor]?.[currentStatus] || [];

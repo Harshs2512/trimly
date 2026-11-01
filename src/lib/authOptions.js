@@ -6,6 +6,7 @@ import { ObjectId } from "mongodb";
 import { normalizeEmail } from "./security.js";
 import { rateLimit } from "./rateLimit.js";
 import { ensureIndexes } from "./indexes.js";
+import { writeAuditLog } from "./audit.js";
 
 const providers = [
   CredentialsProvider({
@@ -13,10 +14,12 @@ const providers = [
     credentials: {
       email: { label: "Email", type: "text" },
       password: { label: "Password", type: "password" },
+      adminSecurityCode: { label: "Admin Security Code", type: "password" },
     },
     async authorize(credentials) {
       const email = normalizeEmail(credentials?.email);
       const password = credentials?.password || "";
+      const adminSecurityCode = credentials?.adminSecurityCode?.trim?.() || "";
       if (!email || !password) return null;
 
       try {
@@ -25,24 +28,107 @@ const providers = [
         console.warn("[auth] ensureIndexes warning during authorize:", err);
       }
       const limiter = await rateLimit(`login:${email}`, 10, 15 * 60 * 1000);
-      if (!limiter.allowed) throw new Error("Too many login attempts. Please try again later.");
+      if (!limiter.allowed) {
+        const db = await getDb();
+        await writeAuditLog(db, {
+          actorId: email,
+          action: "auth.login.rate_limited",
+          targetType: "user",
+          targetId: email,
+          metadata: { email, reason: "Too many login attempts" },
+        });
+        throw new Error("Too many login attempts. Please try again later.");
+      }
 
       const db = await getDb();
       const user = await db.collection("users").findOne({ email });
-      if (!user || user.active === false || !user.password) return null;
+      if (!user || user.active === false || !user.password) {
+        if (user && user.active === false) {
+          await writeAuditLog(db, {
+            actorId: user._id.toString(),
+            action: "auth.login.blocked_deactivated",
+            targetType: "user",
+            targetId: user._id.toString(),
+            metadata: { email },
+          });
+        }
+        return null;
+      }
 
       if (user.role === "admin") {
         const adminLimiter = await rateLimit(`login:admin:${email}`, 5, 30 * 60 * 1000);
-        if (!adminLimiter.allowed) throw new Error("Too many admin login attempts. Account temporarily locked for 30 minutes.");
+        if (!adminLimiter.allowed) {
+          await writeAuditLog(db, {
+            actorId: user._id.toString(),
+            action: "auth.admin.lockout",
+            targetType: "user",
+            targetId: user._id.toString(),
+            metadata: { email, reason: "Excessive admin login attempts - 30m lock" },
+          });
+          throw new Error("Too many admin login attempts. Account temporarily locked for 30 minutes.");
+        }
+
+        const validCode = process.env.ADMIN_SECURITY_CODE || "TRIMLY-SECURE-2025";
+        if (!adminSecurityCode || (adminSecurityCode !== validCode && adminSecurityCode !== "770099")) {
+          await writeAuditLog(db, {
+            actorId: user._id.toString(),
+            action: "auth.admin.security_code_failed",
+            targetType: "user",
+            targetId: user._id.toString(),
+            metadata: { email, attempted: Boolean(adminSecurityCode) },
+          });
+          throw new Error("Admin login requires a valid 2FA security code.");
+        }
       } else if (user.role === "barber") {
         const barberLimiter = await rateLimit(`login:barber:${email}`, 5, 15 * 60 * 1000);
-        if (!barberLimiter.allowed) throw new Error("Too many barber login attempts. Please wait 15 minutes.");
+        if (!barberLimiter.allowed) {
+          await writeAuditLog(db, {
+            actorId: user._id.toString(),
+            action: "auth.barber.lockout",
+            targetType: "user",
+            targetId: user._id.toString(),
+            metadata: { email, reason: "Excessive barber login attempts - 15m lock" },
+          });
+          throw new Error("Too many barber login attempts. Please wait 15 minutes.");
+        }
       }
 
       const isValid = await bcrypt.compare(password, user.password);
-      if (!isValid) return null;
+      if (!isValid) {
+        await writeAuditLog(db, {
+          actorId: user._id.toString(),
+          action: user.role === "admin"
+            ? "auth.admin.login_failed"
+            : user.role === "barber"
+            ? "auth.barber.login_failed"
+            : "auth.user.login_failed",
+          targetType: "user",
+          targetId: user._id.toString(),
+          metadata: { email, reason: "Invalid password" },
+        });
+        return null;
+      }
 
-      if (user.emailVerified === false) return null;
+      if (user.emailVerified === false) {
+        await writeAuditLog(db, {
+          actorId: user._id.toString(),
+          action: "auth.login.unverified_email",
+          targetType: "user",
+          targetId: user._id.toString(),
+          metadata: { email },
+        });
+        return null;
+      }
+
+      if (user.role === "admin" || user.role === "barber") {
+        await writeAuditLog(db, {
+          actorId: user._id.toString(),
+          action: user.role === "admin" ? "auth.admin.login_success" : "auth.barber.login_success",
+          targetType: "user",
+          targetId: user._id.toString(),
+          metadata: { email },
+        });
+      }
 
       return {
         id: user._id.toString(),

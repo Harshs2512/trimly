@@ -5,7 +5,7 @@ import { getProviders, signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle2, Eye, EyeOff } from "lucide-react";
+import { CheckCircle2, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +24,8 @@ function AuthPageContent() {
   const [devVerificationLink, setDevVerificationLink] = useState("");
   const [devCode, setDevCode] = useState("");
   const [registeredEmail, setRegisteredEmail] = useState("");
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [adminSecurityCode, setAdminSecurityCode] = useState("");
 
   useEffect(() => {
     getProviders().then((providers) => setGoogleEnabled(Boolean(providers?.google))).catch(() => setGoogleEnabled(false));
@@ -45,8 +47,21 @@ function AuthPageContent() {
 
     try {
       if (!isRegister) {
-        const result = await signIn("credentials", { redirect: false, email, password });
+        const code = String(form.get("adminSecurityCode") || adminSecurityCode || "").trim();
+        const result = await signIn("credentials", {
+          redirect: false,
+          email,
+          password,
+          adminSecurityCode: code,
+        });
         if (result?.error) {
+          if (result.error.toLowerCase().includes("2fa") || result.error.toLowerCase().includes("security code")) {
+            setIsAdminMode(true);
+            throw new Error("Admin login requires a valid 2FA security code.");
+          }
+          if (result.error.toLowerCase().includes("admin login attempts") || result.error.toLowerCase().includes("locked")) {
+            throw new Error(result.error);
+          }
           throw new Error("Unable to sign in. Please verify your email or check your credentials.");
         }
         router.push("/dashboard");
@@ -172,7 +187,53 @@ function AuthPageContent() {
                 </div>
               )}
 
-              <TabsContent value="login"><form onSubmit={handleSubmit} className="space-y-5"><EmailField /><PasswordField id="login-password" show={showPassword} toggle={() => setShowPassword((value) => !value)} /><div className="flex flex-wrap justify-between gap-2"><Link href="/resend-verification" className="text-xs text-primary hover:underline">Resend verification email</Link><Link href="/forgot-password" className="text-xs text-primary hover:underline">Forgot password?</Link></div><Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? "Signing in..." : "Sign In"}</Button></form></TabsContent>
+              <TabsContent value="login">
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <EmailField />
+                  <PasswordField id="login-password" show={showPassword} toggle={() => setShowPassword((value) => !value)} />
+
+                  {/* High-Security Admin Step-Up Option */}
+                  <div className="pt-1">
+                    <div className="flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => setIsAdminMode(!isAdminMode)}
+                        className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1.5 transition"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+                        <span>{isAdminMode ? "Standard login mode" : "Admin 2FA login"}</span>
+                      </button>
+                    </div>
+
+                    {isAdminMode && (
+                      <div className="mt-3 p-3.5 rounded-xl bg-primary/10 border border-primary/20 space-y-2 animate-in fade-in duration-200">
+                        <Label htmlFor="adminSecurityCode" className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5" /> Admin Security PIN / 2FA Code
+                        </Label>
+                        <Input
+                          id="adminSecurityCode"
+                          name="adminSecurityCode"
+                          type="password"
+                          autoComplete="one-time-code"
+                          placeholder="Enter administrative 2FA code"
+                          value={adminSecurityCode}
+                          onChange={(e) => setAdminSecurityCode(e.target.value)}
+                          className="h-10 text-sm font-mono tracking-wider bg-background"
+                        />
+                        <p className="text-[11px] text-muted-foreground">
+                          Privileged administrator sessions require 2FA security validation.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-wrap justify-between gap-2">
+                    <Link href="/resend-verification" className="text-xs text-primary hover:underline">Resend verification email</Link>
+                    <Link href="/forgot-password" className="text-xs text-primary hover:underline">Forgot password?</Link>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? "Signing in..." : "Sign In"}</Button>
+                </form>
+              </TabsContent>
 
               <TabsContent value="register"><form onSubmit={handleSubmit} className="space-y-5"><div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="firstName">First Name</Label><Input id="firstName" name="firstName" required maxLength={60} /></div><div className="space-y-2"><Label htmlFor="lastName">Last Name</Label><Input id="lastName" name="lastName" required maxLength={60} /></div></div><EmailField /><div className="space-y-2"><Label htmlFor="role">Account Type</Label><select id="role" name="role" className="w-full h-10 rounded-md border bg-background px-3"><option value="user">Customer</option><option value="barber">Barber / Shop Owner</option></select><p className="text-xs text-muted-foreground">Barber profiles require administrator verification before public booking.</p></div><PasswordField id="register-password" show={showPassword} toggle={() => setShowPassword((value) => !value)} /><div className="space-y-2"><Label htmlFor="confirmPassword">Confirm Password</Label><Input id="confirmPassword" name="confirmPassword" type={showPassword ? "text" : "password"} minLength={8} required /></div><Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? "Creating account..." : "Create Account"}</Button></form></TabsContent>
             </Tabs>

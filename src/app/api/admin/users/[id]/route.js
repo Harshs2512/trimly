@@ -29,6 +29,21 @@ export async function PUT(request, { params }) {
     const target = await users.findOne({ _id: targetId });
     if (!target) return Response.json({ error: "User not found" }, { status: 404 });
 
+    if (validation.data.action === "revoke_sessions") {
+      await users.updateOne(
+        { _id: targetId },
+        { $inc: { sessionVersion: 1 }, $set: { updatedAt: new Date() } }
+      );
+      await writeAuditLog(db, {
+        actorId: session.user.id,
+        action: "admin.user.revoke_sessions",
+        targetType: "user",
+        targetId: id,
+        metadata: { targetEmail: target.email },
+      });
+      return Response.json({ ok: true, message: "All sessions revoked for user." });
+    }
+
     const { role, active } = validation.data;
     const removingActiveAdmin = target.role === "admin" && target.active !== false &&
       ((role && role !== "admin") || active === false);
@@ -93,5 +108,72 @@ export async function PUT(request, { params }) {
     return Response.json({ ok: true, message: "User updated successfully" });
   } catch (error) {
     return safeInternalError(error, "admin-user-update");
+  }
+}
+
+export async function DELETE(request, { params }) {
+  try {
+    const originError = rejectCrossSiteRequest(request);
+    if (originError) return originError;
+    const { session, error } = await getSessionWithRole(["admin"]);
+    if (error) return error;
+
+    const { id } = await params;
+    if (!ObjectId.isValid(id)) return Response.json({ error: "Invalid user ID" }, { status: 400 });
+    if (id === session.user.id) {
+      return Response.json({ error: "For safety, you cannot delete your own account." }, { status: 400 });
+    }
+
+    const db = await getDb();
+    const users = db.collection("users");
+    const targetId = new ObjectId(id);
+    const target = await users.findOne({ _id: targetId });
+    if (!target) return Response.json({ error: "User not found" }, { status: 404 });
+
+    if (target.role === "admin" && target.active !== false) {
+      const releaseAdminLock = await acquireMongoLock(db, "active-admin-mutation", 10_000);
+      if (!releaseAdminLock) {
+        return Response.json({ error: "Another administrator change is in progress. Please retry." }, { status: 409 });
+      }
+      try {
+        const activeAdmins = await users.countDocuments({ role: "admin", active: { $ne: false } });
+        if (activeAdmins <= 1) {
+          return Response.json({ error: "The last active administrator cannot be deleted." }, { status: 409 });
+        }
+      } finally {
+        await releaseAdminLock();
+      }
+    }
+
+    if (target.role === "barber") {
+      const barberProfiles = await db.collection("barbers").find({ userId: id, deletedAt: { $exists: false } }).toArray();
+      await db.collection("barbers").updateMany(
+        { userId: id, deletedAt: { $exists: false } },
+        { $set: { verificationStatus: "rejected", verifiedAt: null, deletedAt: new Date(), updatedAt: new Date() } },
+      );
+      await Promise.all(barberProfiles.map((barber) => cancelActiveBookingsForBarber(
+        db,
+        barber,
+        "The barber account was removed by administrator.",
+      )));
+    }
+    await cancelActiveBookingsForCustomer(db, id, "The customer account was removed by administrator.");
+
+    await users.updateOne(
+      { _id: targetId },
+      { $set: { active: false, deletedAt: new Date(), updatedAt: new Date() }, $inc: { sessionVersion: 1 } },
+    );
+
+    await writeAuditLog(db, {
+      actorId: session.user.id,
+      action: "admin.user.delete",
+      targetType: "user",
+      targetId: id,
+      metadata: { targetEmail: target.email, role: target.role },
+    });
+
+    return Response.json({ ok: true, message: "User deleted successfully." });
+  } catch (error) {
+    return safeInternalError(error, "admin-user-delete");
   }
 }
