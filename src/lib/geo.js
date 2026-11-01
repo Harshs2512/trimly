@@ -2,7 +2,7 @@
  * Geographic search and distance utilities.
  */
 
-const KNOWN_CITY_COORDINATES = {
+export const KNOWN_CITY_COORDINATES = {
   delhi: [77.209, 28.6139],
   "new delhi": [77.209, 28.6139],
   mumbai: [72.8777, 19.076],
@@ -24,6 +24,18 @@ const KNOWN_CITY_COORDINATES = {
   kanpur: [80.3319, 26.4499],
   varanasi: [82.9739, 25.3176],
   agra: [78.0081, 27.1767],
+  noida: [77.391, 28.5355],
+  gurgaon: [77.0266, 28.4595],
+  gurugram: [77.0266, 28.4595],
+  ghaziabad: [77.4538, 28.6692],
+  faridabad: [77.3178, 28.4089],
+  thane: [72.9781, 19.2183],
+  "navi mumbai": [73.0297, 19.033],
+  kochi: [76.2673, 9.9312],
+  coimbatore: [76.9558, 11.0168],
+  vadodara: [73.1812, 22.3072],
+  amritsar: [74.8723, 31.634],
+  ludhiana: [75.8573, 30.901],
 };
 
 /**

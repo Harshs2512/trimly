@@ -6,6 +6,7 @@ import { writeAuditLog } from "@/lib/audit";
 import { safeInternalError, rejectCrossSiteRequest } from "@/lib/api";
 import { cancelActiveBookingsForBarber, cancelActiveBookingsForCustomer } from "@/lib/accountLifecycle";
 import { acquireMongoLock } from "@/lib/locks";
+import { resolveCityCoordinates } from "@/lib/geo";
 
 export async function PUT(request, { params }) {
   try {
@@ -44,13 +45,25 @@ export async function PUT(request, { params }) {
       return Response.json({ ok: true, message: "All sessions revoked for user." });
     }
 
-    const { role, active } = validation.data;
+    const { role, active, name, phone, city, address, coordinates } = validation.data;
     const removingActiveAdmin = target.role === "admin" && target.active !== false &&
       ((role && role !== "admin") || active === false);
 
     const updateFields = { updatedAt: new Date() };
     if (role !== undefined) updateFields.role = role;
     if (active !== undefined) updateFields.active = active;
+    if (name !== undefined) updateFields.name = name;
+    if (phone !== undefined) updateFields.phone = phone;
+    if (city !== undefined) updateFields.city = city;
+    if (address !== undefined) updateFields.address = address;
+    if (coordinates && Array.isArray(coordinates) && coordinates.length === 2) {
+      updateFields.location = { type: "Point", coordinates };
+    } else if (city || address) {
+      const fallbackCoords = resolveCityCoordinates(city || address);
+      if (fallbackCoords) {
+        updateFields.location = { type: "Point", coordinates: fallbackCoords };
+      }
+    }
 
     const sensitiveChanged = (role !== undefined && role !== target.role) ||
       (active !== undefined && active !== (target.active !== false));
@@ -102,7 +115,7 @@ export async function PUT(request, { params }) {
       action: "admin.user.update",
       targetType: "user",
       targetId: id,
-      metadata: { role, active },
+      metadata: { role, active, name, phone, city, address },
     });
 
     return Response.json({ ok: true, message: "User updated successfully" });

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import AdminGeoMap from "@/components/admin/AdminGeoMap";
 import {
   Users,
   Scissors,
@@ -34,6 +35,10 @@ import {
   Filter,
   X,
   Check,
+  Calendar,
+  Edit3,
+  Globe,
+  Compass,
 } from "lucide-react";
 
 export default function AdminClient({
@@ -55,6 +60,17 @@ export default function AdminClient({
   const [userSearch, setUserSearch] = useState("");
   const [userRoleFilter, setUserRoleFilter] = useState("all");
   const [userStatusFilter, setUserStatusFilter] = useState("all");
+  const [userCityFilter, setUserCityFilter] = useState("all");
+  const [userCreatedRange, setUserCreatedRange] = useState("all");
+
+  // User Location & Profile Edit State
+  const [editingUser, setEditingUser] = useState(null);
+  const [editUserName, setEditUserName] = useState("");
+  const [editUserPhone, setEditUserPhone] = useState("");
+  const [editUserCity, setEditUserCity] = useState("");
+  const [editUserAddress, setEditUserAddress] = useState("");
+  const [editUserRole, setEditUserRole] = useState("user");
+  const [editUserActive, setEditUserActive] = useState(true);
 
   // Barbers State
   const [barbers, setBarbers] = useState(initialBarbers);
@@ -110,17 +126,24 @@ export default function AdminClient({
     } else if (tabName === "users") {
       const role = options.role || "all";
       setUserRoleFilter(role);
-      loadUsers(1, role);
+      loadUsers(1, role, userStatusFilter, userSearch, userCityFilter, userCreatedRange);
     }
   }
 
   // Loaders
-  async function loadUsers(page = userPage, role = userRoleFilter, status = userStatusFilter, search = userSearch) {
+  async function loadUsers(
+    page = userPage,
+    role = userRoleFilter,
+    status = userStatusFilter,
+    search = userSearch,
+    city = userCityFilter,
+    createdRange = userCreatedRange
+  ) {
     setActionLoading("users-page");
     setError("");
     try {
       const res = await axios.get(
-        `/api/admin/users?page=${page}&limit=${pageSize}&search=${encodeURIComponent(search)}&role=${role}&status=${status}`
+        `/api/admin/users?page=${page}&limit=${pageSize}&search=${encodeURIComponent(search)}&role=${role}&status=${status}&city=${encodeURIComponent(city)}&createdRange=${createdRange}`
       );
       setUsers(res.data.users);
       setUserPage(page);
@@ -214,12 +237,52 @@ export default function AdminClient({
   async function inspectBarberDocs(b) {
     setInspectedBarber(b);
     try {
-      const res = await axios.get(`/api/barbers/${b._id}`);
+      const res = await axios.get(`/api/barbers/${b._id || b.id}`);
       if (res.data) {
-        setInspectedBarber((prev) => (prev && prev._id === b._id ? { ...prev, ...res.data } : prev));
+        setInspectedBarber((prev) => (prev && (prev._id === b._id || prev.id === b.id) ? { ...prev, ...res.data } : prev));
       }
     } catch {
-      // keep existing
+      // keep fallback
+    }
+  }
+
+  // Open Edit User Location & Profile Modal
+  function openEditUserModal(u) {
+    setEditingUser(u);
+    setEditUserName(u.name || "");
+    setEditUserPhone(u.phone || "");
+    setEditUserCity(u.city || "Delhi NCR");
+    setEditUserAddress(u.address || "");
+    setEditUserRole(u.role || "user");
+    setEditUserActive(u.active !== false);
+  }
+
+  // Save User Location & Profile Changes
+  async function submitEditUser() {
+    if (!editingUser) return;
+    const userId = editingUser._id || editingUser.id;
+    setActionLoading(`edit-user-${userId}`);
+    setError("");
+    setSuccessMessage("");
+    try {
+      const payload = {
+        name: editUserName,
+        phone: editUserPhone,
+        city: editUserCity,
+        address: editUserAddress,
+        role: editUserRole,
+        active: editUserActive,
+      };
+      await axios.put(`/api/admin/users/${userId}`, payload);
+      setUsers((prev) =>
+        prev.map((u) => (u._id === userId ? { ...u, ...payload } : u))
+      );
+      setSuccessMessage(`User "${editUserName}" location and profile updated successfully.`);
+      setEditingUser(null);
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to update user profile.");
+    } finally {
+      setActionLoading(null);
     }
   }
 
@@ -260,7 +323,7 @@ export default function AdminClient({
     try {
       await axios.put(`/api/admin/barbers/${id}`, { verificationStatus });
       setBarbers((prev) => prev.map((b) => (b._id === id ? { ...b, verificationStatus } : b)));
-      if (inspectedBarber && inspectedBarber._id === id) {
+      if (inspectedBarber && (inspectedBarber._id === id || inspectedBarber.id === id)) {
         setInspectedBarber((prev) => ({ ...prev, verificationStatus }));
       }
       setConfirmAction(null);
@@ -346,6 +409,35 @@ export default function AdminClient({
     "Admin assistance override approved",
   ];
 
+  const citySuggestions = [
+    "Delhi NCR",
+    "Mumbai",
+    "Bengaluru",
+    "Hyderabad",
+    "Pune",
+    "Jaipur",
+    "Kolkata",
+    "Chennai",
+    "Ahmedabad",
+    "Chandigarh",
+    "Lucknow",
+    "Indore",
+  ];
+
+  function formatRelativeTime(dateString) {
+    if (!dateString) return "Recently";
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffSec = Math.floor((now.getTime() - date.getTime()) / 1000);
+    if (diffSec < 60) return "Just now";
+    if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`;
+    if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`;
+    const diffDays = Math.floor(diffSec / 86400);
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 30) return `${diffDays}d ago`;
+    return date.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" });
+  }
+
   return (
     <div className="min-h-screen bg-background pb-20">
       <div className="container mx-auto px-4 sm:px-6 pt-10 max-w-7xl">
@@ -359,7 +451,7 @@ export default function AdminClient({
               Platform <span className="text-primary">Governance</span>
             </h1>
             <p className="mt-1 text-sm sm:text-base text-muted-foreground">
-              Effortlessly manage users, verify lounges, assist bookings, and monitor security safeguards.
+              Monitor geospatial map distributions, inspect user locations &amp; join dates, assist bookings, and verify lounges.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -404,6 +496,12 @@ export default function AdminClient({
           <TabsList className="bg-card/70 backdrop-blur border p-1.5 rounded-2xl h-auto flex flex-wrap gap-1.5">
             <TabsTrigger value="overview" className="rounded-xl px-4 py-2.5 gap-2 text-xs sm:text-sm font-semibold">
               <Activity className="w-4 h-4 text-primary" /> Overview &amp; Health
+            </TabsTrigger>
+            <TabsTrigger value="map" className="rounded-xl px-4 py-2.5 gap-2 text-xs sm:text-sm font-semibold">
+              <Compass className="w-4 h-4 text-primary" /> Visual Map
+              <span className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/20 text-primary">
+                {barbers.length + users.length} pins
+              </span>
             </TabsTrigger>
             <TabsTrigger value="bookings" className="rounded-xl px-4 py-2.5 gap-2 text-xs sm:text-sm font-semibold">
               <CalendarCheck className="w-4 h-4 text-primary" /> Assist Bookings
@@ -471,15 +569,16 @@ export default function AdminClient({
               </div>
 
               <div
-                onClick={() => jumpToTab("bookings", { status: "all" })}
+                onClick={() => jumpToTab("map")}
                 className="cursor-pointer group hover:scale-[1.02] transition-all"
               >
                 <Stat
-                  icon={CalendarCheck}
-                  label="Total Bookings"
-                  value={analytics?.summary?.totalBookings ?? totals.bookings}
-                  badge={`${analytics?.summary?.completionRate ?? 92}% completed`}
-                  actionHint="Assist bookings"
+                  icon={Compass}
+                  label="Geospatial Map"
+                  value={`${barbers.length + users.length} Mapped`}
+                  badge="Interactive Map"
+                  badgeColor="bg-primary/10 text-primary border border-primary/20"
+                  actionHint="Open visual map"
                 />
               </div>
 
@@ -503,6 +602,15 @@ export default function AdminClient({
               <span className="font-bold text-muted-foreground uppercase tracking-wider mr-1 flex items-center gap-1.5">
                 <Filter className="w-3.5 h-3.5 text-primary" /> Fast Actions:
               </span>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => jumpToTab("map")}
+                className="rounded-xl h-8 border-primary/40 bg-primary/10 text-primary gap-1.5 font-bold hover:bg-primary/20"
+              >
+                <Compass className="w-3.5 h-3.5" />
+                Open Visual Map
+              </Button>
               {totals.pendingBarbers > 0 && (
                 <Button
                   size="sm"
@@ -537,14 +645,6 @@ export default function AdminClient({
                 className="rounded-xl h-8 gap-1.5 font-semibold hover:border-primary"
               >
                 <ShieldAlert className="w-3.5 h-3.5 text-emerald-400" /> Security Safeguards
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => jumpToTab("users", { role: "all" })}
-                className="rounded-xl h-8 gap-1.5 font-semibold hover:border-primary"
-              >
-                <Users className="w-3.5 h-3.5 text-primary" /> All Registered Users ({totals.users})
               </Button>
             </div>
 
@@ -649,7 +749,17 @@ export default function AdminClient({
             </div>
           </TabsContent>
 
-          {/* TAB 2: ASSIST BOOKINGS */}
+          {/* TAB 2: VISUAL GEOSPATIAL MAP */}
+          <TabsContent value="map" className="space-y-6 mt-0">
+            <AdminGeoMap
+              barbers={barbers}
+              users={users}
+              onInspectBarber={(b) => inspectBarberDocs(b)}
+              onEditUser={(u) => openEditUserModal(u)}
+            />
+          </TabsContent>
+
+          {/* TAB 3: ASSIST BOOKINGS */}
           <TabsContent value="bookings" className="space-y-6 mt-0">
             {/* Search, Clear, and Status Filter Chips */}
             <div className="bg-card/50 border rounded-3xl p-5 space-y-4">
@@ -851,7 +961,7 @@ export default function AdminClient({
             </div>
           </TabsContent>
 
-          {/* TAB 3: BARBERS & LOUNGES */}
+          {/* TAB 4: BARBERS & LOUNGES */}
           <TabsContent value="barbers" className="space-y-6 mt-0">
             {/* Filter Bar with Status Pills and Search */}
             <div className="bg-card/50 border rounded-3xl p-5 space-y-4">
@@ -1023,25 +1133,25 @@ export default function AdminClient({
             />
           </TabsContent>
 
-          {/* TAB 4: MANAGE ALL USERS */}
+          {/* TAB 5: MANAGE ALL USERS (WITH CREATED DATE & LOCATION CONTROLS) */}
           <TabsContent value="users" className="space-y-6 mt-0">
-            {/* Filter Bar with Search and Role Selector */}
+            {/* Filter Bar with Search, Creation Date Filter & Location Selector */}
             <div className="bg-card/50 border rounded-3xl p-5 space-y-4">
               <div className="flex flex-col sm:flex-row items-center gap-3">
                 <div className="relative flex-1 w-full">
                   <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search users by name, email, or phone number..."
+                    placeholder="Search users by name, email, phone, city, or address..."
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && loadUsers(1, userRoleFilter, userStatusFilter, userSearch)}
+                    onKeyDown={(e) => e.key === "Enter" && loadUsers(1, userRoleFilter, userStatusFilter, userSearch, userCityFilter, userCreatedRange)}
                     className="pl-10 pr-9 h-10 rounded-xl"
                   />
                   {userSearch && (
                     <button
                       onClick={() => {
                         setUserSearch("");
-                        loadUsers(1, userRoleFilter, userStatusFilter, "");
+                        loadUsers(1, userRoleFilter, userStatusFilter, "", userCityFilter, userCreatedRange);
                       }}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     >
@@ -1051,19 +1161,20 @@ export default function AdminClient({
                 </div>
                 <Button
                   size="sm"
-                  onClick={() => loadUsers(1, userRoleFilter, userStatusFilter, userSearch)}
+                  onClick={() => loadUsers(1, userRoleFilter, userStatusFilter, userSearch, userCityFilter, userCreatedRange)}
                   className="rounded-xl h-10 px-5 font-semibold w-full sm:w-auto"
                 >
                   Search
                 </Button>
               </div>
 
-              {/* Role and Status Chips */}
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              {/* Multi-Dimensional Filter Controls: Role, Status, Creation Date, City */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-border/50">
+                {/* Role Chips */}
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-                  <span className="text-xs font-bold text-muted-foreground uppercase mr-1">Role:</span>
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase mr-1">Role:</span>
                   {[
-                    { id: "all", label: "All Users" },
+                    { id: "all", label: "All" },
                     { id: "user", label: "Customers" },
                     { id: "barber", label: "Barbers" },
                     { id: "admin", label: "Admins" },
@@ -1072,9 +1183,9 @@ export default function AdminClient({
                       key={r.id}
                       onClick={() => {
                         setUserRoleFilter(r.id);
-                        loadUsers(1, r.id, userStatusFilter, userSearch);
+                        loadUsers(1, r.id, userStatusFilter, userSearch, userCityFilter, userCreatedRange);
                       }}
-                      className={`px-3 py-1 rounded-xl text-xs font-bold transition ${
+                      className={`px-2.5 py-1 rounded-xl text-xs font-bold transition ${
                         userRoleFilter === r.id
                           ? "bg-primary text-primary-foreground shadow-sm"
                           : "bg-secondary/40 text-muted-foreground hover:bg-secondary/70"
@@ -1085,8 +1196,37 @@ export default function AdminClient({
                   ))}
                 </div>
 
+                {/* Account Creation Date Range Filter */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase mr-1 flex items-center gap-1">
+                    <Calendar className="w-3 h-3 text-primary" /> Joined:
+                  </span>
+                  {[
+                    { id: "all", label: "All Time" },
+                    { id: "today", label: "Today" },
+                    { id: "week", label: "Past 7d" },
+                    { id: "month", label: "Past 30d" },
+                  ].map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => {
+                        setUserCreatedRange(c.id);
+                        loadUsers(1, userRoleFilter, userStatusFilter, userSearch, userCityFilter, c.id);
+                      }}
+                      className={`px-2.5 py-1 rounded-xl text-xs font-bold transition ${
+                        userCreatedRange === c.id
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "bg-secondary/40 text-muted-foreground hover:bg-secondary/70"
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Status Chips */}
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-bold text-muted-foreground uppercase mr-1">Status:</span>
+                  <span className="text-[11px] font-bold text-muted-foreground uppercase mr-1">Status:</span>
                   {[
                     { id: "all", label: "All" },
                     { id: "active", label: "Active" },
@@ -1096,9 +1236,9 @@ export default function AdminClient({
                       key={s.id}
                       onClick={() => {
                         setUserStatusFilter(s.id);
-                        loadUsers(1, userRoleFilter, s.id, userSearch);
+                        loadUsers(1, userRoleFilter, s.id, userSearch, userCityFilter, userCreatedRange);
                       }}
-                      className={`px-3 py-1 rounded-xl text-xs font-bold transition ${
+                      className={`px-2.5 py-1 rounded-xl text-xs font-bold transition ${
                         userStatusFilter === s.id
                           ? "bg-primary text-primary-foreground shadow-sm"
                           : "bg-secondary/40 text-muted-foreground hover:bg-secondary/70"
@@ -1111,17 +1251,18 @@ export default function AdminClient({
               </div>
             </div>
 
-            {/* Users Table */}
+            {/* Users Table with Joined Date & Location Columns */}
             <div className="bg-card/40 border rounded-3xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead className="bg-secondary/20 border-b text-muted-foreground uppercase text-xs">
                     <tr>
-                      <th className="py-4 px-6">User Name</th>
-                      <th className="py-4 px-6">Email / Phone</th>
+                      <th className="py-4 px-6">User &amp; Contact</th>
+                      <th className="py-4 px-6">Location (City &amp; Area)</th>
+                      <th className="py-4 px-6">Created On</th>
                       <th className="py-4 px-6">Role Selection</th>
-                      <th className="py-4 px-6">Account Status</th>
-                      <th className="py-4 px-6 text-right">Instant Management Actions</th>
+                      <th className="py-4 px-6">Status</th>
+                      <th className="py-4 px-6 text-right">Manage &amp; Edit</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/60">
@@ -1141,11 +1282,42 @@ export default function AdminClient({
                                 </span>
                               )}
                             </div>
+                            <div className="text-xs text-muted-foreground mt-0.5">{u.email}</div>
+                            {u.phone && <div className="text-[11px] text-muted-foreground/70">{u.phone}</div>}
                           </td>
+
+                          {/* Location Column */}
                           <td className="py-4 px-6">
-                            <div className="text-muted-foreground">{u.email}</div>
-                            {u.phone && <div className="text-xs text-muted-foreground/70">{u.phone}</div>}
+                            <div className="flex items-start gap-1.5">
+                              <MapPin className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                              <div>
+                                <div className="font-semibold text-xs text-foreground">
+                                  {u.city || "Delhi NCR"}
+                                </div>
+                                <div className="text-[11px] text-muted-foreground truncate max-w-xs">
+                                  {u.address || "Area location pending"}
+                                </div>
+                              </div>
+                            </div>
                           </td>
+
+                          {/* Created Date Column */}
+                          <td className="py-4 px-6">
+                            <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                              <Calendar className="w-3.5 h-3.5 text-primary" />
+                              {u.createdAt
+                                ? new Date(u.createdAt).toLocaleDateString([], {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  })
+                                : "Recent"}
+                            </div>
+                            <div className="text-[11px] text-muted-foreground mt-0.5">
+                              {formatRelativeTime(u.createdAt)}
+                            </div>
+                          </td>
+
                           <td className="py-4 px-6">
                             <select
                               value={u.role || "user"}
@@ -1167,6 +1339,7 @@ export default function AdminClient({
                               <option value="admin">Administrator</option>
                             </select>
                           </td>
+
                           <td className="py-4 px-6">
                             <span
                               className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${
@@ -1176,8 +1349,21 @@ export default function AdminClient({
                               {u.active === false ? "Deactivated" : "Active"}
                             </span>
                           </td>
+
                           <td className="py-4 px-6 text-right">
-                            <div className="flex items-center justify-end gap-2">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* Edit User & Location Button */}
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openEditUserModal(u)}
+                                className="h-8 px-2 text-xs rounded-xl gap-1 text-foreground hover:border-primary"
+                                title="Edit Location & User Information"
+                              >
+                                <Edit3 className="w-3.5 h-3.5 text-primary" />
+                                <span className="hidden md:inline">Edit Location</span>
+                              </Button>
+
                               {/* Revoke Sessions Key */}
                               <Button
                                 variant="outline"
@@ -1193,10 +1379,9 @@ export default function AdminClient({
                                   })
                                 }
                                 title="Force logout across all devices"
-                                className="h-8 px-2.5 text-xs rounded-xl border-amber-500/30 text-amber-500 hover:bg-amber-500/10 gap-1"
+                                className="h-8 px-2 text-xs rounded-xl border-amber-500/30 text-amber-500 hover:bg-amber-500/10"
                               >
                                 <KeyRound className="w-3.5 h-3.5" />
-                                <span className="hidden sm:inline">Revoke</span>
                               </Button>
 
                               {/* Toggle Active / Deactivate */}
@@ -1254,13 +1439,13 @@ export default function AdminClient({
                   page={userPage}
                   totalPages={userTotalPages}
                   loading={actionLoading === "users-page"}
-                  onPage={(p) => loadUsers(p, userRoleFilter, userStatusFilter, userSearch)}
+                  onPage={(p) => loadUsers(p, userRoleFilter, userStatusFilter, userSearch, userCityFilter, userCreatedRange)}
                 />
               </div>
             </div>
           </TabsContent>
 
-          {/* TAB 5: LIVE AUDIT STREAM */}
+          {/* TAB 6: LIVE AUDIT STREAM */}
           <TabsContent value="activity" className="space-y-6 mt-0">
             {/* Filter & Category Pills */}
             <div className="bg-card/50 border rounded-3xl p-5 space-y-4">
@@ -1391,7 +1576,146 @@ export default function AdminClient({
         </Tabs>
       </div>
 
-      {/* MODAL 1: Confirmation Dialog for User/Barber Changes */}
+      {/* MODAL 1: Edit User Profile & Location Dialog */}
+      <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
+        <DialogContent className="max-w-lg rounded-3xl border">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-primary" /> Manage User &amp; Location
+            </DialogTitle>
+            <DialogDescription>
+              View when the account was registered and manage user location, contact, and permissions.
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingUser && (
+            <div className="space-y-4 py-2 text-sm">
+              {/* Account Registration Metadata Banner */}
+              <div className="p-3.5 rounded-2xl bg-secondary/30 border space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-primary" /> Account Created Date:
+                  </span>
+                  <span className="font-bold text-foreground">
+                    {editingUser.createdAt
+                      ? new Date(editingUser.createdAt).toLocaleString([], {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "Recently Registered"}
+                  </span>
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  User ID: <span className="font-mono text-foreground font-semibold">{editingUser._id || editingUser.id}</span>
+                </div>
+              </div>
+
+              {/* Name & Phone */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">User Name</label>
+                  <Input
+                    value={editUserName}
+                    onChange={(e) => setEditUserName(e.target.value)}
+                    className="rounded-xl h-9 text-xs"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Phone Number</label>
+                  <Input
+                    placeholder="+91..."
+                    value={editUserPhone}
+                    onChange={(e) => setEditUserPhone(e.target.value)}
+                    className="rounded-xl h-9 text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* City Selection with Quick Suggestions */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">User City / Metro</label>
+                  <span className="text-[11px] text-muted-foreground">Quick select:</span>
+                </div>
+                <Input
+                  placeholder="e.g. Delhi NCR, Mumbai, Bengaluru"
+                  value={editUserCity}
+                  onChange={(e) => setEditUserCity(e.target.value)}
+                  className="rounded-xl h-9 text-xs"
+                />
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {citySuggestions.slice(0, 6).map((city) => (
+                    <button
+                      key={city}
+                      type="button"
+                      onClick={() => setEditUserCity(city)}
+                      className="px-2 py-0.5 rounded-lg text-[10px] bg-secondary/50 hover:bg-primary/10 hover:text-primary transition font-medium"
+                    >
+                      {city}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Address / Area */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase text-muted-foreground">Address / Street Area</label>
+                <Input
+                  placeholder="e.g. Sector 18, Connaught Place, Bandra West"
+                  value={editUserAddress}
+                  onChange={(e) => setEditUserAddress(e.target.value)}
+                  className="rounded-xl h-9 text-xs"
+                />
+              </div>
+
+              {/* Role & Activation Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Role</label>
+                  <select
+                    value={editUserRole}
+                    onChange={(e) => setEditUserRole(e.target.value)}
+                    className="w-full h-9 rounded-xl border bg-background px-3 text-xs font-semibold"
+                  >
+                    <option value="user">Customer</option>
+                    <option value="barber">Barber</option>
+                    <option value="admin">Administrator</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Status</label>
+                  <select
+                    value={editUserActive ? "active" : "deactivated"}
+                    onChange={(e) => setEditUserActive(e.target.value === "active")}
+                    className="w-full h-9 rounded-xl border bg-background px-3 text-xs font-semibold"
+                  >
+                    <option value="active">Active</option>
+                    <option value="deactivated">Deactivated</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setEditingUser(null)} className="rounded-xl">
+              Cancel
+            </Button>
+            <Button
+              onClick={submitEditUser}
+              disabled={actionLoading === `edit-user-${editingUser?._id || editingUser?.id}`}
+              className="rounded-xl font-semibold"
+            >
+              {actionLoading?.startsWith("edit-user") ? "Saving Changes..." : "Save Location & Profile"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL 2: Confirmation Dialog for User/Barber Actions */}
       <Dialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
         <DialogContent className="rounded-3xl border">
           <DialogHeader>
@@ -1416,7 +1740,7 @@ export default function AdminClient({
         </DialogContent>
       </Dialog>
 
-      {/* MODAL 2: Assist Booking Override Dialog with Quick Preset Notes */}
+      {/* MODAL 3: Assist Booking Override Dialog with Quick Preset Notes */}
       <Dialog open={!!assistedBooking} onOpenChange={(open) => !open && setAssistedBooking(null)}>
         <DialogContent className="max-w-lg rounded-3xl border">
           <DialogHeader>
@@ -1500,7 +1824,7 @@ export default function AdminClient({
         </DialogContent>
       </Dialog>
 
-      {/* MODAL 3: Barber Document Inspection Modal */}
+      {/* MODAL 4: Barber Document Inspection Modal */}
       <Dialog open={!!inspectedBarber} onOpenChange={(open) => !open && setInspectedBarber(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl border">
           {inspectedBarber && (
@@ -1673,7 +1997,7 @@ export default function AdminClient({
         </DialogContent>
       </Dialog>
 
-      {/* MODAL 4: Fullscreen Image Preview Dialog */}
+      {/* MODAL 5: Fullscreen Image Preview Dialog */}
       <Dialog open={!!previewImage} onOpenChange={(open) => !open && setPreviewImage(null)}>
         <DialogContent className="max-w-4xl p-2 bg-black/95 border-border/40 rounded-3xl">
           {previewImage && (

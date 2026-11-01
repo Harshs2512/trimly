@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getActiveSession } from "@/lib/authz";
 import { getDb } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
+import { resolveCityCoordinates } from "@/lib/geo";
 import AdminClient from "./AdminClient";
 
 const PAGE_SIZE = 20;
@@ -78,19 +79,37 @@ export default async function AdminPage() {
     : [];
   const actorMap = new Map(logActors.map((a) => [a._id.toString(), a]));
 
-  const users = rawUsers.map((u) => ({
-    ...u,
-    _id: u._id.toString(),
-    createdAt: u.createdAt?.toISOString?.() || u.createdAt,
-    updatedAt: u.updatedAt?.toISOString?.() || u.updatedAt,
-  }));
+  const users = rawUsers.map((u) => {
+    let coords = u.location?.coordinates;
+    if (!coords || !Array.isArray(coords) || coords.length !== 2) {
+      coords = resolveCityCoordinates(u.city || u.address);
+    }
+    return {
+      ...u,
+      _id: u._id.toString(),
+      createdAt: u.createdAt?.toISOString?.() || u.createdAt,
+      updatedAt: u.updatedAt?.toISOString?.() || u.updatedAt,
+      city: u.city || "",
+      address: u.address || "",
+      coordinates: coords || [77.209, 28.6139],
+    };
+  });
 
-  const barbers = rawBarbers.map((b) => ({
-    ...b,
-    _id: b._id.toString(),
-    createdAt: b.createdAt?.toISOString?.() || b.createdAt,
-    updatedAt: b.updatedAt?.toISOString?.() || b.updatedAt,
-  }));
+  const barbers = rawBarbers.map((b) => {
+    let coords = b.location?.coordinates;
+    if (!coords || !Array.isArray(coords) || coords.length !== 2) {
+      coords = resolveCityCoordinates(b.city || b.address);
+    }
+    return {
+      ...b,
+      _id: b._id.toString(),
+      createdAt: b.createdAt?.toISOString?.() || b.createdAt,
+      updatedAt: b.updatedAt?.toISOString?.() || b.updatedAt,
+      city: b.city || "Delhi NCR",
+      address: b.address || "Address pending",
+      coordinates: coords || [77.209, 28.6139],
+    };
+  });
 
   const bookings = rawBookings.map((b) => {
     const u = userMap.get(String(b.userId));

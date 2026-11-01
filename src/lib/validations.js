@@ -122,12 +122,28 @@ export const bookingUpdateSchema = z.object({
 });
 
 export const adminUserUpdateSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  phone: z.string().max(20).optional(),
+  city: z.string().max(100).optional(),
+  address: z.string().max(250).optional(),
   role: z.enum(["user", "barber", "admin"]).optional(),
   active: z.boolean().optional(),
   action: z.enum(["revoke_sessions"]).optional(),
-}).refine((data) => data.role !== undefined || data.active !== undefined || data.action !== undefined, {
-  message: "No valid update fields supplied",
-});
+  coordinates: z.array(z.number()).length(2).optional(),
+}).refine(
+  (data) =>
+    data.name !== undefined ||
+    data.phone !== undefined ||
+    data.city !== undefined ||
+    data.address !== undefined ||
+    data.role !== undefined ||
+    data.active !== undefined ||
+    data.action !== undefined ||
+    data.coordinates !== undefined,
+  {
+    message: "No valid update fields supplied",
+  }
+);
 
 export const adminBarberUpdateSchema = z.object({
   verificationStatus: z.enum(["pending", "verified", "rejected"]),
