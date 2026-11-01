@@ -2,7 +2,43 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { MapPin, Clock, Scissors, ArrowRight, Users, Armchair, Star, Camera } from "lucide-react";
 
+function checkIsOpenNow(barber) {
+  if (!barber?.workingHours?.open || !barber?.workingHours?.close) return true;
+  try {
+    const tz = barber.timezone || "Asia/Kolkata";
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      weekday: "long",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(now);
+    const day = parts.find((p) => p.type === "weekday")?.value?.toLowerCase();
+    const hour = parseInt(parts.find((p) => p.type === "hour")?.value || "0", 10);
+    const minute = parseInt(parts.find((p) => p.type === "minute")?.value || "0", 10);
+
+    const closedDays = (barber.closedDays || []).map((d) => d.toLowerCase());
+    if (day && closedDays.includes(day)) {
+      return false;
+    }
+
+    const [openH, openM] = barber.workingHours.open.split(":").map(Number);
+    const [closeH, closeM] = barber.workingHours.close.split(":").map(Number);
+
+    const currentMinutes = hour * 60 + minute;
+    const openMinutes = openH * 60 + openM;
+    const closeMinutes = closeH * 60 + closeM;
+
+    return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+  } catch {
+    return true;
+  }
+}
+
 export default function BarberCard({ barber, index = 0 }) {
+  const isOpen = checkIsOpenNow(barber);
   const waitTime = Math.max(0, barber.waitingTime || 0);
   const waitLabel = waitTime === 0 ? "Available now" : `~${waitTime} min wait`;
   const waitClass =
@@ -40,7 +76,7 @@ export default function BarberCard({ barber, index = 0 }) {
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
-        
+
         {/* Rating Badge on top left of banner */}
         <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full border border-white/20 flex items-center gap-1.5 text-xs font-bold bg-background/90 backdrop-blur text-foreground shadow-sm">
           <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
@@ -53,12 +89,28 @@ export default function BarberCard({ barber, index = 0 }) {
           )}
         </div>
 
-        {/* Wait time badge on top right */}
-        <div
-          className={`absolute top-3 right-3 px-3 py-1 rounded-full border flex items-center gap-1.5 text-xs font-bold bg-background/90 backdrop-blur shadow-sm ${waitClass}`}
-        >
-          <Clock className="w-3.5 h-3.5" />
-          {waitLabel}
+        {/* Status (Open/Closed) and wait time on top right */}
+        <div className="absolute top-3 right-3 flex items-center gap-1.5">
+          {isOpen ? (
+            <span className="px-2.5 py-1 rounded-full border border-emerald-500/30 bg-background/95 backdrop-blur text-emerald-600 dark:text-emerald-400 text-xs font-bold flex items-center gap-1.5 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Open Now
+            </span>
+          ) : (
+            <span className="px-2.5 py-1 rounded-full border border-rose-500/30 bg-background/95 backdrop-blur text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-1.5 shadow-sm">
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
+              Closed
+            </span>
+          )}
+
+          {isOpen && (
+            <div
+              className={`px-2.5 py-1 rounded-full border flex items-center gap-1.5 text-xs font-bold bg-background/90 backdrop-blur shadow-sm ${waitClass}`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              {waitLabel}
+            </div>
+          )}
         </div>
       </div>
 
@@ -93,10 +145,20 @@ export default function BarberCard({ barber, index = 0 }) {
         <h3 className="font-bold text-xl tracking-tight group-hover:text-primary transition-colors">
           {barber.shopName}
         </h3>
-        <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-1.5 mb-3 line-clamp-1">
-          <MapPin className="w-3.5 h-3.5 shrink-0 text-muted-foreground/70" />
-          {barber.address}
-        </p>
+
+        <div className="flex items-center justify-between text-sm text-muted-foreground mt-1.5 mb-3 gap-2">
+          <p className="flex items-center gap-1.5 line-clamp-1 flex-1">
+            <MapPin className="w-3.5 h-3.5 shrink-0 text-muted-foreground/70" />
+            {barber.address}
+          </p>
+          {barber.distanceKm !== undefined && barber.distanceKm !== null && (
+            <span className="text-xs font-semibold text-primary shrink-0 bg-primary/10 px-2.5 py-0.5 rounded-full border border-primary/20">
+              {barber.distanceKm < 1
+                ? `${Math.round(barber.distanceKm * 1000)}m away`
+                : `${barber.distanceKm} km away`}
+            </span>
+          )}
+        </div>
 
         {/* Specialties / tags */}
         {!!barber.specialties?.length && (

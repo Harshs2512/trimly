@@ -22,6 +22,41 @@ import {
   Star,
 } from "lucide-react";
 
+function checkIsOpenNow(barber) {
+  if (!barber?.workingHours?.open || !barber?.workingHours?.close) return true;
+  try {
+    const tz = barber.timezone || "Asia/Kolkata";
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat("en-US", {
+      timeZone: tz,
+      weekday: "long",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(now);
+    const day = parts.find((p) => p.type === "weekday")?.value?.toLowerCase();
+    const hour = parseInt(parts.find((p) => p.type === "hour")?.value || "0", 10);
+    const minute = parseInt(parts.find((p) => p.type === "minute")?.value || "0", 10);
+
+    const closedDays = (barber.closedDays || []).map((d) => d.toLowerCase());
+    if (day && closedDays.includes(day)) {
+      return false;
+    }
+
+    const [openH, openM] = barber.workingHours.open.split(":").map(Number);
+    const [closeH, closeM] = barber.workingHours.close.split(":").map(Number);
+
+    const currentMinutes = hour * 60 + minute;
+    const openMinutes = openH * 60 + openM;
+    const closeMinutes = closeH * 60 + closeM;
+
+    return currentMinutes >= openMinutes && currentMinutes < closeMinutes;
+  } catch {
+    return true;
+  }
+}
+
 export default function BarberDetail() {
   const params = useParams();
   const router = useRouter();
@@ -73,8 +108,9 @@ export default function BarberDetail() {
   const waitText = waitTime === 0 ? "Available now" : `Approximately ${waitTime} minutes`;
   const closedDays = barber.closedDays || [];
   const hasPhotos = barber.shopExteriorImage || barber.shopInteriorImage;
-  const displayReviewCount = liveStats ? liveStats.reviewCount : Number(barber.reviewCount || 0);
-  const displayAverageRating = liveStats && liveStats.reviewCount > 0 ? liveStats.averageRating : Number(barber.averageRating || 0);
+  const isOpen = checkIsOpenNow(barber);
+  const displayReviewCount = barber.reviewCount !== undefined ? Number(barber.reviewCount) : (liveStats ? liveStats.reviewCount : 0);
+  const displayAverageRating = barber.averageRating !== undefined ? Number(barber.averageRating) : (liveStats ? liveStats.averageRating : 0);
 
   const displayAddress = barber.city && barber.address?.toLowerCase().includes(barber.city.toLowerCase())
     ? barber.address
@@ -103,6 +139,19 @@ export default function BarberDetail() {
                 <div className="flex flex-wrap items-center gap-2.5">
                   <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight">{barber.shopName}</h1>
                   <ShieldCheck className="w-6 h-6 text-green-600 shrink-0" aria-label="Verified shop" />
+
+                  {/* Open / Closed Status Badge */}
+                  {isOpen ? (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                      Open Now
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                      <span className="w-2 h-2 rounded-full bg-rose-500" />
+                      Closed
+                    </span>
+                  )}
                   
                   {/* Rating Badge */}
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-yellow-500/10 text-yellow-600 border border-yellow-500/20">
@@ -241,6 +290,20 @@ export default function BarberDetail() {
           <div className="space-y-3">
             <h3 className="font-bold text-lg">Operating Schedule</h3>
             <div className="space-y-2.5 text-sm bg-card/40 p-4 rounded-2xl border">
+              <div className="flex justify-between items-center pb-2 border-b">
+                <span className="text-muted-foreground">Current Status</span>
+                {isOpen ? (
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                    Open Now
+                  </span>
+                ) : (
+                  <span className="font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-rose-500" />
+                    Closed
+                  </span>
+                )}
+              </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Opening time</span>
                 <span className="font-medium">{barber.workingHours?.open || "09:00"}</span>

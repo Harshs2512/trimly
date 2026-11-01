@@ -7,7 +7,7 @@
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
 
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: var(--font-geist-mono);
 
   --color-sidebar-ring: hsl(var(--sidebar-ring));
@@ -18,12 +18,6 @@
   --color-sidebar-primary: hsl(var(--sidebar-primary));
   --color-sidebar-foreground: hsl(var(--sidebar-foreground));
   --color-sidebar: hsl(var(--sidebar));
-
-  --color-chart-5: hsl(var(--chart-5));
-  --color-chart-4: hsl(var(--chart-4));
-  --color-chart-3: hsl(var(--chart-3));
-  --color-chart-2: hsl(var(--chart-2));
-  --color-chart-1: hsl(var(--chart-1));
 
   --color-ring: hsl(var(--ring));
   --color-input: hsl(var(--input));
@@ -54,104 +48,89 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-
 :root {
-  --background: 0 0% 96.5%; /* #F6F6F6 */
-    --foreground: 220 15% 15%;
+  --background: 180 14% 97.5%; /* #F8FAFA Luxury Canvas */
+  --foreground: 180 17% 8%; /* #111818 Text Primary */
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 15% 15%;
+  --card: 0 0% 100%; /* #FFFFFF Surface */
+  --card-foreground: 180 17% 8%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 15%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 180 17% 8%;
 
-    --primary: 179 73.1% 23.3%; /* #106766 Deep Teal */
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 179 73.1% 30%;
+  --primary: 179 73% 23%; /* #106766 Imperial Teal Light */
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 179 73% 19%; /* #0D5453 */
 
-    --secondary: 220 15% 90%;
-    --secondary-foreground: 220 15% 15%;
+  --secondary: 45 93% 47%; /* #F59E0B Accent Amber */
+  --secondary-foreground: 0 0% 100%;
 
-    --muted: 220 15% 96%;
-    --muted-foreground: 220 10% 45%;
+  --muted: 180 12% 95%; /* #F1F5F5 Surface Subtle */
+  --muted-foreground: 180 8% 35%; /* #526060 Text Secondary */
 
-    --accent: 46 96% 55%;
-    --accent-foreground: 220 15% 15%;
-    --accent-hover: 46 96% 48%;
+  --accent: 45 93% 47%; /* #F59E0B Accent Amber */
+  --accent-foreground: 0 0% 100%;
+  --accent-hover: 45 93% 40%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%; /* #EF4444 */
+  --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 210 100% 55%;
+  --border: 180 8% 90%; /* #E2E8E8 Hairline Border */
+  --input: 180 8% 90%;
+  --ring: 179 73% 23%;
 
-    --radius: 0.75rem;
-    
-    --gradient-hero: linear-gradient(135deg, hsl(210 100% 55%) 0%, hsl(210 100% 65%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 15% 98%) 100%);
-    
-    --shadow-soft: 0 4px 24px -4px hsl(210 100% 55% / 0.15);
-    --shadow-hover: 0 8px 32px -4px hsl(210 100% 55% / 0.25);
-    
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --radius: 0.875rem;
 
-    --sidebar-background: 0 0% 98%;
+  --sidebar-background: 180 12% 95%;
+  --sidebar-foreground: 180 17% 8%;
+  --sidebar-primary: 179 73% 23%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 180 8% 90%;
+  --sidebar-accent-foreground: 180 17% 8%;
+  --sidebar-border: 180 8% 90%;
+  --sidebar-ring: 179 73% 23%;
+}
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+.dark {
+  --background: 173 25% 6%; /* #0B1312 Modern Grooming Luxury Canvas */
+  --foreground: 180 12% 95%; /* #F1F5F5 Text Primary */
 
-    --sidebar-primary: 240 5.9% 10%;
+  --card: 174 22% 10%; /* #131E1D Surface */
+  --card-foreground: 180 12% 95%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+  --popover: 174 22% 10%;
+  --popover-foreground: 180 12% 95%;
 
-    --sidebar-accent: 240 4.8% 95.9%;
+  --primary: 179 70% 31%; /* #178584 Imperial Teal Dark */
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 179 71% 40%; /* #1EB0AF */
 
-    --sidebar-accent-foreground: 240 5.9% 10%;
+  --secondary: 45 96% 56%; /* #FBBF24 Accent Amber */
+  --secondary-foreground: 173 25% 6%;
 
-    --sidebar-border: 220 13% 91%;
+  --muted: 176 21% 13%; /* #1A2827 Surface Subtle */
+  --muted-foreground: 177 8% 61%; /* #94A3A2 Text Secondary */
 
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
+  --accent: 45 96% 56%; /* #FBBF24 Accent Amber */
+  --accent-foreground: 173 25% 6%;
+  --accent-hover: 45 96% 65%;
 
-  .dark {
-    --background: 220 20% 8%;
-    --foreground: 0 0% 98%;
+  --destructive: 0 91% 71%; /* #F87171 Status Danger */
+  --destructive-foreground: 0 0% 100%;
 
-    --card: 220 20% 10%;
-    --card-foreground: 0 0% 98%;
+  --border: 174 21% 17%; /* #223533 Hairline Border */
+  --input: 174 21% 17%;
+  --ring: 179 70% 31%;
 
-    --popover: 220 20% 10%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 179 73.1% 23.3%; /* Deep Teal */
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 179 73.1% 30%;
-
-    --secondary: 220 15% 16%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 220 15% 16%;
-    --muted-foreground: 220 10% 65%;
-
-    --accent: 46 96% 55%;
-    --accent-foreground: 220 15% 15%;
-    --accent-hover: 46 96% 62%;
-
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
-    --ring: 210 100% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
+  --sidebar-background: 174 22% 10%;
+  --sidebar-foreground: 180 12% 95%;
+  --sidebar-primary: 179 70% 31%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 176 21% 13%;
+  --sidebar-accent-foreground: 180 12% 95%;
+  --sidebar-border: 174 21% 17%;
+  --sidebar-ring: 179 70% 31%;
+}
 
 @layer base {
   * {
@@ -159,5 +138,6 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }

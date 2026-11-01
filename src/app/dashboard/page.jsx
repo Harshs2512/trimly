@@ -8,6 +8,7 @@ import DashboardClient from "./DashboardClient";
 export default async function Dashboard() {
   const session = await getActiveSession();
   if (!session) redirect("/login");
+  if (session.user.role === "admin") redirect("/admin");
 
   const db = await getDb();
   await expirePendingBookings(db, { userId: session.user.id });

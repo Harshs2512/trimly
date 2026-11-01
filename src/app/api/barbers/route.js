@@ -5,6 +5,7 @@ import { getActiveSession } from "@/lib/authz";
 import { escapeRegex, parsePagination, safeInternalError, rejectCrossSiteRequest } from "@/lib/api";
 import { calculateBarberWaitingTime } from "@/lib/waitingTime";
 import { ensureIndexes } from "@/lib/indexes";
+import { calculateDistanceKm, resolveCityCoordinates, isValidCoordinate } from "@/lib/geo";
 
 function normalizeServices(services = []) {
   const names = new Set();
@@ -29,6 +30,9 @@ export async function GET(request) {
     const name = url.searchParams.get("name")?.trim();
     const search = url.searchParams.get("search")?.trim();
     const userId = url.searchParams.get("userId")?.trim();
+    const rawLat = parseFloat(url.searchParams.get("lat") || url.searchParams.get("latitude"));
+    const rawLng = parseFloat(url.searchParams.get("lng") || url.searchParams.get("longitude"));
+    const hasCoordinates = isValidCoordinate(rawLng, rawLat);
     const { page, limit, skip } = parsePagination(url.searchParams, { defaultLimit: 24, maxLimit: 100 });
 
     const db = await getDb();
@@ -62,12 +66,29 @@ export async function GET(request) {
     const result = await Promise.all(
       list.map(async (barber) => {
         const waitingTime = await calculateBarberWaitingTime(db, barber._id.toString());
-        if (userId) {
-          return { ...barber, waitingTime };
+        const barberData = userId ? { ...barber, waitingTime } : publicBarber(barber, waitingTime);
+
+        if (hasCoordinates) {
+          let bLat = barber.location?.coordinates?.[1];
+          let bLng = barber.location?.coordinates?.[0];
+          if (!bLat || !bLng) {
+            const fallback = resolveCityCoordinates(barber.city || barber.address);
+            if (fallback) {
+              bLng = fallback[0];
+              bLat = fallback[1];
+            }
+          }
+          if (bLat && bLng) {
+            barberData.distanceKm = calculateDistanceKm(rawLat, rawLng, bLat, bLng);
+          }
         }
-        return publicBarber(barber, waitingTime);
+        return barberData;
       })
     );
+
+    if (hasCoordinates) {
+      result.sort((a, b) => (a.distanceKm ?? Infinity) - (b.distanceKm ?? Infinity));
+    }
     return Response.json({
       barbers: result,
       pagination: { total, page, limit, totalPages: Math.max(1, Math.ceil(total / limit)) },
