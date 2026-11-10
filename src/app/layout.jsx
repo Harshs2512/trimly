@@ -18,13 +18,13 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 export const metadata = {
   metadataBase: new URL(APP_URL),
   title: {
-    default: "Trimly: Book Barber & Salon Appointments Online in India",
-    template: "%s | Trimly",
+    default: "Trimlly: Book Barber & Salon Appointments Online in India",
+    template: "%s | Trimlly",
   },
   description:
     "Find and book verified barbers and salons near you. Real-time slots, INR pricing, instant confirmation. Serving Indore, Bhopal, Delhi, Mumbai and 15+ Indian cities.",
-  authors: [{ name: "Trimly Team" }],
-  creator: "Trimly",
+  authors: [{ name: "Trimlly Team" }],
+  creator: "Trimlly",
   alternates: {
     canonical: APP_URL,
   },
@@ -32,22 +32,22 @@ export const metadata = {
     type: "website",
     locale: "en_IN",
     url: APP_URL,
-    title: "Trimly: Book Barber & Salon Appointments Online in India",
+    title: "Trimlly: Book Barber & Salon Appointments Online in India",
     description:
       "Find and book verified barbers and salons near you. Real-time slots, INR pricing, instant confirmation.",
-    siteName: "Trimly",
+    siteName: "Trimlly",
     images: [
       {
         url: `${APP_URL}/og-image.jpg`,
         width: 1200,
         height: 630,
-        alt: "Trimly - Book Barber & Salon Appointments Online in India",
+        alt: "Trimlly - Book Barber & Salon Appointments Online in India",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Trimly: Book Barber & Salon Appointments Online in India",
+    title: "Trimlly: Book Barber & Salon Appointments Online in India",
     description:
       "Find and book verified barbers and salons near you. Real-time slots, INR pricing, instant confirmation.",
     images: [`${APP_URL}/og-image.jpg`],
@@ -62,7 +62,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   const companyName =
-    process.env.NEXT_PUBLIC_COMPANY_NAME || "Trimly";
+    process.env.NEXT_PUBLIC_COMPANY_NAME || "Trimlly";
 
   // Organization + WebSite structured data (replaces the generic SoftwareApplication)
   const jsonLd = [
@@ -77,7 +77,7 @@ export default function RootLayout({ children }) {
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      name: "Trimly",
+      name: "Trimlly",
       url: APP_URL,
       potentialAction: {
         "@type": "SearchAction",

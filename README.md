@@ -1,6 +1,6 @@
-# Trimly
+# Trimlly
 
-Trimly is a Next.js 16 barber/salon discovery and appointment-booking application with customer, barber, and administrator workspaces.
+Trimlly is a Next.js 16 barber/salon discovery and appointment-booking application with customer, barber, and administrator workspaces.
 
 This source includes the security, booking-integrity, authentication, UI/UX and maintenance remediation described in `TASKS.md`.
 

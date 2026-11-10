@@ -85,16 +85,16 @@ Always use the exact registered shop name and standardized address format:
 
 ## 3. B2B Barber Onboarding Page Strategy (`/for-barbers`)
 
-To compete realistically against legacy SaaS like Salonist, Fresha, and Zenoti, Trimly must communicate a compelling, low-friction value proposition tailored to Indian salon owners.
+To compete realistically against traditional salon software, Trimlly communicates a compelling, low-friction value proposition tailored to Indian salon owners.
 
-### 3.1 Trimly vs Legacy Salon Software (Comparison Matrix)
+### 3.1 Trimlly vs Traditional Salon Software (Comparison Matrix)
 
-| Feature | Legacy SaaS (Salonist / Zenoti) | Trimly Partner Platform |
+| Feature | Traditional Salon Software | Trimlly Partner Platform |
 |---|---|---|
 | **Upfront Cost** | ₹1,500 - ₹5,000 / month subscription | **₹0 Free Forever to List & Receive Bookings** |
 | **Setup Complexity** | Days of training, heavy hardware requirements | **5-minute mobile sign-up via Phone OTP** |
 | **Client Discovery** | Just a software tool; you find your own clients | **Built-in marketplace of local customers searching by city** |
-| **Payment Options** | Often requires international payment gateways | **100% Indian UPI, Card & Cash-at-Salon in INR** |
+| **Payment Options** | Often requires complex gateway setups | **100% Indian UPI, Card & Cash-at-Salon in INR** |
 | **Hardware Needed** | POS desktop, barcode scanners, thermal printers | **Any Android/iPhone smartphone or tablet** |
 | **Customer Notifications** | Extra charge for SMS packs (DLT fees) | **Automated SMS & Email confirmations included** |
 

@@ -11,7 +11,7 @@ export default function WorkspaceNavbar() {
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center" aria-label="Trimly home"><Image src="/logo.webp" width={60} height={50} alt="Trimly" className="h-11 w-auto object-contain" priority /></Link>
+        <Link href="/" className="flex items-center" aria-label="Trimlly home"><Image src="/logo.webp" width={60} height={50} alt="Trimlly" className="h-11 w-auto object-contain" priority /></Link>
         <nav className="flex items-center gap-2">
           <Link href="/barbers" className="hidden sm:block"><Button variant="ghost" size="sm">Browse</Button></Link>
           <Link href="/dashboard"><Button variant="ghost" size="sm">Dashboard</Button></Link>

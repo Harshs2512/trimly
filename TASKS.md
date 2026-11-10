@@ -1,4 +1,4 @@
-# Trimly Remediation Tasks
+# Trimlly Remediation Tasks
 
 **Code-remediation status:** Complete for the agreed existing-app bug/security scope.
 

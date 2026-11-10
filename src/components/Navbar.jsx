@@ -40,13 +40,13 @@ export default function Navbar() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between min-h-14">
           {/* Brand Logo & Wordmark */}
-          <Link href="/" className="flex items-center gap-2.5 group" aria-label="Trimly home">
+          <Link href="/" className="flex items-center gap-2.5 group" aria-label="Trimlly home">
             <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-105 transition-transform duration-200">
               <Scissors className="w-5 h-5 text-primary" />
             </div>
             <div className="flex flex-col">
               <span className="font-extrabold tracking-wider text-xl uppercase text-foreground flex items-center gap-1.5">
-                Trimly
+                Trimlly
                 <span className="w-1.5 h-1.5 rounded-full bg-secondary inline-block" />
               </span>
               <span className="text-[10px] tracking-widest text-muted-foreground uppercase font-semibold -mt-1">

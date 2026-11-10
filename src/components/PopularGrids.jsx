@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, MapPin, Scissors, Sparkles } from "lucide-react";
+import { ArrowRight, MapPin, Scissors } from "lucide-react";
 import { POPULAR_SERVICES } from "@/lib/barbers";
 
 const POPULAR_CITIES = [

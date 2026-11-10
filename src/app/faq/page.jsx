@@ -10,9 +10,9 @@ import {
 import { getAppUrl } from "@/lib/appUrl";
 
 export const metadata = {
-  title: "Frequently Asked Questions (FAQ) | Trimly India",
+  title: "Frequently Asked Questions (FAQ) | Trimlly India",
   description:
-    "Find answers to common questions about booking barber appointments, slot availability, cancellation rules, payments in INR, and salon verification on Trimly.",
+    "Find answers to common questions about booking barber appointments, slot availability, cancellation rules, payments in INR, and salon verification on Trimlly.",
   alternates: {
     canonical: `${getAppUrl()}/faq`,
   },
@@ -23,8 +23,8 @@ const FAQS = [
     category: "Booking & Availability",
     items: [
       {
-        q: "How does real-time slot booking work on Trimly?",
-        a: "When you select a barber and service, Trimly's booking engine checks the barber's working hours, closed days, existing bookings, and buffer times to calculate available slots down to the exact minute. Once you select a slot, it is reserved atomically so double-bookings are strictly impossible.",
+        q: "How does real-time slot booking work on Trimlly?",
+        a: "When you select a barber and service, Trimlly's booking engine checks the barber's working hours, closed days, existing bookings, and buffer times to calculate available slots down to the exact minute. Once you select a slot, it is reserved atomically so double-bookings are strictly impossible.",
       },
       {
         q: "What does the estimated wait time mean?",
@@ -54,10 +54,10 @@ const FAQS = [
     items: [
       {
         q: "How do I pay for my appointment?",
-        a: "You can pay either directly at the venue using cash or UPI (Google Pay, PhonePe, Paytm), or online if the lounge has enabled integrated advance checkout. All prices on Trimly are in Indian Rupees (INR) with no hidden platform fees.",
+        a: "You can pay either directly at the venue using cash or UPI (Google Pay, PhonePe, Paytm), or online if the lounge has enabled integrated advance checkout. All prices on Trimlly are in Indian Rupees (INR) with no hidden platform fees.",
       },
       {
-        q: "Are the prices listed on Trimly guaranteed?",
+        q: "Are the prices listed on Trimlly guaranteed?",
         a: "Yes. The service price shown when you book is snapshotted into your booking confirmation record. Barbers cannot change the price of an already confirmed booking.",
       },
     ],
@@ -66,16 +66,16 @@ const FAQS = [
     category: "Barber Verification & Quality",
     items: [
       {
-        q: "How do barbers and salons get verified on Trimly?",
+        q: "How do barbers and salons get verified on Trimlly?",
         a: "New barbers register with their business details, address, and government identification. Our team manually reviews and verifies their physical salon premises, stylist credentials, and hygiene standards before the shop is approved for public booking.",
       },
       {
-        q: "Are customer reviews on Trimly genuine?",
-        a: "Strictly yes. Only customers with completed, confirmed bookings on Trimly can submit a star rating and written review. We enforce a zero-tolerance policy against fake, incentivized, or unverified reviews in compliance with Indian consumer protection laws.",
+        q: "Are customer reviews on Trimlly genuine?",
+        a: "Strictly yes. Only customers with completed, confirmed bookings on Trimlly can submit a star rating and written review. We enforce a zero-tolerance policy against fake, incentivized, or unverified reviews in compliance with Indian consumer protection laws.",
       },
       {
         q: "Which cities are currently supported?",
-        a: "Trimly is currently active in Indore, Bhopal, Mumbai, Delhi-NCR, Bengaluru, and Pune, with ongoing expansion into Jaipur, Ahmedabad, Chandigarh, and Hyderabad.",
+        a: "Trimlly is currently active in Indore, Bhopal, Mumbai, Delhi-NCR, Bengaluru, and Pune, with ongoing expansion into Jaipur, Ahmedabad, Chandigarh, and Hyderabad.",
       },
     ],
   },
@@ -122,7 +122,7 @@ export default function FAQPage() {
             Frequently Asked <span className="text-primary">Questions</span>
           </h1>
           <p className="text-muted-foreground text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-            Everything you need to know about booking, slot confirmation, reschedule policies, and salon verification on Trimly.
+            Everything you need to know about booking, slot confirmation, reschedule policies, and salon verification on Trimlly.
           </p>
         </div>
       </div>

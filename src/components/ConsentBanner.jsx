@@ -69,7 +69,7 @@ export default function ConsentBanner() {
         </div>
 
         <p className="text-xs text-muted-foreground leading-relaxed">
-          In compliance with India&apos;s Digital Personal Data Protection (DPDP) Act 2023, Trimly uses essential cookies for phone OTP authentication and optional analytics to improve local salon discovery.
+          In compliance with India&apos;s Digital Personal Data Protection (DPDP) Act 2023, Trimlly uses essential cookies for phone OTP authentication and optional analytics to improve local salon discovery.
         </p>
 
         <div className="flex items-center justify-between text-xs pt-1">

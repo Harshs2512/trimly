@@ -10,7 +10,6 @@ import {
   XCircle,
   ArrowRight,
   HelpCircle,
-  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,18 +21,18 @@ import {
 } from "@/components/ui/accordion";
 
 export const metadata = {
-  title: "List Your Salon Free on Trimly | India Barber Booking Platform",
+  title: "List Your Salon Free on Trimlly | India Barber Booking Platform",
   description:
-    "Grow your salon business with Trimly. Zero monthly subscription fees, live chair calendar, local customer discovery, and automated SMS appointment reminders.",
+    "Grow your salon business with Trimlly. Zero monthly subscription fees, live chair calendar, local customer discovery, and automated SMS appointment reminders.",
   alternates: {
     canonical: "/for-barbers",
   },
   openGraph: {
-    title: "List Your Salon Free on Trimly | India Barber Booking Platform",
+    title: "List Your Salon Free on Trimlly | India Barber Booking Platform",
     description:
-      "Grow your salon business with Trimly. Zero monthly fees, real-time slot calendar, and verified customer bookings in INR.",
+      "Grow your salon business with Trimlly. Zero monthly fees, real-time slot calendar, and verified customer bookings in INR.",
     url: "/for-barbers",
-    siteName: "Trimly",
+    siteName: "Trimlly",
     locale: "en_IN",
     type: "website",
   },
@@ -41,14 +40,14 @@ export const metadata = {
 
 const B2B_FAQS = [
   {
-    question: "How much does it cost to list my salon on Trimly?",
+    question: "How much does it cost to list my salon on Trimlly?",
     answer:
-      "Listing your salon profile on Trimly is 100% free with zero monthly subscription fees and zero setup costs. Unlike expensive foreign software that charges ₹2,000 to ₹5,000 every month, Trimly only grows when your chairs are full.",
+      "Listing your salon profile on Trimlly is 100% free with zero monthly subscription fees and zero setup costs. Unlike expensive foreign software that charges ₹2,000 to ₹5,000 every month, Trimlly only grows when your chairs are full.",
   },
   {
-    question: "Do I need special computers or barcode scanners to use Trimly?",
+    question: "Do I need special computers or barcode scanners to use Trimlly?",
     answer:
-      "No. Trimly works seamlessly on any Android smartphone, iPhone, tablet, or laptop. You and your stylists can accept appointments, block time off, and mark services completed directly from your personal phones.",
+      "No. Trimlly works seamlessly on any Android smartphone, iPhone, tablet, or laptop. You and your stylists can accept appointments, block time off, and mark services completed directly from your personal phones.",
   },
   {
     question: "How do customers pay for their appointments?",
@@ -58,7 +57,7 @@ const B2B_FAQS = [
   {
     question: "How do appointment reminders work?",
     answer:
-      "When a customer books a slot, Trimly automatically sends an instant confirmation via SMS and email. A gentle reminder is sent prior to the appointment, reducing no-shows by up to 85%.",
+      "When a customer books a slot, Trimlly automatically sends an instant confirmation via SMS and email. A gentle reminder is sent prior to the appointment, reducing no-shows by up to 85%.",
   },
   {
     question: "What documents are required for salon verification?",
@@ -104,7 +103,7 @@ export default function ForBarbersPage() {
           </h1>
 
           <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed">
-            Stop paying ₹3,000/month for clunky POS software. Trimly connects your barbershop or unisex salon with nearby clients, eliminates no-shows, and manages your appointment calendar right from your phone.
+            Stop paying ₹3,000/month for clunky POS software. Trimlly connects your barbershop or unisex salon with nearby clients, eliminates no-shows, and manages your appointment calendar right from your phone.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">
@@ -137,58 +136,98 @@ export default function ForBarbersPage() {
         <div className="space-y-8">
           <div className="text-center space-y-2">
             <h2 className="text-3xl font-extrabold tracking-tight">
-              Why Indian Salons Choose <span className="text-primary">Trimly</span>
+              Why Indian Salons Choose <span className="text-primary">Trimlly</span>
             </h2>
             <p className="text-muted-foreground text-sm max-w-lg mx-auto">
-              Compare Trimly against legacy salon management SaaS like Salonist or Fresha.
+              Compare Trimlly against traditional salon management software and booking tools.
             </p>
           </div>
 
           <div className="overflow-x-auto rounded-2xl border border-border/80 bg-card shadow-sm">
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left text-sm table-fixed min-w-[620px]">
               <thead className="bg-muted/50 border-b border-border/60 text-xs uppercase font-bold text-muted-foreground">
                 <tr>
-                  <th className="p-4 sm:p-5">Feature</th>
-                  <th className="p-4 sm:p-5 text-muted-foreground">Legacy SaaS (Salonist / Zenoti)</th>
-                  <th className="p-4 sm:p-5 text-primary font-extrabold">Trimly Partner Platform</th>
+                  <th className="p-4 sm:p-5 w-[30%]">Feature</th>
+                  <th className="p-4 sm:p-5 w-[35%] text-muted-foreground">Traditional Salon Software</th>
+                  <th className="p-4 sm:p-5 w-[35%] text-primary font-extrabold bg-primary/[0.04]">
+                    Trimlly Partner Platform
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/60">
                 <tr>
-                  <td className="p-4 sm:p-5 font-semibold text-foreground">Monthly Fee</td>
-                  <td className="p-4 sm:p-5 text-muted-foreground">₹1,500 – ₹5,000 / month</td>
-                  <td className="p-4 sm:p-5 font-bold text-emerald-500 flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" /> ₹0 (Free to List)
+                  <td className="p-4 sm:p-5 font-semibold text-foreground align-middle">Monthly Fee</td>
+                  <td className="p-4 sm:p-5 text-muted-foreground align-middle">
+                    <span className="inline-flex items-center gap-2">
+                      <XCircle className="w-4 h-4 text-destructive shrink-0" />
+                      <span>₹1,500 – ₹5,000 / month</span>
+                    </span>
+                  </td>
+                  <td className="p-4 sm:p-5 font-bold text-emerald-600 dark:text-emerald-400 bg-primary/[0.04] align-middle">
+                    <span className="inline-flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                      <span>₹0 (Free to List)</span>
+                    </span>
                   </td>
                 </tr>
                 <tr>
-                  <td className="p-4 sm:p-5 font-semibold text-foreground">Local Client Discovery</td>
-                  <td className="p-4 sm:p-5 text-muted-foreground flex items-center gap-1.5">
-                    <XCircle className="w-4 h-4 text-destructive" /> No (You bring all traffic)
+                  <td className="p-4 sm:p-5 font-semibold text-foreground align-middle">Local Client Discovery</td>
+                  <td className="p-4 sm:p-5 text-muted-foreground align-middle">
+                    <span className="inline-flex items-center gap-2">
+                      <XCircle className="w-4 h-4 text-destructive shrink-0" />
+                      <span>No (You bring all traffic)</span>
+                    </span>
                   </td>
-                  <td className="p-4 sm:p-5 font-bold text-primary flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" /> Yes (Local city directory search)
-                  </td>
-                </tr>
-                <tr>
-                  <td className="p-4 sm:p-5 font-semibold text-foreground">Hardware Requirement</td>
-                  <td className="p-4 sm:p-5 text-muted-foreground">Desktop PC, thermal printer</td>
-                  <td className="p-4 sm:p-5 font-bold text-primary flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" /> Any Android or iPhone
-                  </td>
-                </tr>
-                <tr>
-                  <td className="p-4 sm:p-5 font-semibold text-foreground">Payment Collection</td>
-                  <td className="p-4 sm:p-5 text-muted-foreground">Complex gateway integrations</td>
-                  <td className="p-4 sm:p-5 font-bold text-primary flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" /> Direct UPI & Cash at Salon
+                  <td className="p-4 sm:p-5 font-bold text-primary bg-primary/[0.04] align-middle">
+                    <span className="inline-flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>Yes (Local city directory search)</span>
+                    </span>
                   </td>
                 </tr>
                 <tr>
-                  <td className="p-4 sm:p-5 font-semibold text-foreground">SMS Reminders</td>
-                  <td className="p-4 sm:p-5 text-muted-foreground">Extra fee per SMS pack</td>
-                  <td className="p-4 sm:p-5 font-bold text-primary flex items-center gap-1.5">
-                    <CheckCircle2 className="w-4 h-4" /> Automated SMS & Email included
+                  <td className="p-4 sm:p-5 font-semibold text-foreground align-middle">Hardware Requirement</td>
+                  <td className="p-4 sm:p-5 text-muted-foreground align-middle">
+                    <span className="inline-flex items-center gap-2">
+                      <XCircle className="w-4 h-4 text-destructive shrink-0" />
+                      <span>Desktop PC, thermal printer</span>
+                    </span>
+                  </td>
+                  <td className="p-4 sm:p-5 font-bold text-primary bg-primary/[0.04] align-middle">
+                    <span className="inline-flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>Any Android or iPhone</span>
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="p-4 sm:p-5 font-semibold text-foreground align-middle">Payment Collection</td>
+                  <td className="p-4 sm:p-5 text-muted-foreground align-middle">
+                    <span className="inline-flex items-center gap-2">
+                      <XCircle className="w-4 h-4 text-destructive shrink-0" />
+                      <span>Complex gateway integrations</span>
+                    </span>
+                  </td>
+                  <td className="p-4 sm:p-5 font-bold text-primary bg-primary/[0.04] align-middle">
+                    <span className="inline-flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>Direct UPI & Cash at Salon</span>
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td className="p-4 sm:p-5 font-semibold text-foreground align-middle">SMS Reminders</td>
+                  <td className="p-4 sm:p-5 text-muted-foreground align-middle">
+                    <span className="inline-flex items-center gap-2">
+                      <XCircle className="w-4 h-4 text-destructive shrink-0" />
+                      <span>Extra fee per SMS pack</span>
+                    </span>
+                  </td>
+                  <td className="p-4 sm:p-5 font-bold text-primary bg-primary/[0.04] align-middle">
+                    <span className="inline-flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      <span>Automated SMS & Email included</span>
+                    </span>
                   </td>
                 </tr>
               </tbody>
@@ -204,7 +243,7 @@ export default function ForBarbersPage() {
             </div>
             <h3 className="text-xl font-bold">Fill Empty Off-Peak Hours</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Quiet Tuesday and Wednesday afternoons eat into salon rent. Trimly lets nearby customers discover open slots when your chairs are idle, turning slow hours into steady revenue.
+              Quiet Tuesday and Wednesday afternoons eat into salon rent. Trimlly lets nearby customers discover open slots when your chairs are idle, turning slow hours into steady revenue.
             </p>
           </Card>
 
@@ -306,7 +345,7 @@ export default function ForBarbersPage() {
         {/* Bottom CTA */}
         <div className="p-10 rounded-3xl bg-gradient-to-br from-primary/15 via-card to-secondary/10 border border-primary/30 text-center space-y-6 shadow-xl">
           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto text-primary">
-            <Sparkles className="w-8 h-8" />
+            <Store className="w-8 h-8" />
           </div>
           <div className="space-y-2 max-w-xl mx-auto">
             <h3 className="text-3xl font-extrabold tracking-tight">Ready to Modernize Your Salon?</h3>

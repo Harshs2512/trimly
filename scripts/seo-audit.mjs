@@ -3,7 +3,7 @@ import https from "node:https";
 import fs from "node:fs";
 import path from "node:path";
 
-const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+const BASE_URL = process.env.BASE_URL || process.argv[2] || "http://localhost:3000";
 
 const ROUTES = [
   "/",
@@ -29,7 +29,7 @@ function fetchUrl(url) {
           "User-Agent": "TrimlySeoBot/1.0 (+https://trimly.in/bot)",
           Accept: "text/html,application/xml,application/xhtml+xml,*/*",
         },
-        timeout: 5000,
+        timeout: 15000,
       },
       (res) => {
         let data = "";

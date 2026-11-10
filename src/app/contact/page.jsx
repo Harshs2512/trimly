@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button";
 import { getAppUrl } from "@/lib/appUrl";
 
 export const metadata = {
-  title: "Contact Trimly Support & Partner Help | India",
+  title: "Contact Trimlly Support & Partner Help | India",
   description:
-    "Get in touch with Trimly support for appointment assistance, barber onboarding, or partnership inquiries. We respond within 24 hours.",
+    "Get in touch with Trimlly support for appointment assistance, barber onboarding, or partnership inquiries. We respond within 24 hours.",
   alternates: {
     canonical: `${getAppUrl()}/contact`,
   },
@@ -14,7 +14,7 @@ export const metadata = {
 
 export default function ContactPage() {
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "support@trimly.app";
-  const companyName = process.env.NEXT_PUBLIC_COMPANY_NAME || "Trimly";
+  const companyName = process.env.NEXT_PUBLIC_COMPANY_NAME || "Trimlly";
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -58,7 +58,7 @@ export default function ContactPage() {
               </div>
             </div>
 
-            <a href={`mailto:${supportEmail}?subject=Support%20Request%20-%20Trimly`}>
+            <a href={`mailto:${supportEmail}?subject=Support%20Request%20-%20Trimlly`}>
               <Button className="w-full rounded-xl font-semibold gap-2">
                 Send an Email <ArrowRight className="w-4 h-4" />
               </Button>

@@ -13,7 +13,7 @@ export default function CTA() {
           </div>
 
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
-            Step into the modern luxury of <span className="text-primary">Trimly</span>
+            Step into the modern luxury of <span className="text-primary">Trimlly</span>
           </h2>
 
           <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">

@@ -4,16 +4,16 @@ import { Button } from "@/components/ui/button";
 import { getAppUrl } from "@/lib/appUrl";
 
 export const metadata = {
-  title: "About Us: Revolutionizing Barber & Salon Appointments | Trimly",
+  title: "About Us: Revolutionizing Barber & Salon Appointments | Trimlly",
   description:
-    "Learn about Trimly's mission to eliminate waiting queues in Indian barbershops and salons through verified master stylists and real-time appointment booking.",
+    "Learn about Trimlly's mission to eliminate waiting queues in Indian barbershops and salons through verified master stylists and real-time appointment booking.",
   alternates: {
     canonical: `${getAppUrl()}/about`,
   },
 };
 
 export default function AboutPage() {
-  const companyName = process.env.NEXT_PUBLIC_COMPANY_NAME || "Trimly";
+  const companyName = process.env.NEXT_PUBLIC_COMPANY_NAME || "Trimlly";
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -62,7 +62,7 @@ export default function AboutPage() {
             </div>
             <h3 className="font-bold text-lg">Rigorous Verification</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Every salon on Trimly is manually vetted for physical premises, hygiene protocols, and stylist authenticity.
+              Every salon on Trimlly is manually vetted for physical premises, hygiene protocols, and stylist authenticity.
             </p>
           </div>
 

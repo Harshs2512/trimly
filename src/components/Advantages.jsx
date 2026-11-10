@@ -22,7 +22,7 @@ export default function Advantages() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-4">
           <div className="inline-block px-4 py-1.5 bg-secondary/10 border border-secondary/20 rounded-full">
-            <span className="text-secondary font-bold text-xs uppercase tracking-wider">Why Trimly</span>
+            <span className="text-secondary font-bold text-xs uppercase tracking-wider">Why Trimlly</span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
             Tailored for <span className="text-primary">clients & master barbers</span>

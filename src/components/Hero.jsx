@@ -168,7 +168,7 @@ export default function Hero() {
               {/* Verified Salon Floating Pill */}
               <div className="absolute top-4 left-4 px-3 py-1.5 rounded-full bg-background/90 backdrop-blur-md border border-white/20 text-xs font-bold text-foreground flex items-center gap-1.5 shadow-md">
                 <ShieldCheck className="w-4 h-4 text-primary" />
-                Trimly Verified Partner
+                Trimlly Verified Partner
               </div>
             </div>
 

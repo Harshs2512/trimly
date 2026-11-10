@@ -31,7 +31,7 @@ export async function GET() {
   const rssFeed = `<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Trimly Grooming Journal</title>
+    <title>Trimlly Grooming Journal</title>
     <link>${appUrl}/blog</link>
     <description>Expert Indian barber and salon guides, haircut pricing analyses, and beard styling advice.</description>
     <language>en-IN</language>

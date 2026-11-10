@@ -12,11 +12,11 @@ export async function generateMetadata({ params }) {
   const post = await getPostBySlug(slug);
 
   if (!post) {
-    return { title: "Article Not Found | Trimly Blog" };
+    return { title: "Article Not Found | Trimlly Blog" };
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://trimly.in";
-  const title = post.seoTitle || `${post.title} | Trimly`;
+  const title = post.seoTitle || `${post.title} | Trimlly`;
   const description = post.seoDescription || post.excerpt;
 
   return {
@@ -29,12 +29,12 @@ export async function generateMetadata({ params }) {
       title,
       description,
       url: `/blog/${post.slug}`,
-      siteName: "Trimly",
+      siteName: "Trimlly",
       locale: "en_IN",
       type: "article",
       publishedTime: post.publishedAt || post.createdAt,
       modifiedTime: post.updatedAt || post.publishedAt,
-      authors: [post.author?.name || "Trimly Editorial Team"],
+      authors: [post.author?.name || "Trimlly Editorial Team"],
       images: [
         {
           url: post.coverImage || `${appUrl}/og-image.jpg`,
@@ -108,12 +108,12 @@ export default async function BlogPostPage({ params }) {
     dateModified: post.updatedAt || post.publishedAt || post.createdAt,
     author: {
       "@type": "Person",
-      name: post.author?.name || "Trimly Editorial Team",
+      name: post.author?.name || "Trimlly Editorial Team",
       jobTitle: post.author?.role || "Grooming Specialist",
     },
     publisher: {
       "@type": "Organization",
-      name: "Trimly",
+      name: "Trimlly",
       logo: {
         "@type": "ImageObject",
         url: `${appUrl}/logo.webp`,
@@ -216,7 +216,7 @@ export default async function BlogPostPage({ params }) {
                 {post.author?.name ? post.author.name[0] : "T"}
               </div>
               <div>
-                <p className="font-bold text-foreground text-sm">{post.author?.name || "Trimly Team"}</p>
+                <p className="font-bold text-foreground text-sm">{post.author?.name || "Trimlly Team"}</p>
                 <p className="text-[11px] text-muted-foreground">{post.author?.role || "Editorial Specialist"}</p>
               </div>
             </div>

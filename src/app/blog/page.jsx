@@ -7,18 +7,18 @@ import { Button } from "@/components/ui/button";
 export const revalidate = 300;
 
 export const metadata = {
-  title: "Trimly Grooming Journal: Indian Salon Trends & Barber Advice",
+  title: "Trimlly Grooming Journal: Indian Salon Trends & Barber Advice",
   description:
     "Expert grooming advice, haircut pricing breakdowns, beard styling tips, and wedding salon checklists for men and women across India.",
   alternates: {
     canonical: "/blog",
   },
   openGraph: {
-    title: "Trimly Grooming Journal: Indian Salon Trends & Barber Advice",
+    title: "Trimlly Grooming Journal: Indian Salon Trends & Barber Advice",
     description:
       "Expert grooming advice, haircut pricing breakdowns, beard styling tips, and wedding salon checklists across India.",
     url: "/blog",
-    siteName: "Trimly",
+    siteName: "Trimlly",
     locale: "en_IN",
     type: "website",
   },
@@ -51,7 +51,7 @@ export default async function BlogIndexPage({ searchParams }) {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: "Trimly Grooming Journal",
+    name: "Trimlly Grooming Journal",
     description: "Expert grooming advice, haircut pricing, and barber shop guides for Indian cities.",
     url: `${process.env.NEXT_PUBLIC_APP_URL || "https://trimly.in"}/blog`,
   };
@@ -67,7 +67,7 @@ export default async function BlogIndexPage({ searchParams }) {
         <div className="text-center max-w-3xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-xs font-bold text-primary uppercase tracking-wider">
             <BookOpen className="w-3.5 h-3.5" />
-            Trimly Grooming Journal
+            Trimlly Grooming Journal
           </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
             Indian Grooming Guides & <span className="text-primary">Barber Insights</span>
@@ -175,7 +175,7 @@ export default async function BlogIndexPage({ searchParams }) {
                     <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-[10px]">
                       {post.author?.name ? post.author.name[0] : "T"}
                     </div>
-                    <span className="font-medium text-foreground">{post.author?.name || "Trimly Team"}</span>
+                    <span className="font-medium text-foreground">{post.author?.name || "Trimlly Team"}</span>
                   </div>
                   <Link
                     href={`/blog/${post.slug}`}

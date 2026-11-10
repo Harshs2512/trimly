@@ -36,7 +36,7 @@ export default function Testimonials({ reviews = [] }) {
             Real Experiences from <span className="text-primary">Real Appointments</span>
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Every review on Trimly is submitted by customers after a completed salon appointment. We never publish fake testimonials.
+            Every review on Trimlly is submitted by customers after a completed salon appointment. We never publish fake testimonials.
           </p>
         </div>
 

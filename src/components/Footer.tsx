@@ -26,7 +26,7 @@ const serviceLinks = [
 ];
 
 const companyLinks = [
-  { label: "About Trimly", href: "/about" },
+  { label: "About Trimlly", href: "/about" },
   { label: "Help & FAQ", href: "/faq" },
   { label: "Contact Us", href: "/contact" },
   { label: "Privacy Policy", href: "/privacy" },
@@ -35,7 +35,7 @@ const companyLinks = [
 
 export default function Footer() {
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
-  const companyName = process.env.NEXT_PUBLIC_COMPANY_NAME || "Trimly";
+  const companyName = process.env.NEXT_PUBLIC_COMPANY_NAME || "Trimlly";
   const year = new Date().getFullYear();
 
   return (

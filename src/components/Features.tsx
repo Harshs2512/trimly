@@ -25,7 +25,7 @@ const customerFeatures = [
   {
     icon: ShieldCheck,
     title: "100% Verified Salons",
-    description: "Every barber lounge, sanitation standard, and stylist portfolio is thoroughly reviewed before listing on Trimly.",
+    description: "Every barber lounge, sanitation standard, and stylist portfolio is thoroughly reviewed before listing on Trimlly.",
   },
   {
     icon: DollarSign,
@@ -71,14 +71,14 @@ export default function Features() {
         <div className="text-center max-w-3xl mx-auto mb-12 space-y-4">
           <div className="inline-block px-4 py-1.5 bg-primary/10 border border-primary/20 rounded-full">
             <span className="text-primary font-bold text-xs uppercase tracking-wider">
-              Trimly Experience
+              Trimlly Experience
             </span>
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
             Built for Customers, <span className="text-primary">Powered for Barbers</span>
           </h2>
           <p className="text-lg text-muted-foreground leading-relaxed">
-            Whether you&apos;re booking your regular haircut or managing a busy neighborhood salon, Trimly simplifies every step.
+            Whether you&apos;re booking your regular haircut or managing a busy neighborhood salon, Trimlly simplifies every step.
           </p>
 
           {/* Tab Switcher */}
@@ -140,7 +140,7 @@ export default function Features() {
           ) : (
             <Link href="/login?role=barber">
               <Button size="lg" className="rounded-xl px-8 font-semibold shadow-md gap-2">
-                List Your Salon on Trimly
+                List Your Salon on Trimlly
                 <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>

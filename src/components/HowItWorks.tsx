@@ -11,7 +11,7 @@ const steps = [
     icon: Calendar,
     step: "02",
     title: "Select an Open Slot",
-    description: "Trimly guarantees slots based on selected service durations, operating hours, and active appointments.",
+    description: "Trimlly guarantees slots based on selected service durations, operating hours, and active appointments.",
   },
   {
     icon: Bell,

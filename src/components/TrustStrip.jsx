@@ -1,4 +1,4 @@
-import { ShieldCheck, MapPin, CalendarCheck, Star, Clock, Sparkles } from "lucide-react";
+import { ShieldCheck, MapPin, CalendarCheck, Star, Clock } from "lucide-react";
 
 export default function TrustStrip({ stats }) {
   const showLiveCounters = stats && stats.verifiedBarbersCount >= 3;
