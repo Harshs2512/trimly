@@ -4,6 +4,7 @@ import { MapPin, Scissors, ShieldCheck, ArrowRight, Clock, Star } from "lucide-r
 import { getAppUrl } from "@/lib/appUrl";
 import { getVerifiedBarbers, getCityDirectoryStats, POPULAR_SERVICES, slugify } from "@/lib/barbers";
 import BarberCard from "@/components/BarberCard";
+import { CityInlineLead } from "@/components/leads/InlineLeadCapture";
 import {
   Accordion,
   AccordionContent,
@@ -251,6 +252,9 @@ export default async function BarberCityPage({ params }) {
             ))}
           </div>
         </section>
+
+        {/* Inline Lead Capture: "Can't find the right barber?" */}
+        <CityInlineLead cityName={cityInfo.name} />
 
         {/* FAQ Accordion with Schema */}
         <section className="space-y-6 pt-6 border-t max-w-3xl">

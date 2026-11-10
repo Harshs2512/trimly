@@ -7,6 +7,7 @@ import Advantages from "@/components/Advantages";
 import Testimonials from "@/components/Testimonials";
 import HomeFAQ from "@/components/HomeFAQ";
 import { HOME_FAQS } from "@/lib/faqData";
+import { HomeInlineLead } from "@/components/leads/InlineLeadCapture";
 import CTA from "@/components/CTA";
 import { getPlatformTrustStats, getRecentGenuineReviews } from "@/lib/barbers";
 
@@ -54,6 +55,7 @@ export default async function Home() {
       <Advantages />
       <Testimonials reviews={reviews} />
       <HomeFAQ />
+      <HomeInlineLead />
       <CTA />
     </div>
   );

@@ -93,6 +93,12 @@ async function main() {
     db.collection("posts").createIndex({ slug: 1 }, { unique: true, name: "uniq_post_slug" }),
     db.collection("posts").createIndex({ status: 1, publishedAt: -1 }, { name: "post_status_published" }),
     db.collection("posts").createIndex({ category: 1 }, { name: "post_category" }),
+    db.collection("leads").createIndex({ phone: 1 }, { name: "lead_phone" }),
+    db.collection("leads").createIndex({ createdAt: -1 }, { name: "lead_created_desc" }),
+    db.collection("leads").createIndex({ status: 1, createdAt: -1 }, { name: "lead_status_created" }),
+    db.collection("leads").createIndex({ type: 1, createdAt: -1 }, { name: "lead_type_created" }),
+    db.collection("lead_events").createIndex({ createdAt: -1 }, { name: "lead_event_created_desc" }),
+    db.collection("lead_events").createIndex({ type: 1, createdAt: -1 }, { name: "lead_event_type_created" }),
   ]);
 
   console.log(`Indexes ensured for database '${dbName}'.`);

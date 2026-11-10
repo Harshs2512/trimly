@@ -222,3 +222,38 @@ export const mediaCompleteSchema = z.object({
   purpose: z.enum(["work_photo", "shop_exterior", "shop_interior", "id_document"]),
 });
 
+export const INDIAN_PHONE_REGEX = /^(?:\+91|91|0)?[6-9]\d{9}$/;
+
+export const leadCreateSchema = z.object({
+  type: z.enum(["customer", "owner", "other"]).optional().default("customer"),
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name cannot exceed 100 characters"),
+  phone: z.string().trim().regex(INDIAN_PHONE_REGEX, "Please enter a valid 10-digit Indian mobile number"),
+  email: z.string().trim().email("Please enter a valid email address").max(254).optional().or(z.literal("")),
+  city: z.string().trim().min(2, "City must be at least 2 characters").max(100),
+  interest: z.string().trim().max(200).optional().default(""),
+  message: z.string().trim().max(1000).optional().default(""),
+  source: z.enum(["chatbot", "exit_intent", "contact_form", "whatsapp_click", "call_click"]).optional().default("chatbot"),
+  page: z.string().trim().max(500).optional().default(""),
+  referrer: z.string().trim().max(500).optional().default(""),
+  utm_source: z.string().trim().max(100).optional().default(""),
+  utm_medium: z.string().trim().max(100).optional().default(""),
+  utm_campaign: z.string().trim().max(100).optional().default(""),
+  consent: z.boolean().refine((val) => val === true, "Consent is required to submit your enquiry"),
+  consentText: z.string().trim().max(500).optional().default("I agree to be contacted by Trimlly regarding my enquiry."),
+  website: z.string().max(100).optional().default(""),
+  honeypot: z.string().max(100).optional().default(""),
+});
+
+export const leadEventSchema = z.object({
+  type: z.enum(["whatsapp", "call", "whatsapp_click", "call_click"]),
+  page: z.string().trim().max(500).optional().default(""),
+  source: z.string().trim().max(100).optional().default("web"),
+});
+
+export const leadAdminUpdateSchema = z.object({
+  status: z.enum(["new", "contacted", "qualified", "converted", "lost"]).optional(),
+  assignedTo: z.string().trim().max(100).nullable().optional(),
+  note: z.string().trim().min(1).max(1000).optional(),
+});
+
+

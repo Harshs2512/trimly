@@ -4,6 +4,8 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 import AppChrome from "@/components/AppChrome";
 import ConsentBanner from "@/components/ConsentBanner";
+import ChatbotMount from "@/components/chatbot/ChatbotMount";
+import LeadCaptureMount from "@/components/leads/LeadCaptureMount";
 import { getAppUrl } from "@/lib/appUrl";
 
 const inter = Inter({
@@ -98,6 +100,8 @@ export default function RootLayout({ children }) {
         <Providers>
           <AppChrome>{children}</AppChrome>
           <ConsentBanner />
+          <ChatbotMount />
+          <LeadCaptureMount />
         </Providers>
 
         <script

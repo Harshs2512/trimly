@@ -307,3 +307,79 @@ export async function sendOtpEmail({ to, otp, phone }) {
   console.log(`[otp-email] Dispatched OTP to ${to} - Result:`, sendResult);
   return sendResult;
 }
+
+/**
+ * Sends a real-time lead notification email to LEAD_NOTIFY_EMAIL.
+ */
+export async function sendLeadNotificationEmail(lead) {
+  const notifyTo = process.env.LEAD_NOTIFY_EMAIL;
+  if (!notifyTo) return { sent: false, reason: "missing_recipient" };
+
+  const appUrl = getAppUrl();
+  const phoneDigits = (lead.phone || "").replace(/[^\d]/g, "");
+  const whatsappUrl = `https://wa.me/${phoneDigits}?text=${encodeURIComponent(
+    `Hi ${lead.name || "there"}, thanks for your enquiry with Trimlly regarding ${lead.interest || "our salon services"}.`
+  )}`;
+
+  const subject = `New ${lead.type === "owner" ? "Salon Partner" : "Customer"} Lead: ${lead.name} (${lead.city || "India"})`;
+
+  const html = `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; background-color: #ffffff;">
+      <div style="border-bottom: 2px solid #106766; padding-bottom: 12px; margin-bottom: 20px;">
+        <h2 style="color: #106766; margin: 0; font-size: 22px;">Trimlly Lead Notification</h2>
+        <p style="color: #6b7280; font-size: 13px; margin: 4px 0 0 0;">New enquiry captured via ${lead.source || "website"}</p>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 20px;">
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280; width: 120px;">Lead Type:</td>
+          <td style="padding: 8px 0; font-weight: bold; text-transform: uppercase; color: #106766;">${lead.type || "customer"}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Name:</td>
+          <td style="padding: 8px 0; font-weight: 600; color: #111827;">${lead.name}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Phone:</td>
+          <td style="padding: 8px 0; font-weight: 600; color: #111827;">
+            <a href="tel:${lead.phone}" style="color: #106766; text-decoration: none;">${lead.phone}</a>
+            &nbsp;|&nbsp;
+            <a href="${whatsappUrl}" target="_blank" style="color: #25d366; text-decoration: none; font-weight: bold;">💬 Open WhatsApp</a>
+          </td>
+        </tr>
+        ${lead.email ? `
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Email:</td>
+          <td style="padding: 8px 0; color: #111827;"><a href="mailto:${lead.email}" style="color: #106766; text-decoration: none;">${lead.email}</a></td>
+        </tr>` : ""}
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">City:</td>
+          <td style="padding: 8px 0; color: #111827;">${lead.city || "Not specified"}</td>
+        </tr>
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Interest / Need:</td>
+          <td style="padding: 8px 0; color: #111827;">${lead.interest || "None specified"}</td>
+        </tr>
+        ${lead.message ? `
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280; vertical-align: top;">Message:</td>
+          <td style="padding: 8px 0; color: #374151; white-space: pre-wrap; background: #f9fafb; padding: 8px; border-radius: 6px;">${lead.message}</td>
+        </tr>` : ""}
+        <tr>
+          <td style="padding: 8px 0; color: #6b7280;">Page Captured:</td>
+          <td style="padding: 8px 0; color: #6b7280; font-size: 12px;">${lead.page || "/"}</td>
+        </tr>
+      </table>
+
+      <div style="text-align: center; margin-top: 24px; padding-top: 16px; border-top: 1px solid #f3f4f6;">
+        <a href="${appUrl}/admin" style="display: inline-block; background-color: #106766; color: #ffffff; padding: 10px 20px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;">
+          View in Admin Dashboard
+        </a>
+      </div>
+    </div>
+  `;
+
+  const text = `New Lead on Trimlly:\n\nType: ${lead.type}\nName: ${lead.name}\nPhone: ${lead.phone}\nCity: ${lead.city}\nInterest: ${lead.interest}\nMessage: ${lead.message || "None"}\nPage: ${lead.page || "/"}`;
+
+  return await sendEmail({ to: notifyTo, subject, html, text });
+}

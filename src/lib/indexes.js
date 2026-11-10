@@ -67,6 +67,12 @@ export async function ensureIndexes() {
         { col: "posts", spec: { slug: 1 }, opts: { unique: true, name: "uniq_post_slug" } },
         { col: "posts", spec: { status: 1, publishedAt: -1 }, opts: { name: "post_status_published" } },
         { col: "posts", spec: { category: 1 }, opts: { name: "post_category" } },
+        { col: "leads", spec: { phone: 1 }, opts: { name: "lead_phone" } },
+        { col: "leads", spec: { createdAt: -1 }, opts: { name: "lead_created_desc" } },
+        { col: "leads", spec: { status: 1, createdAt: -1 }, opts: { name: "lead_status_created" } },
+        { col: "leads", spec: { type: 1, createdAt: -1 }, opts: { name: "lead_type_created" } },
+        { col: "lead_events", spec: { createdAt: -1 }, opts: { name: "lead_event_created_desc" } },
+        { col: "lead_events", spec: { type: 1, createdAt: -1 }, opts: { name: "lead_event_type_created" } },
       ];
 
       const results = await Promise.allSettled(

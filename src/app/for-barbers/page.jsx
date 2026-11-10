@@ -19,6 +19,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { SalonOwnerInlineLead } from "@/components/leads/InlineLeadCapture";
 
 export const metadata = {
   title: "List Your Salon Free on Trimlly | India Barber Booking Platform",
@@ -316,6 +317,11 @@ export default function ForBarbersPage() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Inline Salon Owner Lead Capture Form */}
+        <div className="max-w-3xl mx-auto">
+          <SalonOwnerInlineLead />
         </div>
 
         {/* B2B FAQ Accordion */}

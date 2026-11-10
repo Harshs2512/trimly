@@ -49,8 +49,10 @@ import {
   Globe,
   Compass,
   BookOpen,
+  MessageSquare,
 } from "lucide-react";
 import AdminBlogManager from "@/components/admin/AdminBlogManager";
+import AdminLeadsManager from "@/components/admin/AdminLeadsManager";
 
 export default function AdminClient({
   adminUser,
@@ -548,6 +550,9 @@ export default function AdminClient({
             </TabsTrigger>
             <TabsTrigger value="blog" className="rounded-xl px-4 py-2.5 gap-2 text-xs sm:text-sm font-semibold">
               <BookOpen className="w-4 h-4 text-primary" /> Blog Articles
+            </TabsTrigger>
+            <TabsTrigger value="leads" className="rounded-xl px-4 py-2.5 gap-2 text-xs sm:text-sm font-semibold">
+              <MessageSquare className="w-4 h-4 text-primary" /> Captured Leads
             </TabsTrigger>
           </TabsList>
 
@@ -1591,6 +1596,11 @@ export default function AdminClient({
           {/* TAB 7: BLOG JOURNAL MANAGEMENT */}
           <TabsContent value="blog" className="space-y-6 mt-0">
             <AdminBlogManager />
+          </TabsContent>
+
+          {/* TAB 8: CAPTURED LEADS & CRM WORKFLOW */}
+          <TabsContent value="leads" className="space-y-6 mt-0">
+            <AdminLeadsManager adminUser={adminUser} />
           </TabsContent>
         </Tabs>
       </div>

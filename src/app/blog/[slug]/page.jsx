@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, Calendar, Clock, Share2, Scissors, MapPin, CheckCircle2, User, HelpCircle } from "lucide-react";
 import { getPostBySlug, getRelatedPosts } from "@/lib/blog";
 import { Button } from "@/components/ui/button";
+import { BlogInlineLead } from "@/components/leads/InlineLeadCapture";
 
 export const revalidate = 300;
 
@@ -254,6 +255,9 @@ export default async function BlogPostPage({ params }) {
           className="prose prose-neutral dark:prose-invert max-w-none pt-4 text-foreground/90 space-y-4"
           dangerouslySetInnerHTML={{ __html: renderSimpleMarkdown(post.content) }}
         />
+
+        {/* Mid-Article Concierge Mini-CTA */}
+        <BlogInlineLead />
 
         {/* In-Article FAQ Section if provided */}
         {post.faq && post.faq.length > 0 && (
