@@ -125,8 +125,7 @@ test("Mobile API Contract & Gateway Suite", async (t) => {
       verificationStatus: "verified",
     };
 
-    // Date: Monday 2026-11-02
-    const date = "2026-11-02";
+    const targetDate = new Date(Date.now() + 86400000 * 3); if (targetDate.getDay() === 0) targetDate.setDate(targetDate.getDate() + 1); const date = targetDate.toISOString().split("T")[0];
     const res = await getBarberAvailability(db, {
       barber: testBarber,
       date,
@@ -195,3 +194,4 @@ test("Mobile API Contract & Gateway Suite", async (t) => {
   const client = await clientPromise;
   await client.close();
 });
+

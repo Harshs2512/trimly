@@ -48,7 +48,7 @@ export default function ResendVerificationPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-sm">
         <h1 className="text-3xl font-bold">Resend verification email</h1>
-        <p className="mt-2 text-sm text-muted-foreground">Enter the email used for your Trimlly account.</p>
+        <p className="mt-2 text-sm text-muted-foreground">Enter the email used for your Trimly account.</p>
         <form onSubmit={submit} className="mt-6 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>

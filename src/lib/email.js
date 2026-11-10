@@ -80,9 +80,9 @@ export async function sendPasswordResetEmail({ to, token }) {
   const resetUrl = `${appUrl}/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(to)}`;
   return sendEmail({
     to,
-    subject: "Reset your Trimlly password",
-    html: `<p>We received a request to reset your Trimlly password.</p><p><a href="${resetUrl.replace(/&/g, "&amp;")}">Reset password</a></p><p>This link expires in 60 minutes. If you did not request this, you can ignore this email.</p>`,
-    text: `Reset your Trimlly password: ${resetUrl}\n\nThis link expires in 60 minutes.`,
+    subject: "Reset your Trimly password",
+    html: `<p>We received a request to reset your Trimly password.</p><p><a href="${resetUrl.replace(/&/g, "&amp;")}">Reset password</a></p><p>This link expires in 60 minutes. If you did not request this, you can ignore this email.</p>`,
+    text: `Reset your Trimly password: ${resetUrl}\n\nThis link expires in 60 minutes.`,
   });
 }
 

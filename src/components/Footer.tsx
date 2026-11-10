@@ -1,63 +1,141 @@
 import Link from "next/link";
-import { Scissors } from "lucide-react";
+import { Scissors, MapPin, Mail, ShieldCheck } from "lucide-react";
 
-const links = [
-  { label: "Home", href: "/" },
-  { label: "Barbers", href: "/barbers" },
-  { label: "Reviews", href: "/reviews" },
-  { label: "Features", href: "/#features" },
-  { label: "Benefits", href: "/#benefits" },
-  { label: "About", href: "/#about" },
+const productLinks = [
+  { label: "Find Barbers", href: "/barbers" },
+  { label: "Popular Services", href: "/services/haircut" },
+  { label: "Customer Reviews", href: "/reviews" },
+  { label: "For Salon Owners", href: "/for-barbers" },
+];
+
+const cityLinks = [
+  { label: "Barbers in Indore", href: "/barbers/city/indore" },
+  { label: "Barbers in Bhopal", href: "/barbers/city/bhopal" },
+  { label: "Barbers in Mumbai", href: "/barbers/city/mumbai" },
+  { label: "Barbers in Delhi-NCR", href: "/barbers/city/delhi" },
+  { label: "Barbers in Bengaluru", href: "/barbers/city/bengaluru" },
+  { label: "Barbers in Pune", href: "/barbers/city/pune" },
+];
+
+const serviceLinks = [
+  { label: "Haircut & Styling", href: "/services/haircut" },
+  { label: "Beard Trim & Shape", href: "/services/beard-trim" },
+  { label: "Hair Colour & Tint", href: "/services/hair-colour" },
+  { label: "Facial & De-Tan", href: "/services/facial" },
+  { label: "Wedding Packages", href: "/services/bridal-grooming" },
+];
+
+const companyLinks = [
+  { label: "About Trimly", href: "/about" },
+  { label: "Help & FAQ", href: "/faq" },
+  { label: "Contact Us", href: "/contact" },
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Service", href: "/terms" },
 ];
 
 export default function Footer() {
   const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim();
+  const companyName = process.env.NEXT_PUBLIC_COMPANY_NAME || "Trimly";
+  const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-card/40 border-t border-border/70">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-          <div className="max-w-sm space-y-3">
+    <footer className="bg-card/50 border-t border-border/70 text-sm">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-10">
+          {/* Brand Info */}
+          <div className="col-span-2 md:col-span-3 lg:col-span-1 space-y-4">
             <Link href="/" className="flex items-center gap-2.5">
               <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
                 <Scissors className="w-4 h-4 text-primary" />
               </div>
               <span className="font-extrabold tracking-wider text-xl uppercase text-foreground flex items-center gap-1.5">
-                Trimly
+                {companyName}
                 <span className="w-1.5 h-1.5 rounded-full bg-secondary inline-block" />
               </span>
             </Link>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Curated master artisans, real-time appointments, and modern grooming luxury.
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              India&apos;s smart online barber and salon appointment booking platform. Verified local stylists, real-time slots, and transparent INR menus.
             </p>
-          </div>
-
-          <nav className="flex flex-wrap gap-x-6 gap-y-3 md:justify-end text-sm">
-            {links.map((link) => (
-              <Link
-                key={link.label}
-                href={link.href}
-                className="text-muted-foreground hover:text-primary transition-colors font-medium"
-              >
-                {link.label}
-              </Link>
-            ))}
+            <div className="pt-1 flex items-center gap-2 text-xs font-semibold text-primary">
+              <ShieldCheck className="w-4 h-4" />
+              <span>100% Verified Partners</span>
+            </div>
             {supportEmail && (
               <a
                 href={`mailto:${supportEmail}`}
-                className="text-muted-foreground hover:text-primary font-medium"
+                className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary transition-colors"
               >
-                Contact Support
+                <Mail className="w-3.5 h-3.5" />
+                {supportEmail}
               </a>
             )}
-          </nav>
+          </div>
+
+          {/* Product Links */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-xs uppercase tracking-wider text-foreground">Product</h4>
+            <ul className="space-y-2">
+              {productLinks.map((item) => (
+                <li key={item.label}>
+                  <Link href={item.href} className="text-muted-foreground hover:text-primary transition-colors">
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Top Indian Cities */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-xs uppercase tracking-wider text-foreground">Top Cities</h4>
+            <ul className="space-y-2">
+              {cityLinks.map((item) => (
+                <li key={item.label}>
+                  <Link href={item.href} className="text-muted-foreground hover:text-primary transition-colors">
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Popular Services */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-xs uppercase tracking-wider text-foreground">Popular Services</h4>
+            <ul className="space-y-2">
+              {serviceLinks.map((item) => (
+                <li key={item.label}>
+                  <Link href={item.href} className="text-muted-foreground hover:text-primary transition-colors">
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Company & Legal */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-xs uppercase tracking-wider text-foreground">Company & Legal</h4>
+            <ul className="space-y-2">
+              {companyLinks.map((item) => (
+                <li key={item.label}>
+                  <Link href={item.href} className="text-muted-foreground hover:text-primary transition-colors">
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} Trimly Grooming Ltd. All rights reserved.</span>
-          <span>Designed with Modern Grooming Luxury standards.</span>
+        {/* Bottom Bar */}
+        <div className="mt-12 pt-6 border-t border-border/60 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+          <span>© {year} {companyName}. All rights reserved.</span>
+          <div className="flex items-center gap-4">
+            <Link href="/privacy" className="hover:text-primary">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-primary">Terms of Service</Link>
+            <span>Made in India 🇮🇳</span>
+          </div>
         </div>
       </div>
     </footer>

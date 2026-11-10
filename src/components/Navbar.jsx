@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu, X, Scissors, Shield, LayoutDashboard, UserCheck, LogOut } from "lucide-react";
+import { Menu, X, Scissors, Shield, LayoutDashboard, UserCheck, LogOut, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
@@ -22,10 +22,11 @@ export default function Navbar() {
   const navLinks = [
     { name: "Home", href: "/" },
     { name: "Barbers", href: "/barbers" },
+    { name: "Services", href: "/services/haircut" },
     { name: "Reviews", href: "/reviews" },
-    { name: "About", href: "/#about" },
-    { name: "Features", href: "/#features" },
-    { name: "Benefits", href: "/#benefits" },
+    { name: "About", href: "/about" },
+    { name: "FAQ", href: "/faq" },
+    { name: "Contact", href: "/contact" },
   ];
 
   return (
@@ -38,7 +39,7 @@ export default function Navbar() {
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between min-h-14">
-          {/* Brand Logo & Wordmark matching Mobile Stitch Design */}
+          {/* Brand Logo & Wordmark */}
           <Link href="/" className="flex items-center gap-2.5 group" aria-label="Trimly home">
             <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-105 transition-transform duration-200">
               <Scissors className="w-5 h-5 text-primary" />
@@ -49,13 +50,13 @@ export default function Navbar() {
                 <span className="w-1.5 h-1.5 rounded-full bg-secondary inline-block" />
               </span>
               <span className="text-[10px] tracking-widest text-muted-foreground uppercase font-semibold -mt-1">
-                Luxury Grooming
+                India Booking
               </span>
             </div>
           </Link>
 
           {/* Desktop Nav Links */}
-          <div className="hidden md:flex items-center space-x-7">
+          <div className="hidden lg:flex items-center space-x-6">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
@@ -68,14 +69,14 @@ export default function Navbar() {
           </div>
 
           {/* Right Action Stack */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2.5">
             {session ? (
               <div className="flex items-center gap-2">
                 {session.user?.role === "admin" && (
                   <Link href="/admin">
                     <Button variant="outline" size="sm" className="rounded-xl border-primary/30 text-primary gap-1.5 font-semibold">
                       <Shield className="w-3.5 h-3.5" />
-                      Admin Portal
+                      Admin
                     </Button>
                   </Link>
                 )}
@@ -83,7 +84,7 @@ export default function Navbar() {
                   <Link href="/dashboard/barber">
                     <Button variant="outline" size="sm" className="rounded-xl border-primary/30 text-primary gap-1.5 font-semibold">
                       <UserCheck className="w-3.5 h-3.5" />
-                      Barber Workspace
+                      Workspace
                     </Button>
                   </Link>
                 )}
@@ -106,6 +107,12 @@ export default function Navbar() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
+                <Link href="/for-barbers">
+                  <Button variant="ghost" size="sm" className="rounded-xl font-semibold gap-1.5 text-muted-foreground hover:text-primary">
+                    <Store className="w-3.5 h-3.5 text-primary" />
+                    For Barbers
+                  </Button>
+                </Link>
                 <Link href="/login">
                   <Button variant="outline" size="sm" className="rounded-xl font-semibold">
                     Sign In
@@ -123,7 +130,7 @@ export default function Navbar() {
           {/* Mobile Menu Hamburger */}
           <button
             type="button"
-            className="md:hidden p-2.5 rounded-xl hover:bg-muted border border-border/50 text-foreground transition-colors"
+            className="lg:hidden p-2.5 rounded-xl hover:bg-muted border border-border/50 text-foreground transition-colors"
             onClick={() => setIsMobileMenuOpen((value) => !value)}
             aria-label="Toggle navigation"
             aria-expanded={isMobileMenuOpen}
@@ -134,7 +141,7 @@ export default function Navbar() {
 
         {/* Mobile Navigation Dropdown */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 space-y-3 border-t border-border/60 mt-2 bg-background/95 backdrop-blur-lg animate-in slide-in-from-top-2 duration-200">
+          <div className="lg:hidden py-4 space-y-3 border-t border-border/60 mt-2 bg-background/95 backdrop-blur-lg animate-in slide-in-from-top-2 duration-200">
             <div className="space-y-1">
               {navLinks.map((link) => (
                 <Link
@@ -179,17 +186,24 @@ export default function Navbar() {
                   </Button>
                 </>
               ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button variant="outline" className="w-full rounded-xl">
-                      Sign In
+                <div className="space-y-2">
+                  <Link href="/for-barbers" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button variant="outline" className="w-full rounded-xl gap-2">
+                      <Store className="w-4 h-4 text-primary" /> For Barbers & Salon Owners
                     </Button>
                   </Link>
-                  <Link href="/barbers" onClick={() => setIsMobileMenuOpen(false)}>
-                    <Button className="w-full rounded-xl">
-                      Book Now
-                    </Button>
-                  </Link>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full rounded-xl">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link href="/barbers" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button className="w-full rounded-xl">
+                        Book Now
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>

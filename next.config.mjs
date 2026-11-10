@@ -1,7 +1,14 @@
 /** @type {import('next').NextConfig} */
+const isProduction = process.env.NODE_ENV === "production";
+
+// Tighten CSP: omit 'unsafe-eval' in production; allow GA4 domains
+const scriptSrc = isProduction
+  ? "'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com"
+  : "'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com";
+
 const cspHeader = `
   default-src 'self';
-  script-src 'self' 'unsafe-inline' 'unsafe-eval';
+  script-src ${scriptSrc};
   style-src 'self' 'unsafe-inline';
   img-src 'self' blob: data: https:;
   font-src 'self' data:;
@@ -9,7 +16,7 @@ const cspHeader = `
   base-uri 'self';
   form-action 'self';
   frame-ancestors 'none';
-  connect-src 'self' https: ws: wss:;
+  connect-src 'self' https: ws: wss: https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com;
 `.replace(/\s{2,}/g, " ").trim();
 
 const securityHeaders = [
@@ -20,7 +27,7 @@ const securityHeaders = [
   { key: "Content-Security-Policy", value: cspHeader },
 ];
 
-if (process.env.NODE_ENV === "production") {
+if (isProduction) {
   securityHeaders.push({
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",

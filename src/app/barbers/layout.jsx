@@ -1,7 +1,7 @@
 export const metadata = {
-  title: "Find Barbers Near You",
-  description: "Browse our directory of top barbers and book your next appointment easily with Trimlly.",
-  keywords: ["find local barbers", "book haircut", "barber directory", "Trimlly barbers"],
+  title: "Find Barbers & Salons Near You in India",
+  description:
+    "Browse verified barbers and salons across India. Book appointments online with real-time slot availability. Available in Indore, Bhopal, Delhi, Mumbai and more.",
 };
 
 export default function BarbersLayout({ children }) {

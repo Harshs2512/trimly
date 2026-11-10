@@ -64,6 +64,9 @@ export async function ensureIndexes() {
         { col: "favourites", spec: { userId: 1, barberId: 1 }, opts: { unique: true, name: "uniq_user_favourite" } },
         { col: "consents", spec: { userId: 1, createdAt: -1 }, opts: { name: "consent_user_created" } },
         { col: "barbers", spec: { location: "2dsphere" }, opts: { name: "barber_geo_2dsphere", sparse: true } },
+        { col: "posts", spec: { slug: 1 }, opts: { unique: true, name: "uniq_post_slug" } },
+        { col: "posts", spec: { status: 1, publishedAt: -1 }, opts: { name: "post_status_published" } },
+        { col: "posts", spec: { category: 1 }, opts: { name: "post_category" } },
       ];
 
       const results = await Promise.allSettled(

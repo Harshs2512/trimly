@@ -201,7 +201,7 @@ export default function BarberCard({ barber, index = 0 }) {
         )}
 
         <div className="mt-auto pt-4 border-t">
-          <Link href={`/barbers/${barber._id}`} className="block">
+          <Link href={barber.canonicalSlug || `/barbers/${barber._id}`} className="block">
             <Button className="w-full rounded-xl gap-2 font-semibold">
               View & Book <ArrowRight className="w-4 h-4" />
             </Button>

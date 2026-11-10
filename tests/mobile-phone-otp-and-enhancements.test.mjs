@@ -17,7 +17,7 @@ test("Phone OTP: normalization, generation, and rate limits", async () => {
   assert.equal(normalizePhone("09876543210"), "+919876543210");
 
   const testPhone = `99999${Math.floor(10000 + Math.random() * 90000)}`;
-  const sendRes = await sendPhoneOtp(db, { phone: testPhone, ip: "127.0.0.1" });
+  const sendRes = await sendPhoneOtp(db, { phone: testPhone, ip: `127.0.2.${Math.floor(Math.random() * 200) + 1}` });
 
   assert.equal(sendRes.ok, true);
   assert.ok(sendRes.developmentCode);
@@ -35,7 +35,7 @@ test("Phone OTP: new user auto-registration and direct login", async () => {
   const db = await getDb();
 
   const testPhone = `98888${Math.floor(10000 + Math.random() * 90000)}`;
-  const sendRes = await sendPhoneOtp(db, { phone: testPhone, ip: "127.0.0.1" });
+  const sendRes = await sendPhoneOtp(db, { phone: testPhone, ip: `127.0.2.${Math.floor(Math.random() * 200) + 1}` });
   assert.equal(sendRes.ok, true);
   const otp = sendRes.developmentCode;
 
@@ -72,7 +72,7 @@ test("Phone OTP: new user auto-registration and direct login", async () => {
   assert.equal(tokenCheck.payload.role, "user");
 
   // 3. Subsequent login with existing phone -> logs in directly without creating duplicate
-  const secondOtpRes = await sendPhoneOtp(db, { phone: testPhone, ip: "127.0.0.1" });
+  const secondOtpRes = await sendPhoneOtp(db, { phone: testPhone, ip: `127.0.3.${Math.floor(Math.random() * 200) + 1}` });
   const secondLogin = await verifyPhoneOtpAndLogin(db, {
     phone: testPhone,
     code: secondOtpRes.developmentCode,
@@ -154,10 +154,15 @@ test("Phone OTP: 3-tier fallback chain (Fast2SMS -> Twilio -> Email -> Dev)", as
 
   const otpRes = await sendPhoneOtp(db, {
     phone: testPhone,
-    ip: "127.0.0.1",
+    ip: `127.0.2.${Math.floor(Math.random() * 200) + 1}`,
   });
 
   assert.equal(otpRes.ok, true);
   assert.ok(otpRes.deliveryMethod);
   assert.ok(otpRes.developmentCode || otpRes.smsDelivered || otpRes.emailDelivered);
+
+  const { default: clientPromise } = await import("../src/lib/mongodb.js");
+  const client = await clientPromise;
+  await client.close();
 });
+

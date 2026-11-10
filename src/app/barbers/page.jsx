@@ -1,211 +1,173 @@
-"use client";
+import Link from "next/link";
+import { Scissors, MapPin } from "lucide-react";
+import { getAppUrl } from "@/lib/appUrl";
+import { getVerifiedBarbers, getCityDirectoryStats, POPULAR_SERVICES } from "@/lib/barbers";
+import BarbersDirectoryClient from "@/components/BarbersDirectoryClient";
 
-import { useEffect, useState } from "react";
-import axios from "axios";
-import BarberCard from "@/components/BarberCard";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, MapPin, Scissors, AlertCircle, Navigation, X } from "lucide-react";
+export const revalidate = 60;
+const PAGE_SIZE = 24; // Bounded pagination matching response.data.pagination contract
 
-const PAGE_SIZE = 24;
+export async function generateMetadata({ searchParams }) {
+  const resolvedParams = await searchParams;
+  const page = parseInt(resolvedParams?.page || "1", 10);
+  const search = resolvedParams?.search?.trim() || "";
+  const appUrl = getAppUrl();
 
-export default function BarbersPage() {
-  const [list, setList] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ total: 0, totalPages: 1 });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [userCoords, setUserCoords] = useState(null);
-  const [locating, setLocating] = useState(false);
-  const [locationError, setLocationError] = useState("");
+  const title = search
+    ? `Barbers & Salons matching "${search}" | Trimly`
+    : page > 1
+    ? `Verified Barbers & Salons in India (Page ${page}) | Trimly`
+    : "Find & Book Verified Barbers and Salons Online in India | Trimly";
 
-  useEffect(() => {
-    const controller = new AbortController();
-    const timer = setTimeout(async () => {
-      setIsLoading(true);
-      setError("");
-      try {
-        const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) });
-        if (searchQuery.trim()) params.set("search", searchQuery.trim());
-        if (userCoords?.lat && userCoords?.lng) {
-          params.set("lat", String(userCoords.lat));
-          params.set("lng", String(userCoords.lng));
-        }
-        const response = await axios.get(`/api/barbers?${params}`, { signal: controller.signal });
-        setList(response.data.barbers || []);
-        setPagination(response.data.pagination || { total: 0, totalPages: 1 });
-      } catch (err) {
-        if (err.code !== "ERR_CANCELED" && err.name !== "CanceledError") {
-          setError("We could not load the barber directory. Please try again.");
-          setList([]);
-        }
-      } finally {
-        if (!controller.signal.aborted) setIsLoading(false);
-      }
-    }, 250);
+  const description =
+    "Browse verified artisan barbers and modern grooming lounges across India. Real-time slot availability, transparent INR pricing, and zero wait times.";
 
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [page, searchQuery, userCoords]);
+  const canonical = page > 1 ? `${appUrl}/barbers?page=${page}` : `${appUrl}/barbers`;
 
-  function updateSearch(value) {
-    setSearchQuery(value);
-    setPage(1);
-  }
+  return {
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "website",
+      locale: "en_IN",
+    },
+  };
+}
 
-  function handleGetLocation() {
-    if (typeof window === "undefined" || !navigator?.geolocation) {
-      setLocationError("Geolocation is not supported by your browser.");
-      return;
-    }
-    setLocating(true);
-    setLocationError("");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setUserCoords({
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude,
-        });
-        setLocating(false);
-        setPage(1);
+export default async function BarbersPage({ searchParams }) {
+  const resolvedParams = await searchParams;
+  const page = Math.max(1, parseInt(resolvedParams?.page || "1", 10));
+  const search = resolvedParams?.search?.trim() || "";
+  const service = resolvedParams?.service?.trim() || "";
+  const city = resolvedParams?.city?.trim() || "";
+  const lat = resolvedParams?.lat ? parseFloat(resolvedParams.lat) : null;
+  const lng = resolvedParams?.lng ? parseFloat(resolvedParams.lng) : null;
+
+  const appUrl = getAppUrl();
+  const [{ barbers, pagination }, cityStats] = await Promise.all([
+    getVerifiedBarbers({ page, limit: 24, search, service, city, lat, lng }),
+    getCityDirectoryStats(),
+  ]);
+
+  // Structured Data: ItemList
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    itemListElement: barbers.map((b, index) => ({
+      "@type": "ListItem",
+      position: (page - 1) * 24 + index + 1,
+      name: b.shopName,
+      url: `${appUrl}${b.canonicalSlug}`,
+    })),
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: appUrl,
       },
-      () => {
-        setLocating(false);
-        setLocationError("Could not retrieve your location. Please check browser permissions.");
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Barbers",
+        item: `${appUrl}/barbers`,
       },
-      { timeout: 10000, enableHighAccuracy: true }
-    );
-  }
-
-  function handleClearLocation() {
-    setUserCoords(null);
-    setLocationError("");
-    setPage(1);
-  }
+    ],
+  };
 
   return (
     <div className="min-h-screen bg-background pb-20 relative overflow-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+
       <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-primary/5 blur-[120px] pointer-events-none -z-10" />
-      <div className="relative pt-28 pb-14 px-6 container mx-auto max-w-7xl">
-        <div className="flex flex-col items-center text-center space-y-6 max-w-3xl mx-auto animate-in fade-in slide-in-from-bottom-6 duration-700">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-bold uppercase tracking-wider border border-primary/20">
-            <Scissors className="w-4 h-4" /> Barber Directory
+
+      <div className="relative pt-24 pb-10 px-4 sm:px-6 container mx-auto max-w-7xl">
+        {/* Breadcrumb */}
+        <nav aria-label="Breadcrumb" className="mb-6 text-xs text-muted-foreground">
+          <ol className="flex items-center gap-2">
+            <li>
+              <Link href="/" className="hover:text-primary transition-colors">
+                Home
+              </Link>
+            </li>
+            <li>/</li>
+            <li className="text-foreground font-medium">Barbers</li>
+          </ol>
+        </nav>
+
+        {/* Directory Header */}
+        <header className="flex flex-col items-center text-center space-y-4 max-w-3xl mx-auto mb-10">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider border border-primary/20">
+            <Scissors className="w-3.5 h-3.5" /> Verified Barber Directory
           </div>
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">
-            Find the right <span className="text-primary">barber</span> for your next visit
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight">
+            Book Verified <span className="text-primary">Barbers & Salons</span> in India
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground">
-            Browse verified shop profiles, compare services and request an available appointment time.
+          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
+            Real-time appointment slots, confirmed stylists, and zero wait anxiety. Pay at venue or online in INR.
           </p>
 
-          <div className="w-full max-w-2xl flex flex-col sm:flex-row items-center gap-3 mt-4">
-            <div className="w-full relative shadow-lg rounded-full group flex-1">
-              <Search className="w-6 h-6 absolute left-6 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-              <Input
-                type="search"
-                placeholder="Search by shop, service or address..."
-                className="w-full h-16 pl-16 pr-6 rounded-full bg-card border-2 text-lg"
-                value={searchQuery}
-                onChange={(event) => updateSearch(event.target.value)}
-              />
-            </div>
-
-            {userCoords ? (
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleClearLocation}
-                className="h-16 px-6 rounded-full border-2 border-primary/40 bg-primary/10 text-primary font-semibold flex items-center gap-2 hover:bg-primary/20 shrink-0 shadow-md"
-              >
-                <Navigation className="w-5 h-5 fill-primary text-primary" />
-                Near Me
-                <X className="w-4 h-4 ml-1 opacity-70" />
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={handleGetLocation}
-                disabled={locating}
-                className="h-16 px-6 rounded-full border-2 font-semibold flex items-center gap-2 hover:border-primary shrink-0 shadow-md"
-              >
-                <Navigation className={`w-5 h-5 ${locating ? "animate-spin" : ""}`} />
-                {locating ? "Locating..." : "Find Near Me"}
-              </Button>
-            )}
-          </div>
-
-          {locationError && (
-            <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">{locationError}</p>
-          )}
-
-          {userCoords && (
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold border border-primary/20">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-              Showing barbers sorted by distance from your current location
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="container mx-auto px-6 max-w-7xl">
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold">Verified Barbers</h2>
-          <p className="text-muted-foreground">
-            {isLoading ? "Loading results..." : `${pagination.total} result${pagination.total === 1 ? "" : "s"}`}
-          </p>
-        </div>
-        {error ? (
-          <div className="rounded-3xl border border-red-500/20 bg-red-500/10 p-10 text-center text-red-700">
-            <AlertCircle className="w-10 h-10 mx-auto mb-3" />
-            <h3 className="font-bold text-lg">Unable to load barbers</h3>
-            <p className="mt-1">{error}</p>
-          </div>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-              {isLoading ? (
-                Array.from({ length: 8 }, (_, i) => (
-                  <div key={i} className="h-96 rounded-3xl bg-card/40 border animate-pulse" />
-                ))
-              ) : list.length ? (
-                list.map((barber, index) => <BarberCard key={barber._id} barber={barber} index={index} />)
-              ) : (
-                <div className="col-span-full py-24 flex flex-col items-center text-center rounded-3xl border border-dashed">
-                  <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-5">
-                    <MapPin className="w-9 h-9 text-muted-foreground" />
-                  </div>
-                  <h3 className="text-2xl font-bold">No matching barbers</h3>
-                  <p className="text-muted-foreground mt-2">Try a different shop name, service or address.</p>
-                </div>
-              )}
-            </div>
-            {!isLoading && pagination.totalPages > 1 && (
-              <div className="mt-10 flex items-center justify-center gap-3">
-                <Button
-                  variant="outline"
-                  disabled={page <= 1}
-                  onClick={() => setPage((value) => Math.max(1, value - 1))}
+          {/* Quick city links */}
+          {cityStats.length > 0 && (
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-2 text-xs">
+              <span className="text-muted-foreground font-medium">Popular Cities:</span>
+              {cityStats.slice(0, 6).map((c) => (
+                <Link
+                  key={c.citySlug}
+                  href={`/barbers/city/${c.citySlug}`}
+                  className="px-2.5 py-1 rounded-full bg-secondary/80 hover:bg-primary/20 hover:text-primary transition-colors text-foreground font-medium"
                 >
-                  Previous
-                </Button>
-                <span className="text-sm text-muted-foreground">
-                  Page {page} of {pagination.totalPages}
+                  {c.cityName} ({c.count})
+                </Link>
+              ))}
+            </div>
+          )}
+        </header>
+
+        {/* Interactive Directory List */}
+        <BarbersDirectoryClient
+          initialBarbers={barbers}
+          pagination={pagination}
+          selectedCity={city}
+          selectedService={service}
+        />
+
+        {/* Popular Services Quick Hub */}
+        <section className="mt-20 pt-12 border-t border-border/60">
+          <h2 className="text-2xl font-bold text-center mb-6">Explore Grooming Services</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {POPULAR_SERVICES.map((srv) => (
+              <Link
+                key={srv.slug}
+                href={`/services/${srv.slug}`}
+                className="p-3.5 rounded-2xl bg-card border border-border/60 hover:border-primary/50 text-center transition-all group flex flex-col items-center justify-center gap-1.5"
+              >
+                <span className="font-semibold text-xs text-foreground group-hover:text-primary transition-colors">
+                  {srv.name}
                 </span>
-                <Button
-                  variant="outline"
-                  disabled={page >= pagination.totalPages}
-                  onClick={() => setPage((value) => Math.min(pagination.totalPages, value + 1))}
-                >
-                  Next
-                </Button>
-              </div>
-            )}
-          </>
-        )}
+                <span className="text-[11px] text-muted-foreground">{srv.priceRange}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );

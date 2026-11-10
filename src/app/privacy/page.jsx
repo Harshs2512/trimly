@@ -1,6 +1,6 @@
 export const metadata = {
   title: "Privacy Policy",
-  description: "Privacy Policy for Trimlly.",
+  description: "Privacy Policy for Trimly — how we collect, use and protect your data.",
 };
 
 export default function PrivacyPolicy() {
@@ -51,7 +51,7 @@ export default function PrivacyPolicy() {
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-foreground">5. Contact Us</h2>
             <p className="text-muted-foreground">
-              {supportEmail ? <>If you have any questions about this Privacy Policy, contact us at <a className="underline" href={`mailto:${supportEmail}`}>{supportEmail}</a>.</> : "If you have any questions about this Privacy Policy, use the support contact published by Trimlly."}
+              {supportEmail ? <>If you have any questions about this Privacy Policy, contact us at <a className="underline" href={`mailto:${supportEmail}`}>{supportEmail}</a>.</> : "If you have any questions about this Privacy Policy, use the support contact published by Trimly."}
             </p>
           </section>
         </div>

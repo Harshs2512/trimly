@@ -90,6 +90,9 @@ async function main() {
     db.collection("favourites").createIndex({ userId: 1, barberId: 1 }, { unique: true, name: "uniq_user_favourite" }),
     db.collection("consents").createIndex({ userId: 1, createdAt: -1 }, { name: "consent_user_created" }),
     db.collection("barbers").createIndex({ location: "2dsphere" }, { name: "barber_geo_2dsphere", sparse: true }),
+    db.collection("posts").createIndex({ slug: 1 }, { unique: true, name: "uniq_post_slug" }),
+    db.collection("posts").createIndex({ status: 1, publishedAt: -1 }, { name: "post_status_published" }),
+    db.collection("posts").createIndex({ category: 1 }, { name: "post_category" }),
   ]);
 
   console.log(`Indexes ensured for database '${dbName}'.`);

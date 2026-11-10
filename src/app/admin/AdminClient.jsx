@@ -6,7 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import AdminGeoMap from "@/components/admin/AdminGeoMap";
+import dynamic from "next/dynamic";
+
+const AdminGeoMap = dynamic(() => import("@/components/admin/AdminGeoMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[600px] flex items-center justify-center bg-card rounded-2xl border text-muted-foreground animate-pulse text-sm">
+      Loading geospatial map...
+    </div>
+  ),
+});
 import {
   Users,
   Scissors,
@@ -39,7 +48,9 @@ import {
   Edit3,
   Globe,
   Compass,
+  BookOpen,
 } from "lucide-react";
+import AdminBlogManager from "@/components/admin/AdminBlogManager";
 
 export default function AdminClient({
   adminUser,
@@ -534,6 +545,9 @@ export default function AdminClient({
                   Shield Active
                 </span>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="blog" className="rounded-xl px-4 py-2.5 gap-2 text-xs sm:text-sm font-semibold">
+              <BookOpen className="w-4 h-4 text-primary" /> Blog Articles
             </TabsTrigger>
           </TabsList>
 
@@ -1572,6 +1586,11 @@ export default function AdminClient({
               loading={actionLoading === "activity-page"}
               onPage={(p) => loadActivity(p, activityCategory, activitySearch)}
             />
+          </TabsContent>
+
+          {/* TAB 7: BLOG JOURNAL MANAGEMENT */}
+          <TabsContent value="blog" className="space-y-6 mt-0">
+            <AdminBlogManager />
           </TabsContent>
         </Tabs>
       </div>

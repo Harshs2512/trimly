@@ -503,3 +503,6 @@ export async function checkBreachedPassword(password) {
     return { breached: false };
   }
 }
+
+export { deleteUserAccount } from "./accountLifecycle.js";
+
