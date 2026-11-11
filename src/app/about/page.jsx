@@ -8,7 +8,7 @@ export const metadata = {
   description:
     "Learn about Trimlly's mission to eliminate waiting queues in Indian barbershops and salons through verified master stylists and real-time appointment booking.",
   alternates: {
-    canonical: `${getAppUrl()}/about`,
+    canonical: "/about",
   },
 };
 

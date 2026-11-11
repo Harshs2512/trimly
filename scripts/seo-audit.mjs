@@ -10,9 +10,12 @@ const ROUTES = [
   "/barbers",
   "/for-barbers",
   "/services/haircut",
+  "/reviews",
   "/about",
   "/contact",
   "/faq",
+  "/privacy",
+  "/terms",
   "/blog",
   "/blog/feed.xml",
 ];

@@ -8,7 +8,7 @@ export const metadata = {
   description:
     "Get in touch with Trimlly for appointment bookings, salon onboarding, or support inquiries across Indore, Bhopal, Mumbai, Delhi, Bengaluru, and Pune.",
   alternates: {
-    canonical: `${getAppUrl()}/contact`,
+    canonical: "/contact",
   },
 };
 

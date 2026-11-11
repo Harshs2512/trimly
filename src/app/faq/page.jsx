@@ -14,7 +14,7 @@ export const metadata = {
   description:
     "Find answers to common questions about booking barber appointments, slot availability, cancellation rules, payments in INR, and salon verification on Trimlly.",
   alternates: {
-    canonical: `${getAppUrl()}/faq`,
+    canonical: "/faq",
   },
 };
 

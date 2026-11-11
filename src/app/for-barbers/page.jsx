@@ -22,16 +22,16 @@ import {
 import { SalonOwnerInlineLead } from "@/components/leads/InlineLeadCapture";
 
 export const metadata = {
-  title: "List Your Salon Free on Trimlly | India Barber Booking Platform",
+  title: "Free Salon Management & Booking System in India | Trimlly for Barbers",
   description:
-    "Grow your salon business with Trimlly. Zero monthly subscription fees, live chair calendar, local customer discovery, and automated SMS appointment reminders.",
+    "Free salon management and appointment booking software for Indian barbershops and salons. Zero monthly fees, real-time chair calendar, and automated SMS reminders.",
   alternates: {
     canonical: "/for-barbers",
   },
   openGraph: {
-    title: "List Your Salon Free on Trimlly | India Barber Booking Platform",
+    title: "Free Salon Management & Booking System in India | Trimlly",
     description:
-      "Grow your salon business with Trimlly. Zero monthly fees, real-time slot calendar, and verified customer bookings in INR.",
+      "Manage your salon appointment calendar, fill empty chairs, and eliminate no-shows with zero monthly software fees on Trimlly India.",
     url: "/for-barbers",
     siteName: "Trimlly",
     locale: "en_IN",
@@ -81,11 +81,30 @@ export default function ForBarbersPage() {
     })),
   };
 
+  const softwareJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Trimlly Salon Management & Booking System",
+    operatingSystem: "Web, Android, iOS",
+    applicationCategory: "BusinessApplication",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "INR",
+    },
+    description:
+      "Free salon management and appointment booking software for Indian barbershops and salons. Real-time chair calendar, customer discovery, and automated appointment reminders.",
+  };
+
   return (
     <div className="bg-background min-h-screen py-12 md:py-20">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
       />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl space-y-24">
@@ -93,18 +112,18 @@ export default function ForBarbersPage() {
         <div className="text-center space-y-6 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-primary/10 border border-primary/25 rounded-full text-primary text-xs font-bold uppercase tracking-wider">
             <Store className="w-3.5 h-3.5 text-primary" />
-            For Barber Shops & Salon Owners
+            Free Salon Management System in India
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.12]">
-            Fill Every Chair. <br />
+            Smart Salon Management. <br />
             <span className="text-primary bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
               Zero Monthly Software Fees.
             </span>
           </h1>
 
           <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed">
-            Stop paying ₹3,000/month for clunky POS software. Trimlly connects your barbershop or unisex salon with nearby clients, eliminates no-shows, and manages your appointment calendar right from your phone.
+            The free salon management and appointment booking system built for Indian barbers and salon owners. Manage your live chair calendar, fill off-peak slots, and eliminate no-shows right from your smartphone.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-2">

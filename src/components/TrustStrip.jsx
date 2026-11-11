@@ -59,7 +59,7 @@ export default function TrustStrip({ stats }) {
                 <ShieldCheck className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-foreground">100% Vetted Salons</h4>
+                <p className="text-sm font-bold text-foreground">100% Vetted Salons</p>
                 <p className="text-xs text-muted-foreground">Every partner profile verified</p>
               </div>
             </div>
@@ -69,7 +69,7 @@ export default function TrustStrip({ stats }) {
                 <CalendarCheck className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-foreground">Real-Time Chair Slots</h4>
+                <p className="text-sm font-bold text-foreground">Real-Time Chair Slots</p>
                 <p className="text-xs text-muted-foreground">Live availability, zero wait</p>
               </div>
             </div>
@@ -79,7 +79,7 @@ export default function TrustStrip({ stats }) {
                 <span className="font-extrabold text-primary text-base">₹</span>
               </div>
               <div>
-                <h4 className="text-sm font-bold text-foreground">Transparent INR Menus</h4>
+                <p className="text-sm font-bold text-foreground">Transparent INR Menus</p>
                 <p className="text-xs text-muted-foreground">Upfront pricing, no hidden fees</p>
               </div>
             </div>
@@ -89,7 +89,7 @@ export default function TrustStrip({ stats }) {
                 <MapPin className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <h4 className="text-sm font-bold text-foreground">Top Indian Cities</h4>
+                <p className="text-sm font-bold text-foreground">Top Indian Cities</p>
                 <p className="text-xs text-muted-foreground">Indore, Bhopal, Mumbai & more</p>
               </div>
             </div>

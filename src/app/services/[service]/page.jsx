@@ -12,12 +12,11 @@ export async function generateMetadata({ params }) {
   const srv = POPULAR_SERVICES.find((s) => s.slug === serviceParam);
 
   if (!srv) {
-    return { title: "Service Not Found | Trimly" };
+    return { title: "Service Not Found | Trimlly" };
   }
 
-  const appUrl = getAppUrl();
-  const canonical = `${appUrl}/services/${srv.slug}`;
-  const title = `Book ${srv.name} Online in India | Trimly`.slice(0, 60);
+  const canonical = `/services/${srv.slug}`;
+  const title = `Book ${srv.name} Online in India | Trimlly`.slice(0, 60);
   const description = `Find verified barbers and salons offering ${srv.name.toLowerCase()} in India. Compare prices (${srv.priceRange}), check real-time slots, and book with zero wait time.`.slice(0, 155);
 
   return {

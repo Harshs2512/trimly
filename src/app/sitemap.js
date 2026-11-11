@@ -13,6 +13,7 @@ export default async function sitemap() {
     { url: `${appUrl}`, changeFrequency: "weekly", priority: 1.0, lastModified: now },
     { url: `${appUrl}/barbers`, changeFrequency: "daily", priority: 0.9, lastModified: now },
     { url: `${appUrl}/for-barbers`, changeFrequency: "weekly", priority: 0.85, lastModified: now },
+    { url: `${appUrl}/reviews`, changeFrequency: "daily", priority: 0.8, lastModified: now },
     { url: `${appUrl}/blog`, changeFrequency: "daily", priority: 0.85, lastModified: now },
     { url: `${appUrl}/about`, changeFrequency: "monthly", priority: 0.7, lastModified: now },
     { url: `${appUrl}/contact`, changeFrequency: "monthly", priority: 0.7, lastModified: now },

@@ -71,7 +71,7 @@ export async function generateMetadata({ params }) {
 
   if (!barber) {
     return {
-      title: "Barber Not Found | Trimly",
+      title: "Barber Not Found | Trimlly",
       description: "This salon or barber profile is unavailable.",
     };
   }
@@ -79,14 +79,14 @@ export async function generateMetadata({ params }) {
   const appUrl = getAppUrl();
   const shopName = barber.shopName || "Barber Shop";
   const cityName = barber.city || city || "India";
-  const title = `${shopName} in ${cityName}: Book Online | Trimly`.slice(0, 60);
+  const title = `${shopName} in ${cityName}: Book Online | Trimlly`.slice(0, 60);
 
   const rawDesc = barber.description
     ? `${shopName} in ${cityName}. ${barber.description}`
-    : `Book verified grooming appointments at ${shopName} in ${cityName}. Check real-time slots, pricing in INR, and reviews on Trimly.`;
+    : `Book verified grooming appointments at ${shopName} in ${cityName}. Check real-time slots, pricing in INR, and reviews on Trimlly.`;
   const description = rawDesc.slice(0, 155);
 
-  const canonical = `${appUrl}${barber.canonicalSlug}`;
+  const canonical = barber.canonicalSlug;
   const ogImage =
     barber.shopExteriorImage || barber.shopInteriorImage || barber.avatar || `${appUrl}/images/logo.png`;
 

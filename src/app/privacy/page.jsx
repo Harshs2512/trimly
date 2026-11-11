@@ -1,6 +1,9 @@
 export const metadata = {
-  title: "Privacy Policy",
-  description: "Privacy Policy for Trimly — how we collect, use and protect your data.",
+  title: "Privacy Policy | Trimlly India",
+  description: "Privacy Policy for Trimlly — how we collect, use and protect your data in compliance with India's DPDP Act.",
+  alternates: {
+    canonical: "/privacy",
+  },
 };
 
 export default function PrivacyPolicy() {

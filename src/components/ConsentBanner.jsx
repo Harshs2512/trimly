@@ -57,7 +57,7 @@ export default function ConsentBanner() {
             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary shrink-0">
               <ShieldCheck className="w-4 h-4" />
             </div>
-            <h4 className="font-bold text-sm text-foreground">Your Privacy &amp; Data Rights</h4>
+            <p className="font-bold text-sm text-foreground">Your Privacy &amp; Data Rights</p>
           </div>
           <button
             onClick={() => handleConsent(false)}

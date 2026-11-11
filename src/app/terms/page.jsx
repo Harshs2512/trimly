@@ -1,6 +1,9 @@
 export const metadata = {
-  title: "Terms of Service",
-  description: "Terms of Service for Trimly — your rights and responsibilities when using our platform.",
+  title: "Terms of Service | Trimlly India",
+  description: "Terms of Service for Trimlly — rights, responsibilities and booking policies for customers and salon owners.",
+  alternates: {
+    canonical: "/terms",
+  },
 };
 
 export default function TermsOfService() {

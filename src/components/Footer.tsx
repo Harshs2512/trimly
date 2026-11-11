@@ -73,7 +73,7 @@ export default function Footer() {
 
           {/* Product Links */}
           <div className="space-y-3">
-            <h4 className="font-bold text-xs uppercase tracking-wider text-foreground">Product</h4>
+            <p className="font-bold text-xs uppercase tracking-wider text-foreground">Product</p>
             <ul className="space-y-2">
               {productLinks.map((item) => (
                 <li key={item.label}>
@@ -87,7 +87,7 @@ export default function Footer() {
 
           {/* Top Indian Cities */}
           <div className="space-y-3">
-            <h4 className="font-bold text-xs uppercase tracking-wider text-foreground">Top Cities</h4>
+            <p className="font-bold text-xs uppercase tracking-wider text-foreground">Top Cities</p>
             <ul className="space-y-2">
               {cityLinks.map((item) => (
                 <li key={item.label}>
@@ -101,7 +101,7 @@ export default function Footer() {
 
           {/* Popular Services */}
           <div className="space-y-3">
-            <h4 className="font-bold text-xs uppercase tracking-wider text-foreground">Popular Services</h4>
+            <p className="font-bold text-xs uppercase tracking-wider text-foreground">Popular Services</p>
             <ul className="space-y-2">
               {serviceLinks.map((item) => (
                 <li key={item.label}>
@@ -115,7 +115,7 @@ export default function Footer() {
 
           {/* Company & Legal */}
           <div className="space-y-3">
-            <h4 className="font-bold text-xs uppercase tracking-wider text-foreground">Company & Legal</h4>
+            <p className="font-bold text-xs uppercase tracking-wider text-foreground">Company & Legal</p>
             <ul className="space-y-2">
               {companyLinks.map((item) => (
                 <li key={item.label}>

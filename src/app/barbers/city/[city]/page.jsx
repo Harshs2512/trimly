@@ -73,9 +73,8 @@ export async function generateMetadata({ params }) {
   const count = pagination.total;
   const isIndexable = count >= MIN_INDEX_BARBERS;
 
-  const appUrl = getAppUrl();
-  const canonical = `${appUrl}/barbers/city/${cityKey}`;
-  const title = `Top Barbers & Salons in ${info.name}: Book Online | Trimly`.slice(0, 60);
+  const canonical = `/barbers/city/${cityKey}`;
+  const title = `Top Barbers & Salons in ${info.name}: Book Online | Trimlly`.slice(0, 60);
   const description = `Find verified barbers in ${info.name}, ${info.state}. Compare real-time slots, ratings, and haircut prices in INR. Zero wait times with instant confirmation.`.slice(0, 155);
 
   return {

@@ -14,15 +14,15 @@ export async function generateMetadata({ searchParams }) {
   const appUrl = getAppUrl();
 
   const title = search
-    ? `Barbers & Salons matching "${search}" | Trimly`
+    ? `Barbers & Salons matching "${search}" | Trimlly`
     : page > 1
-    ? `Verified Barbers & Salons in India (Page ${page}) | Trimly`
-    : "Find & Book Verified Barbers and Salons Online in India | Trimly";
+    ? `Verified Barbers & Salons in India (Page ${page}) | Trimlly`
+    : "Find & Book Verified Barbers and Salons Online in India | Trimlly";
 
   const description =
     "Browse verified artisan barbers and modern grooming lounges across India. Real-time slot availability, transparent INR pricing, and zero wait times.";
 
-  const canonical = page > 1 ? `${appUrl}/barbers?page=${page}` : `${appUrl}/barbers`;
+  const canonical = page > 1 ? `/barbers?page=${page}` : `/barbers`;
 
   return {
     title,

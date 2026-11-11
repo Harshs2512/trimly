@@ -24,12 +24,9 @@ export const metadata = {
     template: "%s | Trimlly",
   },
   description:
-    "Find and book verified barbers and salons near you. Real-time slots, INR pricing, instant confirmation. Serving Indore, Bhopal, Delhi, Mumbai and 15+ Indian cities.",
+    "Book verified barbers and salons across India. Real-time slot booking, transparent INR prices, and instant confirmation in 15+ cities.",
   authors: [{ name: "Trimlly Team" }],
   creator: "Trimlly",
-  alternates: {
-    canonical: APP_URL,
-  },
   openGraph: {
     type: "website",
     locale: "en_IN",

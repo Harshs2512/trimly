@@ -12,14 +12,13 @@ export async function generateMetadata({ params }) {
   const srv = POPULAR_SERVICES.find((s) => s.slug === serviceParam);
 
   if (!srv) {
-    return { title: "Service Not Found | Trimly" };
+    return { title: "Service Not Found | Trimlly" };
   }
 
   const cityName = cityParam.charAt(0).toUpperCase() + cityParam.slice(1);
-  const appUrl = getAppUrl();
-  const canonical = `${appUrl}/services/${srv.slug}/${slugify(cityParam)}`;
-  const title = `Best ${srv.name} in ${cityName}: Book Online | Trimly`.slice(0, 60);
-  const description = `Looking for ${srv.name.toLowerCase()} in ${cityName}? Compare top-rated barbers, check live slot availability and transparent pricing (${srv.priceRange}) on Trimly.`.slice(0, 155);
+  const canonical = `/services/${srv.slug}/${slugify(cityParam)}`;
+  const title = `Best ${srv.name} in ${cityName}: Book Online | Trimlly`.slice(0, 60);
+  const description = `Looking for ${srv.name.toLowerCase()} in ${cityName}? Compare top-rated barbers, check live slot availability and transparent pricing (${srv.priceRange}) on Trimlly.`.slice(0, 155);
 
   return {
     title,
