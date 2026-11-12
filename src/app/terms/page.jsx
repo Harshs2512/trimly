@@ -1,5 +1,5 @@
 export const metadata = {
-  title: "Terms of Service | Trimlly India",
+  title: "Terms of Service",
   description: "Terms of Service for Trimlly — rights, responsibilities and booking policies for customers and salon owners.",
   alternates: {
     canonical: "/terms",

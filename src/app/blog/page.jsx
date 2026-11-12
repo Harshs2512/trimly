@@ -7,14 +7,14 @@ import { Button } from "@/components/ui/button";
 export const revalidate = 300;
 
 export const metadata = {
-  title: "Trimlly Grooming Journal: Indian Salon Trends & Barber Advice",
+  title: "Grooming Journal: Indian Salon Trends & Barber Advice",
   description:
     "Expert grooming advice, haircut pricing breakdowns, beard styling tips, and wedding salon checklists for men and women across India.",
   alternates: {
     canonical: "/blog",
   },
   openGraph: {
-    title: "Trimlly Grooming Journal: Indian Salon Trends & Barber Advice",
+    title: "Grooming Journal: Indian Salon Trends & Barber Advice | Trimlly",
     description:
       "Expert grooming advice, haircut pricing breakdowns, beard styling tips, and wedding salon checklists across India.",
     url: "/blog",

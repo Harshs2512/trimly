@@ -22,14 +22,14 @@ import {
 import { SalonOwnerInlineLead } from "@/components/leads/InlineLeadCapture";
 
 export const metadata = {
-  title: "Free Salon Management & Booking System in India | Trimlly for Barbers",
+  title: "Free Salon Booking & Appointment Software in India",
   description:
-    "Free salon management and appointment booking software for Indian barbershops and salons. Zero monthly fees, real-time chair calendar, and automated SMS reminders.",
+    "Zero-commission appointment & slot management software for Indian salons and barbers. Manage chairs, reduce no-shows, and accept bookings 24/7.",
   alternates: {
     canonical: "/for-barbers",
   },
   openGraph: {
-    title: "Free Salon Management & Booking System in India | Trimlly",
+    title: "Free Salon Booking & Appointment Software in India | Trimlly",
     description:
       "Manage your salon appointment calendar, fill empty chairs, and eliminate no-shows with zero monthly software fees on Trimlly India.",
     url: "/for-barbers",

@@ -20,7 +20,7 @@ const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 export const metadata = {
   metadataBase: new URL(APP_URL),
   title: {
-    default: "Trimlly: Book Barber & Salon Appointments Online in India",
+    default: "Book Barber & Salon Appointments Online in India | Trimlly",
     template: "%s | Trimlly",
   },
   description:

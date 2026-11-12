@@ -14,9 +14,9 @@ import { getPlatformTrustStats, getRecentGenuineReviews } from "@/lib/barbers";
 export const revalidate = 300; // Revalidate every 5 minutes
 
 export const metadata = {
-  title: "Trimlly: Book Barber & Salon Appointments Online in India",
+  title: "Book Barber & Salon Appointments Online in India",
   description:
-    "Book top-rated barbers and salons across India. Verified stylists, real-time slots, upfront INR pricing, and zero wait times on Trimlly.",
+    "Find top-rated barbers & salons in India. View real-time slots, compare transparent INR prices & book appointments instantly on Trimlly.",
   alternates: {
     canonical: "/",
   },

@@ -14,10 +14,10 @@ export async function generateMetadata({ searchParams }) {
   const appUrl = getAppUrl();
 
   const title = search
-    ? `Barbers & Salons matching "${search}" | Trimlly`
+    ? `Barbers & Salons matching "${search}"`
     : page > 1
-    ? `Verified Barbers & Salons in India (Page ${page}) | Trimlly`
-    : "Find & Book Verified Barbers and Salons Online in India | Trimlly";
+    ? `Verified Barbers & Salons in India (Page ${page})`
+    : "Find & Book Verified Barbers and Salons Online in India";
 
   const description =
     "Browse verified artisan barbers and modern grooming lounges across India. Real-time slot availability, transparent INR pricing, and zero wait times.";
@@ -31,7 +31,7 @@ export async function generateMetadata({ searchParams }) {
       canonical,
     },
     openGraph: {
-      title,
+      title: `${title} | Trimlly`,
       description,
       url: canonical,
       type: "website",

@@ -16,7 +16,7 @@ export async function generateMetadata({ params }) {
   }
 
   const canonical = `/services/${srv.slug}`;
-  const title = `Book ${srv.name} Online in India | Trimlly`.slice(0, 60);
+  const title = `Book ${srv.name} Online in India`;
   const description = `Find verified barbers and salons offering ${srv.name.toLowerCase()} in India. Compare prices (${srv.priceRange}), check real-time slots, and book with zero wait time.`.slice(0, 155);
 
   return {
@@ -24,7 +24,7 @@ export async function generateMetadata({ params }) {
     description,
     alternates: { canonical },
     openGraph: {
-      title,
+      title: `${title} | Trimlly`,
       description,
       url: canonical,
       type: "website",

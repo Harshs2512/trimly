@@ -17,7 +17,8 @@ export async function generateMetadata({ params }) {
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://trimly.in";
-  const title = post.seoTitle || `${post.title} | Trimlly`;
+  const rawTitle = post.seoTitle || post.title;
+  const title = rawTitle.replace(/\s*\|\s*Trimlly$/i, "");
   const description = post.seoDescription || post.excerpt;
 
   return {
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }) {
       canonical: `/blog/${post.slug}`,
     },
     openGraph: {
-      title,
+      title: `${title} | Trimlly`,
       description,
       url: `/blog/${post.slug}`,
       siteName: "Trimlly",

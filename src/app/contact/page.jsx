@@ -4,7 +4,7 @@ import { getAppUrl } from "@/lib/appUrl";
 import ContactPageInteractive from "@/components/leads/ContactPageInteractive";
 
 export const metadata = {
-  title: "Contact Trimlly Support & Partner Help | India",
+  title: "Contact Support & Partner Help",
   description:
     "Get in touch with Trimlly for appointment bookings, salon onboarding, or support inquiries across Indore, Bhopal, Mumbai, Delhi, Bengaluru, and Pune.",
   alternates: {

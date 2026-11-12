@@ -74,7 +74,7 @@ export async function generateMetadata({ params }) {
   const isIndexable = count >= MIN_INDEX_BARBERS;
 
   const canonical = `/barbers/city/${cityKey}`;
-  const title = `Top Barbers & Salons in ${info.name}: Book Online | Trimlly`.slice(0, 60);
+  const title = `Top Barbers & Salons in ${info.name}: Book Online`;
   const description = `Find verified barbers in ${info.name}, ${info.state}. Compare real-time slots, ratings, and haircut prices in INR. Zero wait times with instant confirmation.`.slice(0, 155);
 
   return {
@@ -85,7 +85,7 @@ export async function generateMetadata({ params }) {
       ? { index: true, follow: true }
       : { index: false, follow: true },
     openGraph: {
-      title,
+      title: `${title} | Trimlly`,
       description,
       url: canonical,
       type: "website",

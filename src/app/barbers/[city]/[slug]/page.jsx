@@ -79,7 +79,7 @@ export async function generateMetadata({ params }) {
   const appUrl = getAppUrl();
   const shopName = barber.shopName || "Barber Shop";
   const cityName = barber.city || city || "India";
-  const title = `${shopName} in ${cityName}: Book Online | Trimlly`.slice(0, 60);
+  const title = `${shopName} in ${cityName}: Book Online`;
 
   const rawDesc = barber.description
     ? `${shopName} in ${cityName}. ${barber.description}`
@@ -95,7 +95,7 @@ export async function generateMetadata({ params }) {
     description,
     alternates: { canonical },
     openGraph: {
-      title,
+      title: `${title} | Trimlly`,
       description,
       url: canonical,
       type: "website",

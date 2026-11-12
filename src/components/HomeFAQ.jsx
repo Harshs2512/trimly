@@ -35,7 +35,7 @@ export default function HomeFAQ() {
           {HOME_FAQS.map((faq, index) => (
             <AccordionItem key={index} value={`item-${index}`} className="border-border/60">
               <AccordionTrigger className="text-left font-bold text-base hover:text-primary transition-colors py-4">
-                {faq.question}
+                <h3 className="text-base font-bold inline">{faq.question}</h3>
               </AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground leading-relaxed pt-1 pb-4">
                 {faq.answer}

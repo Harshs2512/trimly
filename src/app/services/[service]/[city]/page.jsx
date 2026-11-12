@@ -17,7 +17,7 @@ export async function generateMetadata({ params }) {
 
   const cityName = cityParam.charAt(0).toUpperCase() + cityParam.slice(1);
   const canonical = `/services/${srv.slug}/${slugify(cityParam)}`;
-  const title = `Best ${srv.name} in ${cityName}: Book Online | Trimlly`.slice(0, 60);
+  const title = `Best ${srv.name} in ${cityName}: Book Online`;
   const description = `Looking for ${srv.name.toLowerCase()} in ${cityName}? Compare top-rated barbers, check live slot availability and transparent pricing (${srv.priceRange}) on Trimlly.`.slice(0, 155);
 
   return {
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }) {
     description,
     alternates: { canonical },
     openGraph: {
-      title,
+      title: `${title} | Trimlly`,
       description,
       url: canonical,
       type: "website",

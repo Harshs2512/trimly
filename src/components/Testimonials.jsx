@@ -63,7 +63,7 @@ export default function Testimonials({ reviews = [] }) {
 
                     <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs">
                       <div>
-                        <p className="font-bold text-foreground">{review.userName}</p>
+                        <h3 className="font-bold text-foreground text-xs">{review.userName}</h3>
                         <p className="text-muted-foreground">
                           {review.barberName} {review.barberCity ? `• ${review.barberCity}` : ""}
                         </p>

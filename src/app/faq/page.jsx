@@ -10,7 +10,7 @@ import {
 import { getAppUrl } from "@/lib/appUrl";
 
 export const metadata = {
-  title: "Frequently Asked Questions (FAQ) | Trimlly India",
+  title: "Frequently Asked Questions (FAQ)",
   description:
     "Find answers to common questions about booking barber appointments, slot availability, cancellation rules, payments in INR, and salon verification on Trimlly.",
   alternates: {
