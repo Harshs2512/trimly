@@ -1,18 +1,18 @@
 export function getAppUrl() {
-  // If running on Vercel with a designated production domain, auto-resolve
+  const canonicalProductionDomain = "https://trimlly.solvantis.in";
   const vercelProd = process.env.VERCEL_PROJECT_PRODUCTION_URL;
   let configured =
     process.env.NEXT_PUBLIC_APP_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
     process.env.NEXTAUTH_URL;
 
-  // If configured points to a temporary vercel.app preview URL but a custom domain is assigned:
-  if (
-    vercelProd &&
-    (!configured ||
-      (configured.includes(".vercel.app") && !vercelProd.endsWith(".vercel.app")))
-  ) {
-    configured = `https://${vercelProd}`;
+  // In production or on Vercel, prevent temporary vercel.app URLs from leaking into canonical tags
+  if (!configured || configured.includes(".vercel.app")) {
+    if (vercelProd && !vercelProd.endsWith(".vercel.app")) {
+      configured = `https://${vercelProd}`;
+    } else if (process.env.NODE_ENV === "production" || process.env.VERCEL) {
+      configured = canonicalProductionDomain;
+    }
   } else if (!configured && vercelProd) {
     configured = `https://${vercelProd}`;
   } else if (!configured && process.env.VERCEL_URL) {
@@ -21,7 +21,7 @@ export function getAppUrl() {
 
   if (!configured) {
     if (process.env.NODE_ENV === "production") {
-      throw new Error("NEXT_PUBLIC_APP_URL or NEXTAUTH_URL must be configured in production.");
+      return canonicalProductionDomain;
     }
     return "http://localhost:3000";
   }

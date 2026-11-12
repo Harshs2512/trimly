@@ -80,9 +80,9 @@ export async function sendPasswordResetEmail({ to, token }) {
   const resetUrl = `${appUrl}/reset-password?token=${encodeURIComponent(token)}&email=${encodeURIComponent(to)}`;
   return sendEmail({
     to,
-    subject: "Reset your Trimly password",
-    html: `<p>We received a request to reset your Trimly password.</p><p><a href="${resetUrl.replace(/&/g, "&amp;")}">Reset password</a></p><p>This link expires in 60 minutes. If you did not request this, you can ignore this email.</p>`,
-    text: `Reset your Trimly password: ${resetUrl}\n\nThis link expires in 60 minutes.`,
+    subject: "Reset your Trimlly password",
+    html: `<p>We received a request to reset your Trimlly password.</p><p><a href="${resetUrl.replace(/&/g, "&amp;")}">Reset password</a></p><p>This link expires in 60 minutes. If you did not request this, you can ignore this email.</p>`,
+    text: `Reset your Trimlly password: ${resetUrl}\n\nThis link expires in 60 minutes.`,
   });
 }
 
@@ -101,12 +101,12 @@ export async function sendVerificationEmail({ to, token, code }) {
   return {
     ...(await sendEmail({
       to,
-      subject: displayCode ? `Your Trimly Verification Code: ${displayCode}` : "Verify your Trimly email",
+      subject: displayCode ? `Your Trimlly Verification Code: ${displayCode}` : "Verify your Trimlly email",
       html: `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px;">
-          <h2 style="color: #106766; margin-top: 0; text-align: center;">Verify Your Trimly Account</h2>
+          <h2 style="color: #106766; margin-top: 0; text-align: center;">Verify Your Trimlly Account</h2>
           <p style="color: #374151; font-size: 15px; line-height: 1.5; text-align: center;">
-            Thank you for registering with Trimly! Enter the 6-digit code below into your mobile app:
+            Thank you for registering with Trimlly! Enter the 6-digit code below into your mobile app:
           </p>
           ${codeHtml}
           <p style="color: #6b7280; font-size: 14px; text-align: center; margin-top: 16px;">
@@ -122,8 +122,8 @@ export async function sendVerificationEmail({ to, token, code }) {
         </div>
       `,
       text: displayCode
-        ? `Your Trimly verification code is: ${displayCode}\n\nOr click here to verify: ${verifyUrl}\n\nThis code expires in 24 hours.`
-        : `Verify your Trimly email: ${verifyUrl}\n\nThis link expires in 24 hours.`,
+        ? `Your Trimlly verification code is: ${displayCode}\n\nOr click here to verify: ${verifyUrl}\n\nThis code expires in 24 hours.`
+        : `Verify your Trimlly email: ${verifyUrl}\n\nThis link expires in 24 hours.`,
     })),
     verifyUrl,
     code: displayCode,
@@ -159,33 +159,33 @@ export async function sendBookingNotificationEmail({
       })
     : "Scheduled Time";
 
-  let subject = `[Trimly] Appointment Update: ${service}`;
+  let subject = `[Trimlly] Appointment Update: ${service}`;
   let title = "Appointment Update";
   let badgeColor = "#106766";
   let badgeLabel = "UPDATE";
 
   if (type === "booking_created") {
-    subject = `[Trimly] 💈 New Booking Request: ${service} by ${customerName}`;
+    subject = `[Trimlly] 💈 New Booking Request: ${service} by ${customerName}`;
     title = `New Booking Request from ${customerName}`;
     badgeColor = "#F59E0B";
     badgeLabel = "PENDING APPROVAL";
   } else if (type === "booking_confirmed" || booking.status === "confirmed") {
-    subject = `[Trimly] ✅ Confirmed: Your ${service} with ${barberName}`;
+    subject = `[Trimlly] ✅ Confirmed: Your ${service} with ${barberName}`;
     title = "Appointment Confirmed! 🎉";
     badgeColor = "#10B981";
     badgeLabel = "CONFIRMED";
   } else if (type === "booking_cancelled" || booking.status === "cancelled") {
-    subject = `[Trimly] ❌ Cancelled: ${service} with ${barberName}`;
+    subject = `[Trimlly] ❌ Cancelled: ${service} with ${barberName}`;
     title = "Appointment Cancelled";
     badgeColor = "#EF4444";
     badgeLabel = "CANCELLED";
   } else if (type === "booking_declined" || booking.status === "declined") {
-    subject = `[Trimly] ⚠️ Declined: ${service} appointment request`;
+    subject = `[Trimlly] ⚠️ Declined: ${service} appointment request`;
     title = "Appointment Request Declined";
     badgeColor = "#EF4444";
     badgeLabel = "DECLINED";
   } else if (type === "booking_rescheduled") {
-    subject = `[Trimly] 🗓️ Rescheduled: ${service} with ${barberName}`;
+    subject = `[Trimlly] 🗓️ Rescheduled: ${service} with ${barberName}`;
     title = "Appointment Rescheduled";
     badgeColor = "#3B82F6";
     badgeLabel = "RESCHEDULED";
@@ -196,7 +196,7 @@ export async function sendBookingNotificationEmail({
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 28px; border: 1px solid #e5e7eb; border-radius: 14px; background-color: #ffffff;">
       <div style="text-align: center; margin-bottom: 24px;">
-        <span style="font-size: 26px; font-weight: 800; color: #106766; letter-spacing: -0.5px;">TRIMLY</span>
+        <span style="font-size: 26px; font-weight: 800; color: #106766; letter-spacing: -0.5px;">TRIMLLY</span>
         <div style="font-size: 13px; color: #6b7280; margin-top: 2px;">Premium Barber Grooming Platform</div>
       </div>
 
@@ -243,21 +243,21 @@ export async function sendBookingNotificationEmail({
         </table>
       </div>
 
-      <div style="text-align: center; margin: 26px 0 16px 0;">
+      <div style="text-align: center; margin-26px 0 16px 0;">
         <a href="${appUrl}" style="display: inline-block; padding: 12px 28px; background-color: #106766; color: #ffffff; text-decoration: none; font-weight: 600; font-size: 14px; border-radius: 8px;">
-          View in Trimly
+          View in Trimlly
         </a>
       </div>
 
       <hr style="border: none; border-top: 1px solid #f3f4f6; margin: 24px 0 16px 0;" />
       <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0; line-height: 1.4;">
         This is an automated notification for an important appointment update.<br />
-        You can adjust your notification settings anytime in the Trimly app profile.
+        You can adjust your notification settings anytime in the Trimlly app profile.
       </p>
     </div>
   `;
 
-  const text = `${title}\n\nHi ${recipientName},\n${messageText}\n\nService: ${service}\nBarber: ${barberName}\nTime: ${timeSlot}\n${price ? `Price: ${price}\n` : ""}\nView details on Trimly: ${appUrl}`;
+  const text = `${title}\n\nHi ${recipientName},\n${messageText}\n\nService: ${service}\nBarber: ${barberName}\nTime: ${timeSlot}\n${price ? `Price: ${price}\n` : ""}\nView details on Trimlly: ${appUrl}`;
 
   const sendResult = await sendEmail({ to, subject, html, text });
   console.log(`[email-notification] Dispatched to ${to} (${badgeLabel}) - Result:`, sendResult);
@@ -276,11 +276,11 @@ export async function sendOtpEmail({ to, otp, phone }) {
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 28px; border: 1px solid #e5e7eb; border-radius: 12px; background-color: #ffffff;">
       <div style="text-align: center; margin-bottom: 20px;">
-        <h1 style="color: #106766; font-size: 26px; margin: 0; font-weight: 800;">Trimly</h1>
+        <h1 style="color: #106766; font-size: 26px; margin: 0; font-weight: 800;">Trimlly</h1>
         <p style="color: #6b7280; font-size: 14px; margin-top: 4px;">Smart Barber Booking</p>
       </div>
       <p style="color: #374151; font-size: 15px; line-height: 1.5; text-align: center;">
-        Here is your 6-digit login verification code for <strong>${phone || "your Trimly account"}</strong>:
+        Here is your 6-digit login verification code for <strong>${phone || "your Trimlly account"}</strong>:
       </p>
       <div style="margin: 24px 0; text-align: center;">
         <span style="display: inline-block; font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #106766; background: #e6f3f3; padding: 12px 28px; border-radius: 8px; font-family: monospace;">${otp}</span>
@@ -295,11 +295,11 @@ export async function sendOtpEmail({ to, otp, phone }) {
     </div>
   `;
 
-  const text = `Your Trimly login verification code is: ${otp}\n\nValid for 10 minutes for ${phone || "your Trimly account"}. Never share this code with anyone.`;
+  const text = `Your Trimlly login verification code is: ${otp}\n\nValid for 10 minutes for ${phone || "your Trimlly account"}. Never share this code with anyone.`;
 
   const sendResult = await sendEmail({
     to,
-    subject: `Your Trimly Verification Code: ${otp}`,
+    subject: `Your Trimlly Verification Code: ${otp}`,
     html,
     text,
   });

@@ -458,7 +458,7 @@ export default function AdminClient({
         <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-2.5 border border-primary/20">
-              <ShieldCheck className="w-4 h-4 text-primary" /> Trimly Admin Command Center
+              <ShieldCheck className="w-4 h-4 text-primary" /> Trimlly Admin Command Center
             </div>
             <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight">
               Platform <span className="text-primary">Governance</span>

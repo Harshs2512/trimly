@@ -17,7 +17,7 @@ export async function createNotification(db, { userId, type, message, bookingId 
     await sendPushNotification(db, {
       userId,
       type,
-      title: "Trimly Appointment Update",
+      title: "Trimlly Appointment Update",
       bookingId,
     }).catch((err) => console.error("[push] Push notification error:", err));
 

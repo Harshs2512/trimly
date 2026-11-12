@@ -9,18 +9,18 @@ const GENERIC_TITLES = {
   review_received: "New Review Received",
   reminder_24h: "Upcoming Appointment Tomorrow",
   reminder_1h: "Appointment in 1 Hour",
-  system: "Trimly Notification",
+  system: "Trimlly Notification",
 };
 
 /**
  * Strips sensitive PII and constructs a safe push payload.
  */
 export function formatSafePushPayload({ type, title = null, bookingId = null }) {
-  const safeTitle = title || GENERIC_TITLES[type] || "Trimly Notification";
+  const safeTitle = title || GENERIC_TITLES[type] || "Trimlly Notification";
   return {
     notification: {
       title: safeTitle,
-      body: "Tap to view appointment details in Trimly.",
+      body: "Tap to view appointment details in Trimlly.",
     },
     data: {
       type: type || "system",

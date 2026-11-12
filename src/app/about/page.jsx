@@ -6,7 +6,7 @@ import { getAppUrl } from "@/lib/appUrl";
 export const metadata = {
   title: "About Us: Revolutionizing Barber & Salon Appointments",
   description:
-    "Learn about Trimlly's mission to eliminate waiting queues in Indian barbershops and salons through verified master stylists and real-time appointment booking.",
+    "Learn how Trimlly eliminates waiting queues in Indian salons and barbershops through verified stylists and instant appointment booking.",
   alternates: {
     canonical: "/about",
   },

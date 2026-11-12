@@ -3,6 +3,7 @@ import { getDb } from "@/lib/mongodb";
 import { escapeRegex } from "@/lib/api";
 import { calculateBarberWaitingTime } from "@/lib/waitingTime";
 import { calculateDistanceKm, resolveCityCoordinates, isValidCoordinate } from "@/lib/geo";
+import { buildCityMongoQuery, getUnifiedCityStats } from "@/lib/cities";
 
 export function slugify(text = "") {
   return text
@@ -65,7 +66,7 @@ export async function getVerifiedBarbers({
   };
 
   if (city) {
-    query.city = { $regex: new RegExp(`^${escapeRegex(city.trim())}$`, "i") };
+    Object.assign(query, buildCityMongoQuery(city));
   }
 
   if (service) {
@@ -214,31 +215,7 @@ export async function getBarberReviewsSummary(barberId) {
 }
 
 export async function getCityDirectoryStats() {
-  const db = await getDb();
-  const pipeline = [
-    {
-      $match: {
-        deletedAt: { $exists: false },
-        verificationStatus: "verified",
-        city: { $exists: true, $ne: "" },
-      },
-    },
-    {
-      $group: {
-        _id: { $toLower: "$city" },
-        cityOriginal: { $first: "$city" },
-        count: { $sum: 1 },
-      },
-    },
-    { $sort: { count: -1 } },
-  ];
-
-  const results = await db.collection("barbers").aggregate(pipeline).toArray();
-  return results.map((r) => ({
-    citySlug: slugify(r._id),
-    cityName: r.cityOriginal,
-    count: r.count,
-  }));
+  return getUnifiedCityStats();
 }
 
 export const POPULAR_SERVICES = [

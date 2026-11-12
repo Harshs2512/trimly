@@ -22,16 +22,26 @@ const STATIC_ROUTES = [
 ];
 
 const DYNAMIC_REPRESENTATIVE_ROUTES = [
-  // City Directory Pages
-  "/barbers/city/indore",
+  // Active City Directory Pages (with verified inventory)
   "/barbers/city/bhopal",
+  "/barbers/city/mumbai",
+  "/barbers/city/delhi",
+  "/barbers/city/bengaluru",
+  // Zero-inventory city (audits noindex, follow and onboarding empty state)
+  "/barbers/city/indore",
   // Service-City Landing Pages
-  "/services/haircut/indore",
-  "/services/beard-trim/indore",
-  // Representative Barber Profile
-  "/barbers/indore/the-barber-room-101",
-  // Representative Blog Article
-  "/blog/top-salons-indore-guide",
+  "/services/haircut/bhopal",
+  "/services/beard-trim/mumbai",
+  "/services/hair-color/delhi",
+  // Verified Barber Profiles
+  "/barbers/bhopal/the-urban-gentleman-barber-co",
+  "/barbers/mumbai/fade-blade-grooming-studio",
+  "/barbers/delhi/crown-comb-salon",
+  "/barbers/bengaluru/vintage-heritage-barber-lounge",
+  // Representative Published Blog Articles
+  "/blog/free-salon-management-software-india",
+  "/blog/how-to-book-barber-appointment-online-india",
+  "/blog/best-salon-barber-booking-apps-india",
 ];
 
 const PROTOCOL_ROUTES = [
@@ -227,8 +237,8 @@ function auditHtml(route, html, baseUrl, headers = {}) {
     issues.push("Missing or empty <meta name=\"description\">");
   } else {
     const desc = descMatch[1].trim();
-    if (desc.length > 165) {
-      warnings.push(`Meta description length is ${desc.length} chars (recommended <= 160)`);
+    if (desc.length > 160) {
+      warnings.push(`Meta description length is ${desc.length} chars (recommended <= 155 for mobile search results)`);
     } else if (desc.length < 50) {
       warnings.push(`Meta description is very short (${desc.length} chars)`);
     }
@@ -322,6 +332,20 @@ function auditHtml(route, html, baseUrl, headers = {}) {
 
   if (jsonLdCount === 0 && !route.endsWith(".xml") && route !== "/robots.txt") {
     warnings.push("No JSON-LD structured data detected");
+  }
+
+  // 9. Internal Links: Validate domain consistency & no legacy URLs
+  const hrefRegex = /<a\s+[^>]*href=["']([^"']*)["']/gi;
+  let hrefMatch;
+  let legacyDomainLinks = 0;
+  while ((hrefMatch = hrefRegex.exec(html)) !== null) {
+    const href = hrefMatch[1];
+    if (href.includes("trimly.in") || href.includes("trimly-teal.vercel.app")) {
+      legacyDomainLinks++;
+    }
+  }
+  if (legacyDomainLinks > 0) {
+    issues.push(`Found ${legacyDomainLinks} internal link(s) pointing to deprecated domains (trimly.in / trimly-teal.vercel.app)`);
   }
 
   return { issues, warnings, title };

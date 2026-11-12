@@ -27,7 +27,7 @@ export default function HomeFAQ() {
             Frequently Asked <span className="text-primary">Questions</span>
           </h2>
           <p className="text-muted-foreground text-base max-w-xl mx-auto">
-            Everything you need to know about booking hair, beard, and grooming appointments on Trimly.
+            Everything you need to know about booking hair, beard, and grooming appointments on Trimlly.
           </p>
         </div>
 
@@ -35,7 +35,7 @@ export default function HomeFAQ() {
           {HOME_FAQS.map((faq, index) => (
             <AccordionItem key={index} value={`item-${index}`} className="border-border/60">
               <AccordionTrigger className="text-left font-bold text-base hover:text-primary transition-colors py-4">
-                <h3 className="text-base font-bold inline">{faq.question}</h3>
+                <span>{faq.question}</span>
               </AccordionTrigger>
               <AccordionContent className="text-sm text-muted-foreground leading-relaxed pt-1 pb-4">
                 {faq.answer}

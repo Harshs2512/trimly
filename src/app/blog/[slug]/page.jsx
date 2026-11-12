@@ -74,7 +74,8 @@ function renderSimpleMarkdown(md = "") {
   return md
     .replace(/^### (.*$)/gim, '<h3 class="text-xl font-bold mt-8 mb-3 text-foreground">$1</h3>')
     .replace(/^## (.*$)/gim, '<h2 class="text-2xl sm:text-3xl font-extrabold mt-10 mb-4 text-foreground pb-2 border-b border-border/60">$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1 class="text-3xl sm:text-4xl font-extrabold mt-10 mb-6 text-foreground">$1</h1>')
+    // Demote any single # in body content to h2 so the page maintains exactly one h1
+    .replace(/^# (.*$)/gim, '<h2 class="text-2xl sm:text-3xl font-extrabold mt-10 mb-4 text-foreground pb-2 border-b border-border/60">$1</h2>')
     .replace(/\*\*(.*?)\*\*/gim, '<strong class="font-bold text-foreground">$1</strong>')
     .replace(/\*(.*?)\*/gim, '<em class="italic">$1</em>')
     .replace(/^\> (.*$)/gim, '<blockquote class="border-l-4 border-primary pl-4 py-2 my-4 bg-muted/30 rounded-r-xl italic text-muted-foreground">$1</blockquote>')

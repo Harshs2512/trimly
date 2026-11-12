@@ -17,7 +17,7 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-foreground">1. Acceptance of Terms</h2>
             <p className="text-muted-foreground">
-              By accessing and using Trimly, you accept and agree to be bound by the terms and provision of this agreement. 
+              By accessing and using Trimlly, you accept and agree to be bound by the terms and provision of this agreement. 
               In addition, when using these particular services, you shall be subject to any posted guidelines or rules applicable to such services.
             </p>
           </section>
@@ -25,7 +25,7 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-foreground">2. Description of Service</h2>
             <p className="text-muted-foreground">
-              Trimly provides a platform for barbers to manage their appointments and for clients to book haircuts and other grooming services. 
+              Trimlly provides a platform for barbers to manage their appointments and for clients to book haircuts and other grooming services. 
               We act solely as an intermediary between the service provider (barber) and the client.
             </p>
           </section>
@@ -41,14 +41,14 @@ export default function TermsOfService() {
           <section className="space-y-4">
             <h2 className="text-2xl font-semibold text-foreground">4. Appointment Cancellations</h2>
             <p className="text-muted-foreground">
-              Customers may cancel eligible appointments through the platform. Appointment acceptance, cancellation, rescheduling, completion, and no-show states are recorded by Trimly according to the booking workflow available to the customer and barber.
+              Customers may cancel eligible appointments through the platform. Appointment acceptance, cancellation, rescheduling, completion, and no-show states are recorded by Trimlly according to the booking workflow available to the customer and barber.
             </p>
           </section>
 
           <section className="space-y-4">
              <h2 className="text-2xl font-semibold text-foreground">5. Modifications to Service</h2>
             <p className="text-muted-foreground">
-              Trimly reserves the right at any time to modify or discontinue, temporarily or permanently, the service (or any part thereof) with or without notice.
+              Trimlly reserves the right at any time to modify or discontinue, temporarily or permanently, the service (or any part thereof) with or without notice.
             </p>
           </section>
         </div>

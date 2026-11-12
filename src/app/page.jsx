@@ -10,22 +10,24 @@ import { HOME_FAQS } from "@/lib/faqData";
 import { HomeInlineLead } from "@/components/leads/InlineLeadCapture";
 import CTA from "@/components/CTA";
 import { getPlatformTrustStats, getRecentGenuineReviews } from "@/lib/barbers";
+import { getUnifiedCityStats } from "@/lib/cities";
 
 export const revalidate = 300; // Revalidate every 5 minutes
 
 export const metadata = {
   title: "Book Barber & Salon Appointments Online in India",
   description:
-    "Find top-rated barbers & salons in India. View real-time slots, compare transparent INR prices & book appointments instantly on Trimlly.",
+    "Book verified barbers & salons across India. View real-time slots, compare transparent INR prices & book appointments instantly.",
   alternates: {
     canonical: "/",
   },
 };
 
 export default async function Home() {
-  const [stats, reviews] = await Promise.all([
+  const [stats, reviews, cityStats] = await Promise.all([
     getPlatformTrustStats(),
     getRecentGenuineReviews(6),
+    getUnifiedCityStats(),
   ]);
 
   const faqJsonLd = {
@@ -49,7 +51,7 @@ export default async function Home() {
       />
       <Hero />
       <TrustStrip stats={stats} />
-      <PopularGrids />
+      <PopularGrids cityStats={cityStats} />
       <Features />
       <HowItWorks />
       <Advantages />

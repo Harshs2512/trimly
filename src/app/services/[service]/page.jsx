@@ -54,7 +54,7 @@ export default async function ServiceHubPage({ params }) {
     description: srv.description,
     provider: {
       "@type": "Organization",
-      name: "Trimly",
+      name: "Trimlly",
       url: appUrl,
     },
     offers: {

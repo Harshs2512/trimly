@@ -13,7 +13,11 @@ const POPULAR_CITIES = [
   { slug: "ahmedabad", name: "Ahmedabad", state: "Gujarat", tag: "Emerging" },
 ];
 
-export default function PopularGrids() {
+export default function PopularGrids({ cityStats = [] }) {
+  const countMap = Object.fromEntries(
+    cityStats.map((item) => [item.citySlug, item.count])
+  );
+
   return (
     <section className="py-20 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
@@ -39,30 +43,37 @@ export default function PopularGrids() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {POPULAR_CITIES.map((city) => (
-              <Link
-                key={city.slug}
-                href={`/barbers/city/${city.slug}`}
-                className="group p-5 rounded-2xl bg-card border border-border/70 hover:border-primary/50 transition-all hover:shadow-md space-y-2 flex flex-col justify-between"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                    <MapPin className="w-4 h-4" />
+            {POPULAR_CITIES.map((city) => {
+              const count = countMap[city.slug] || 0;
+              return (
+                <Link
+                  key={city.slug}
+                  href={`/barbers/city/${city.slug}`}
+                  className="group p-5 rounded-2xl bg-card border border-border/70 hover:border-primary/50 transition-all hover:shadow-md space-y-2 flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    {count > 0 ? (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+                        {count} {count === 1 ? "Salon" : "Salons"}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border/60">
+                        Opening Soon
+                      </span>
+                    )}
                   </div>
-                  {city.tag && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-secondary/15 text-secondary border border-secondary/25">
-                      {city.tag}
-                    </span>
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors">
-                    Barbers in {city.name}
-                  </h3>
-                  <p className="text-xs text-muted-foreground">{city.state}</p>
-                </div>
-              </Link>
-            ))}
+                  <div>
+                    <h3 className="font-bold text-base text-foreground group-hover:text-primary transition-colors">
+                      Barbers in {city.name}
+                    </h3>
+                    <p className="text-xs text-muted-foreground">{city.state}</p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
 

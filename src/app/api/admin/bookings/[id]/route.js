@@ -78,7 +78,7 @@ export async function PUT(request, { params }) {
       if (existing.userId) {
         await createNotification(db, {
           userId: existing.userId,
-          title: "Appointment Assisted by Trimly Admin",
+          title: "Appointment Assisted by Trimlly Admin",
           message: `Your appointment with ${barber?.shopName || "barber"} was updated: ${changeMsg}.`,
           type: "booking_update",
           bookingId: id,

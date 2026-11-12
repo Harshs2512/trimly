@@ -153,7 +153,7 @@ export async function sendPhoneOtp(db, { phone, email, ip }) {
       const twilioBody = new URLSearchParams({
         To: normalizedPhone,
         From: process.env.TWILIO_PHONE_NUMBER.trim(),
-        Body: `Your Trimly verification code is ${otp}. Valid for 10 minutes.`,
+        Body: `Your Trimlly verification code is ${otp}. Valid for 10 minutes.`,
       });
 
       const twilioRes = await fetch(

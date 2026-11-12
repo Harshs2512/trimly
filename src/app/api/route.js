@@ -28,7 +28,7 @@ export async function GET(request) {
   return NextResponse.json(
     {
       status: "success",
-      message: "Trimly API is live and operational",
+      message: "Trimlly API is live and operational",
       timestamp: new Date().toISOString(),
       latency: responseTime,
       client: {

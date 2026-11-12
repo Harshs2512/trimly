@@ -238,7 +238,7 @@ function AuthPageContent() {
               <TabsContent value="register"><form onSubmit={handleSubmit} className="space-y-5"><div className="grid grid-cols-2 gap-4"><div className="space-y-2"><Label htmlFor="firstName">First Name</Label><Input id="firstName" name="firstName" required maxLength={60} /></div><div className="space-y-2"><Label htmlFor="lastName">Last Name</Label><Input id="lastName" name="lastName" required maxLength={60} /></div></div><EmailField /><div className="space-y-2"><Label htmlFor="role">Account Type</Label><select id="role" name="role" className="w-full h-10 rounded-md border bg-background px-3"><option value="user">Customer</option><option value="barber">Barber / Shop Owner</option></select><p className="text-xs text-muted-foreground">Barber profiles require administrator verification before public booking.</p></div><PasswordField id="register-password" show={showPassword} toggle={() => setShowPassword((value) => !value)} /><div className="space-y-2"><Label htmlFor="confirmPassword">Confirm Password</Label><Input id="confirmPassword" name="confirmPassword" type={showPassword ? "text" : "password"} minLength={8} required /></div><Button type="submit" className="w-full" disabled={isLoading}>{isLoading ? "Creating account..." : "Create Account"}</Button></form></TabsContent>
             </Tabs>
           </div>
-          <Link href="/" className="mt-6 block text-center text-sm text-muted-foreground hover:text-primary">Back to Trimly</Link>
+          <Link href="/" className="mt-6 block text-center text-sm text-muted-foreground hover:text-primary">Back to Trimlly</Link>
         </div>
       </div>
     </div>

@@ -1,8 +1,11 @@
 import { getDb } from "@/lib/mongodb";
 import { getAppUrl } from "@/lib/appUrl";
-import { POPULAR_SERVICES, getBarberCanonicalSlug, slugify } from "@/lib/barbers";
+import { POPULAR_SERVICES, getBarberCanonicalSlug } from "@/lib/barbers";
+import { resolveCity } from "@/lib/cities";
 
-const MIN_INDEX_BARBERS = parseInt(process.env.MIN_CITY_BARBERS_INDEX || "3", 10);
+// Set to 1 so any city with verified salons is included in sitemap.
+// Cities with 0 verified salons are excluded and marked noindex, follow.
+const MIN_INDEX_BARBERS = parseInt(process.env.MIN_CITY_BARBERS_INDEX || "1", 10);
 
 // Accurate baseline content dates (avoids telling Google unchanged static pages changed every second)
 const STATIC_PAGE_LASTMOD = {
@@ -54,7 +57,8 @@ export default async function sitemap() {
         latestBarberUpdate = bDate;
       }
       if (b.city) {
-        const cityKey = slugify(b.city);
+        const cityInfo = resolveCity(b.city);
+        const cityKey = cityInfo.slug;
         cityCounts[cityKey] = (cityCounts[cityKey] || 0) + 1;
         if (!cityLatestUpdate[cityKey] || bDate > cityLatestUpdate[cityKey]) {
           cityLatestUpdate[cityKey] = bDate;

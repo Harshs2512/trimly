@@ -86,7 +86,7 @@ export const AccordionTrigger = React.forwardRef<
   const isOpen = itemCtx?.isOpen || false;
 
   return (
-    <div className="flex">
+    <h3 className="flex font-normal m-0 p-0 text-inherit">
       <button
         ref={ref}
         type="button"
@@ -110,7 +110,7 @@ export const AccordionTrigger = React.forwardRef<
           })}
         />
       </button>
-    </div>
+    </h3>
   );
 });
 AccordionTrigger.displayName = "AccordionTrigger";
@@ -122,13 +122,12 @@ export const AccordionContent = React.forwardRef<
   const itemCtx = React.useContext(AccordionItemContext);
   const isOpen = itemCtx?.isOpen || false;
 
-  if (!isOpen) return null;
-
   return (
     <div
       ref={ref}
       data-state={isOpen ? "open" : "closed"}
-      className="overflow-hidden text-sm transition-all"
+      hidden={!isOpen}
+      className={cn("overflow-hidden text-sm transition-all", !isOpen && "hidden")}
       {...props}
     >
       <div className={cn("pb-4 pt-0", className)}>{children}</div>

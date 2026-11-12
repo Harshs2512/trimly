@@ -22,16 +22,16 @@ import {
 import { SalonOwnerInlineLead } from "@/components/leads/InlineLeadCapture";
 
 export const metadata = {
-  title: "Free Salon Booking & Appointment Software in India",
+  title: "Free Salon Management System in India | Trimlly",
   description:
-    "Zero-commission appointment & slot management software for Indian salons and barbers. Manage chairs, reduce no-shows, and accept bookings 24/7.",
+    "Manage your salon appointments, bookings and daily operations with Trimlly's salon management platform. Explore smart salon software designed for Indian salon owners.",
   alternates: {
     canonical: "/for-barbers",
   },
   openGraph: {
-    title: "Free Salon Booking & Appointment Software in India | Trimlly",
+    title: "Free Salon Management System in India | Trimlly",
     description:
-      "Manage your salon appointment calendar, fill empty chairs, and eliminate no-shows with zero monthly software fees on Trimlly India.",
+      "Manage your salon appointments, bookings and daily operations with Trimlly's salon management platform. Explore smart salon software designed for Indian salon owners.",
     url: "/for-barbers",
     siteName: "Trimlly",
     locale: "en_IN",
@@ -116,13 +116,14 @@ export default function ForBarbersPage() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.12]">
-            Smart Salon Management. <br />
-            <span className="text-primary bg-gradient-to-r from-primary to-emerald-400 bg-clip-text text-transparent">
-              Zero Monthly Software Fees.
-            </span>
+            Free Salon Management Software for Indian Salons
           </h1>
 
-          <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed">
+          <p className="text-xl sm:text-2xl font-bold text-primary">
+            Smart Salon Management. Zero Monthly Software Fees.
+          </p>
+
+          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
             The free salon management and appointment booking system built for Indian barbers and salon owners. Manage your live chair calendar, fill off-peak slots, and eliminate no-shows right from your smartphone.
           </p>
 
@@ -366,6 +367,49 @@ export default function ForBarbersPage() {
             ))}
           </Accordion>
         </div>
+
+        {/* Helpful Resources & Related Internal Links */}
+        <section className="space-y-4 pt-6 border-t">
+          <h3 className="font-bold text-lg text-foreground">Explore Trimlly Platform Resources</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <Link
+              href="/barbers"
+              className="p-4 rounded-xl bg-card border border-border/70 hover:border-primary/50 transition group space-y-1"
+            >
+              <p className="font-semibold text-sm text-foreground group-hover:text-primary transition flex items-center justify-between">
+                Verified Salons <ArrowRight className="w-3.5 h-3.5" />
+              </p>
+              <p className="text-xs text-muted-foreground">Browse active partner salons across Indian cities</p>
+            </Link>
+            <Link
+              href="/reviews"
+              className="p-4 rounded-xl bg-card border border-border/70 hover:border-primary/50 transition group space-y-1"
+            >
+              <p className="font-semibold text-sm text-foreground group-hover:text-primary transition flex items-center justify-between">
+                Customer Reviews <ArrowRight className="w-3.5 h-3.5" />
+              </p>
+              <p className="text-xs text-muted-foreground">Real feedback from verified customer bookings</p>
+            </Link>
+            <Link
+              href="/faq"
+              className="p-4 rounded-xl bg-card border border-border/70 hover:border-primary/50 transition group space-y-1"
+            >
+              <p className="font-semibold text-sm text-foreground group-hover:text-primary transition flex items-center justify-between">
+                Partner Help Center <ArrowRight className="w-3.5 h-3.5" />
+              </p>
+              <p className="text-xs text-muted-foreground">Answers to common onboarding and booking questions</p>
+            </Link>
+            <Link
+              href="/contact"
+              className="p-4 rounded-xl bg-card border border-border/70 hover:border-primary/50 transition group space-y-1"
+            >
+              <p className="font-semibold text-sm text-foreground group-hover:text-primary transition flex items-center justify-between">
+                Contact Partner Support <ArrowRight className="w-3.5 h-3.5" />
+              </p>
+              <p className="text-xs text-muted-foreground">Get personalized assistance from our onboarding team</p>
+            </Link>
+          </div>
+        </section>
 
         {/* Bottom CTA */}
         <div className="p-10 rounded-3xl bg-gradient-to-br from-primary/15 via-card to-secondary/10 border border-primary/30 text-center space-y-6 shadow-xl">

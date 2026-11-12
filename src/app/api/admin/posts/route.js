@@ -81,7 +81,7 @@ export async function POST(request) {
       category: body.category?.trim() || "Grooming",
       tags: Array.isArray(body.tags) ? body.tags.map((t) => t.trim()).filter(Boolean) : [],
       author: {
-        name: body.author?.name?.trim() || session.user?.name || "Trimly Editorial",
+        name: body.author?.name?.trim() || session.user?.name || "Trimlly Editorial Team",
         role: body.author?.role?.trim() || "Grooming Specialist",
         avatar: body.author?.avatar?.trim() || null,
       },

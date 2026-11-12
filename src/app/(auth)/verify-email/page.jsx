@@ -68,7 +68,7 @@ function VerifyEmailContent() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Verify your email</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Confirm your email address to activate your Trimly account.
+            Confirm your email address to activate your Trimlly account.
           </p>
         </div>
 
@@ -83,7 +83,7 @@ function VerifyEmailContent() {
             </div>
             <Link href="/login" className="block">
               <Button className="w-full py-6 text-base font-semibold">
-                Sign In to Trimly
+                Sign In to Trimlly
               </Button>
             </Link>
           </div>

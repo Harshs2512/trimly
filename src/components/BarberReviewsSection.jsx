@@ -464,14 +464,14 @@ export default function BarberReviewsSection({ barberId, onStatsLoaded }) {
         )}
       </div>
 
-      {/* Trimly Community Reviews Showcase Banner */}
+      {/* Trimlly Community Reviews Showcase Banner */}
       <Link
         href="/reviews"
         className="group flex items-center justify-between p-4 rounded-2xl bg-card/60 hover:bg-card border border-border/80 hover:border-primary/40 transition-all shadow-xs"
       >
         <div className="space-y-0.5">
           <div className="font-semibold text-sm flex items-center gap-1.5 text-foreground group-hover:text-primary transition">
-            <MessageSquare className="w-4 h-4 text-primary" /> Explore All Trimly Customer Reviews
+            <MessageSquare className="w-4 h-4 text-primary" /> Explore All Trimlly Customer Reviews
           </div>
           <p className="text-xs text-muted-foreground">
             Browse verified ratings, client feedback, and community recommendations across all salons
