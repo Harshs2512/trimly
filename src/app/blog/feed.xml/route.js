@@ -1,7 +1,8 @@
 import { getPublishedPosts } from "@/lib/blog";
+import { getAppUrl } from "@/lib/appUrl";
 
 export async function GET() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://trimly.in";
+  const appUrl = getAppUrl();
   const { posts } = await getPublishedPosts({ page: 1, limit: 20 });
 
   const escapeXml = (unsafe = "") =>

@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Calendar, Clock, Share2, Scissors, MapPin, CheckCircle2, User, HelpCircle } from "lucide-react";
 import { getPostBySlug, getRelatedPosts } from "@/lib/blog";
+import { getAppUrl } from "@/lib/appUrl";
 import { Button } from "@/components/ui/button";
 import { BlogInlineLead } from "@/components/leads/InlineLeadCapture";
 
@@ -16,7 +17,7 @@ export async function generateMetadata({ params }) {
     return { title: "Article Not Found | Trimlly Blog" };
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://trimly.in";
+  const appUrl = getAppUrl();
   const rawTitle = post.seoTitle || post.title;
   const title = rawTitle.replace(/\s*\|\s*Trimlly$/i, "");
   const description = post.seoDescription || post.excerpt;
@@ -95,7 +96,7 @@ export default async function BlogPostPage({ params }) {
     notFound();
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://trimly.in";
+  const appUrl = getAppUrl();
   const postUrl = `${appUrl}/blog/${post.slug}`;
   const relatedPosts = await getRelatedPosts(post.category, post.slug, 3);
 

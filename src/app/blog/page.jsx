@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Calendar, Clock, BookOpen, Search, Scissors, Tag } from "lucide-react";
 import { getPublishedPosts, getDistinctCategories } from "@/lib/blog";
+import { getAppUrl } from "@/lib/appUrl";
 import { Button } from "@/components/ui/button";
 
 export const revalidate = 300;
@@ -53,7 +54,7 @@ export default async function BlogIndexPage({ searchParams }) {
     "@type": "CollectionPage",
     name: "Trimlly Grooming Journal",
     description: "Expert grooming advice, haircut pricing, and barber shop guides for Indian cities.",
-    url: `${process.env.NEXT_PUBLIC_APP_URL || "https://trimly.in"}/blog`,
+    url: `${getAppUrl()}/blog`,
   };
 
   return (
