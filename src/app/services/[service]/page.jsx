@@ -12,7 +12,7 @@ export async function generateMetadata({ params }) {
   const srv = POPULAR_SERVICES.find((s) => s.slug === serviceParam);
 
   if (!srv) {
-    return { title: "Service Not Found | Trimlly" };
+    return { title: "Service Not Found" };
   }
 
   const canonical = `/services/${srv.slug}`;

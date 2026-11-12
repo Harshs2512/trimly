@@ -71,7 +71,7 @@ export async function generateMetadata({ params }) {
 
   if (!barber) {
     return {
-      title: "Barber Not Found | Trimlly",
+      title: "Barber Not Found",
       description: "This salon or barber profile is unavailable.",
     };
   }

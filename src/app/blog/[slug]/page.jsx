@@ -14,7 +14,7 @@ export async function generateMetadata({ params }) {
   const post = await getPostBySlug(slug);
 
   if (!post) {
-    return { title: "Article Not Found | Trimlly Blog" };
+    return { title: "Article Not Found" };
   }
 
   const appUrl = getAppUrl();

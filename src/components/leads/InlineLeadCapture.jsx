@@ -225,7 +225,8 @@ export function HomeInlineLead() {
 /**
  * 2. City Page Inline Lead Section ("Can't find the right barber in {city}?")
  */
-export function CityInlineLead({ cityName }) {
+export function CityInlineLead({ cityName, city }) {
+  const displayCity = (cityName || city || "").trim() || "Your Area";
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [need, setNeed] = useState("");
@@ -257,10 +258,10 @@ export function CityInlineLead({ cityName }) {
           type: "customer",
           name: name.trim(),
           phone: phone.trim(),
-          city: cityName,
-          interest: need || `Custom barber request for ${cityName}`,
+          city: displayCity,
+          interest: need || `Custom barber request for ${displayCity}`,
           source: "contact_form",
-          page: `/barbers/city/${cityName.toLowerCase()}`,
+          page: `/barbers/city/${encodeURIComponent(displayCity.toLowerCase())}`,
           consent: true,
           consentText: "I agree to be contacted by Trimlly regarding my enquiry.",
           website: "",
@@ -269,7 +270,7 @@ export function CityInlineLead({ cityName }) {
 
       if (!res.ok) throw new Error("Submission failed");
       setSubmitted(true);
-      trackEvent("city_inline_lead_submitted", { city: cityName });
+      trackEvent("city_inline_lead_submitted", { city: displayCity });
     } catch (err) {
       setError(err.message || "Failed to submit.");
     } finally {
@@ -284,13 +285,13 @@ export function CityInlineLead({ cityName }) {
           <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
           <h4 className="font-bold text-lg">Thank You!</h4>
           <p className="text-xs text-muted-foreground">
-            We will review nearby verified options in <strong>{cityName}</strong> and WhatsApp you shortly.
+            We will review nearby verified options in <strong>{displayCity}</strong> and WhatsApp you shortly.
           </p>
         </div>
       ) : (
         <div className="space-y-4">
           <div>
-            <h3 className="text-xl font-bold">Can&apos;t find the right barber in {cityName}?</h3>
+            <h3 className="text-xl font-bold">Can&apos;t find the right barber in {displayCity}?</h3>
             <p className="text-xs text-muted-foreground mt-1">
               Tell us your area or required style. We will connect you directly with vetted local stylists.
             </p>
@@ -430,7 +431,7 @@ export function SalonOwnerInlineLead() {
         <div className="space-y-6">
           <div>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 rounded-full text-xs font-bold text-primary uppercase tracking-wider mb-2">
-              <Store className="w-3.5 h-3.5" /> 5-Minute Setup
+              <Store className="w-3.5 h-3.5" /> Quick Partner Registration
             </span>
             <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
               Request Your Free Salon Partner Listing

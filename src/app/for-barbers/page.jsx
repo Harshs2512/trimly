@@ -22,16 +22,16 @@ import {
 import { SalonOwnerInlineLead } from "@/components/leads/InlineLeadCapture";
 
 export const metadata = {
-  title: "Free Salon Management System in India | Trimlly",
+  title: "Free Salon Management System in India",
   description:
-    "Manage your salon appointments, bookings and daily operations with Trimlly's salon management platform. Explore smart salon software designed for Indian salon owners.",
+    "Manage salon appointments, chair schedules and daily operations with Trimlly. Free salon management software designed for Indian salon owners.",
   alternates: {
     canonical: "/for-barbers",
   },
   openGraph: {
     title: "Free Salon Management System in India | Trimlly",
     description:
-      "Manage your salon appointments, bookings and daily operations with Trimlly's salon management platform. Explore smart salon software designed for Indian salon owners.",
+      "Manage salon appointments, chair schedules and daily operations with Trimlly. Free salon management software designed for Indian salon owners.",
     url: "/for-barbers",
     siteName: "Trimlly",
     locale: "en_IN",
@@ -43,7 +43,7 @@ const B2B_FAQS = [
   {
     question: "How much does it cost to list my salon on Trimlly?",
     answer:
-      "Listing your salon profile on Trimlly is 100% free with zero monthly subscription fees and zero setup costs. Unlike expensive foreign software that charges ₹2,000 to ₹5,000 every month, Trimlly only grows when your chairs are full.",
+      "Listing your salon profile on Trimlly is free to start with zero upfront setup costs and no mandatory monthly software subscription. Salon owners can create their listing, set their chair hours, and begin accepting appointments directly.",
   },
   {
     question: "Do I need special computers or barcode scanners to use Trimlly?",
@@ -58,7 +58,7 @@ const B2B_FAQS = [
   {
     question: "How do appointment reminders work?",
     answer:
-      "When a customer books a slot, Trimlly automatically sends an instant confirmation via SMS and email. A gentle reminder is sent prior to the appointment, reducing no-shows by up to 85%.",
+      "When a customer books a slot, Trimlly sends an instant confirmation via email and notifications to keep both stylist and client aligned, helping minimize missed appointments and scheduling conflicts.",
   },
   {
     question: "What documents are required for salon verification?",
@@ -145,7 +145,7 @@ export default function ForBarbersPage() {
               <CheckCircle2 className="w-4 h-4 text-emerald-500" /> ₹0 Monthly Subscription
             </span>
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" /> 5-Minute Phone Setup
+              <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Quick Phone Setup
             </span>
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="w-4 h-4 text-emerald-500" /> 100% Direct UPI Payments
@@ -181,7 +181,7 @@ export default function ForBarbersPage() {
                   <td className="p-4 sm:p-5 text-muted-foreground align-middle">
                     <span className="inline-flex items-center gap-2">
                       <XCircle className="w-4 h-4 text-destructive shrink-0" />
-                      <span>₹1,500 – ₹5,000 / month</span>
+                      <span>Monthly subscription fees</span>
                     </span>
                   </td>
                   <td className="p-4 sm:p-5 font-bold text-emerald-600 dark:text-emerald-400 bg-primary/[0.04] align-middle">

@@ -215,7 +215,7 @@ export default async function BarberCityPage({ params }) {
                 <p className="text-xs text-muted-foreground mb-4">
                   Want to be notified when the first top-rated salon in {cityInfo.name} opens on Trimlly?
                 </p>
-                <CityInlineLead city={cityInfo.name} />
+                <CityInlineLead cityName={cityInfo.name} />
               </div>
             </div>
           ) : (
@@ -247,10 +247,12 @@ export default async function BarberCityPage({ params }) {
           </div>
         </section>
 
-        {/* City Inline Lead Capture Banner */}
-        <div className="pt-6">
-          <CityInlineLead city={cityInfo.name} />
-        </div>
+        {/* City Inline Lead Capture Banner (Active Inventory Cities) */}
+        {barbers.length > 0 && (
+          <div className="pt-6">
+            <CityInlineLead cityName={cityInfo.name} />
+          </div>
+        )}
 
         {/* Local City FAQs */}
         <section className="space-y-6 pt-6 border-t">

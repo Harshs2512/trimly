@@ -2,7 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Scissors, MapPin, Clock, ArrowRight, ShieldCheck } from "lucide-react";
 import { getAppUrl } from "@/lib/appUrl";
-import { getVerifiedBarbers, POPULAR_SERVICES, slugify } from "@/lib/barbers";
+import { getVerifiedBarbers, POPULAR_SERVICES } from "@/lib/barbers";
+import { resolveCity } from "@/lib/cities";
 import BarberCard from "@/components/BarberCard";
 
 export const revalidate = 60;
@@ -12,18 +13,28 @@ export async function generateMetadata({ params }) {
   const srv = POPULAR_SERVICES.find((s) => s.slug === serviceParam);
 
   if (!srv) {
-    return { title: "Service Not Found | Trimlly" };
+    return { title: "Service Not Found" };
   }
 
-  const cityName = cityParam.charAt(0).toUpperCase() + cityParam.slice(1);
-  const canonical = `/services/${srv.slug}/${slugify(cityParam)}`;
-  const title = `Best ${srv.name} in ${cityName}: Book Online`;
-  const description = `Looking for ${srv.name.toLowerCase()} in ${cityName}? Compare top-rated barbers, check live slot availability and transparent pricing (${srv.priceRange}) on Trimlly.`.slice(0, 155);
+  const cityInfo = resolveCity(cityParam);
+  const { pagination } = await getVerifiedBarbers({
+    city: cityInfo.slug,
+    service: srv.name.split(" ")[0],
+    limit: 1,
+  });
+  const hasInventory = pagination.total > 0;
+
+  const canonical = `/services/${srv.slug}/${cityInfo.slug}`;
+  const title = `Best ${srv.name} in ${cityInfo.name}: Book Online`;
+  const description = `Looking for ${srv.name.toLowerCase()} in ${cityInfo.name}? Compare top-rated barbers, check live slot availability and transparent pricing (${srv.priceRange}) on Trimlly.`.slice(0, 155);
 
   return {
     title,
     description,
     alternates: { canonical },
+    robots: hasInventory
+      ? { index: true, follow: true }
+      : { index: false, follow: true },
     openGraph: {
       title: `${title} | Trimlly`,
       description,
@@ -42,10 +53,11 @@ export default async function ServiceCityPage({ params }) {
     notFound();
   }
 
-  const cityName = cityParam.charAt(0).toUpperCase() + cityParam.slice(1);
+  const cityInfo = resolveCity(cityParam);
+  const cityName = cityInfo.name;
   const appUrl = getAppUrl();
   const { barbers, pagination } = await getVerifiedBarbers({
-    city: cityName,
+    city: cityInfo.slug,
     service: srv.name.split(" ")[0],
     limit: 18,
   });
@@ -89,7 +101,7 @@ export default async function ServiceCityPage({ params }) {
             Available Lounges in {cityName} ({pagination.total})
           </h2>
           <Link
-            href={`/barbers/city/${slugify(cityParam)}`}
+            href={`/barbers/city/${cityInfo.slug}`}
             className="text-xs text-primary font-medium hover:underline flex items-center gap-1"
           >
             All lounges in {cityName} <ArrowRight className="w-3.5 h-3.5" />
@@ -101,7 +113,7 @@ export default async function ServiceCityPage({ params }) {
             <p className="text-sm text-muted-foreground">
               No lounges in {cityName} are currently tagged with &quot;{srv.name}&quot;.
             </p>
-            <Link href={`/barbers/city/${slugify(cityParam)}`} className="text-xs text-primary underline font-medium">
+            <Link href={`/barbers/city/${cityInfo.slug}`} className="text-xs text-primary underline font-medium">
               Browse all salons in {cityName} &rarr;
             </Link>
           </div>
