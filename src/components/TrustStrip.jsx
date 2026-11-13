@@ -1,7 +1,11 @@
 import { ShieldCheck, MapPin, CalendarCheck, Star, Clock } from "lucide-react";
 
 export default function TrustStrip({ stats }) {
-  const showLiveCounters = stats && stats.verifiedBarbersCount >= 3;
+  const showLiveCounters = Boolean(
+    stats &&
+      typeof stats.verifiedBarbersCount === "number" &&
+      stats.verifiedBarbersCount >= 3
+  );
 
   return (
     <section className="border-y border-border/60 bg-muted/30 py-8">

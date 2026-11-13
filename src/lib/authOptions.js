@@ -8,6 +8,14 @@ import { rateLimit } from "./rateLimit.js";
 import { ensureIndexes } from "./indexes.js";
 import { writeAuditLog } from "./audit.js";
 
+// Ensure NEXTAUTH_URL defaults to canonical production domain so Google OAuth callback matches
+if (
+  (!process.env.NEXTAUTH_URL || process.env.NEXTAUTH_URL.includes(".vercel.app")) &&
+  (process.env.NODE_ENV === "production" || process.env.VERCEL)
+) {
+  process.env.NEXTAUTH_URL = "https://trimlly.solvantis.in";
+}
+
 const providers = [
   CredentialsProvider({
     name: "Credentials",

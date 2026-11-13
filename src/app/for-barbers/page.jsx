@@ -22,7 +22,7 @@ import {
 import { SalonOwnerInlineLead } from "@/components/leads/InlineLeadCapture";
 
 export const metadata = {
-  title: "Free Salon Management System in India",
+  title: "Free Salon Management Software & System in India",
   description:
     "Manage salon appointments, chair schedules and daily operations with Trimlly. Free salon management software designed for Indian salon owners.",
   alternates: {
@@ -36,6 +36,21 @@ export const metadata = {
     siteName: "Trimlly",
     locale: "en_IN",
     type: "website",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Trimlly - Free Salon Management System in India",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Free Salon Management System in India | Trimlly",
+    description:
+      "Manage salon appointments, chair schedules and daily operations with Trimlly. Free salon management software designed for Indian salon owners.",
+    images: ["/og-image.jpg"],
   },
 };
 

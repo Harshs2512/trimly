@@ -25,9 +25,18 @@ export const metadata = {
 
 export default async function Home() {
   const [stats, reviews, cityStats] = await Promise.all([
-    getPlatformTrustStats(),
-    getRecentGenuineReviews(6),
-    getUnifiedCityStats(),
+    getPlatformTrustStats().catch((err) => {
+      console.error("[home] Failed to fetch trust stats:", err);
+      return null;
+    }),
+    getRecentGenuineReviews(6).catch((err) => {
+      console.error("[home] Failed to fetch recent reviews:", err);
+      return [];
+    }),
+    getUnifiedCityStats().catch((err) => {
+      console.error("[home] Failed to fetch unified city stats:", err);
+      return [];
+    }),
   ]);
 
   const faqJsonLd = {

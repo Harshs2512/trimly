@@ -22,7 +22,8 @@ function StarRating({ rating }) {
 }
 
 export default function Testimonials({ reviews = [] }) {
-  const hasRealReviews = Array.isArray(reviews) && reviews.length >= 3;
+  const safeReviews = Array.isArray(reviews) ? reviews : [];
+  const hasRealReviews = safeReviews.length >= 3;
 
   return (
     <section className="py-20 bg-background border-b border-border/50">
@@ -43,7 +44,7 @@ export default function Testimonials({ reviews = [] }) {
         {hasRealReviews ? (
           <>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {reviews.slice(0, 6).map((review) => (
+              {safeReviews.slice(0, 6).map((review) => (
                 <Card
                   key={review._id}
                   className="bg-card/70 border-border/80 rounded-2xl hover:border-primary/40 transition-all hover:shadow-md"

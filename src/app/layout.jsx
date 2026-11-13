@@ -71,7 +71,10 @@ export default function RootLayout({ children }) {
       name: companyName,
       url: APP_URL,
       logo: `${APP_URL}/logo.webp`,
-      sameAs: [],
+      sameAs: (process.env.NEXT_PUBLIC_SOCIAL_LINKS || "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
     },
     {
       "@context": "https://schema.org",

@@ -18,6 +18,26 @@ const STATIC_PAGE_LASTMOD = {
   services: new Date("2026-11-10T00:00:00.000Z"),
 };
 
+function getStaticPages(
+  appUrl,
+  latestBarberUpdate = STATIC_PAGE_LASTMOD.home,
+  latestReviewUpdate = STATIC_PAGE_LASTMOD.home,
+  latestBlogUpdate = STATIC_PAGE_LASTMOD.home
+) {
+  return [
+    { url: `${appUrl}`, changeFrequency: "weekly", priority: 1.0, lastModified: STATIC_PAGE_LASTMOD.home },
+    { url: `${appUrl}/barbers`, changeFrequency: "daily", priority: 0.9, lastModified: latestBarberUpdate || STATIC_PAGE_LASTMOD.home },
+    { url: `${appUrl}/for-barbers`, changeFrequency: "weekly", priority: 0.85, lastModified: STATIC_PAGE_LASTMOD.forBarbers },
+    { url: `${appUrl}/reviews`, changeFrequency: "daily", priority: 0.8, lastModified: latestReviewUpdate || STATIC_PAGE_LASTMOD.home },
+    { url: `${appUrl}/blog`, changeFrequency: "daily", priority: 0.85, lastModified: latestBlogUpdate || STATIC_PAGE_LASTMOD.home },
+    { url: `${appUrl}/about`, changeFrequency: "monthly", priority: 0.7, lastModified: STATIC_PAGE_LASTMOD.about },
+    { url: `${appUrl}/contact`, changeFrequency: "monthly", priority: 0.7, lastModified: STATIC_PAGE_LASTMOD.contact },
+    { url: `${appUrl}/faq`, changeFrequency: "weekly", priority: 0.8, lastModified: STATIC_PAGE_LASTMOD.faq },
+    { url: `${appUrl}/privacy`, changeFrequency: "yearly", priority: 0.3, lastModified: STATIC_PAGE_LASTMOD.legal },
+    { url: `${appUrl}/terms`, changeFrequency: "yearly", priority: 0.3, lastModified: STATIC_PAGE_LASTMOD.legal },
+  ];
+}
+
 export default async function sitemap() {
   const appUrl = getAppUrl();
 
@@ -111,18 +131,12 @@ export default async function sitemap() {
     }
 
     // Core static money and info routes with realistic, non-fabricated lastModified dates
-    const staticPages = [
-      { url: `${appUrl}`, changeFrequency: "weekly", priority: 1.0, lastModified: STATIC_PAGE_LASTMOD.home },
-      { url: `${appUrl}/barbers`, changeFrequency: "daily", priority: 0.9, lastModified: latestBarberUpdate },
-      { url: `${appUrl}/for-barbers`, changeFrequency: "weekly", priority: 0.85, lastModified: STATIC_PAGE_LASTMOD.forBarbers },
-      { url: `${appUrl}/reviews`, changeFrequency: "daily", priority: 0.8, lastModified: latestReviewUpdate },
-      { url: `${appUrl}/blog`, changeFrequency: "daily", priority: 0.85, lastModified: latestBlogUpdate },
-      { url: `${appUrl}/about`, changeFrequency: "monthly", priority: 0.7, lastModified: STATIC_PAGE_LASTMOD.about },
-      { url: `${appUrl}/contact`, changeFrequency: "monthly", priority: 0.7, lastModified: STATIC_PAGE_LASTMOD.contact },
-      { url: `${appUrl}/faq`, changeFrequency: "weekly", priority: 0.8, lastModified: STATIC_PAGE_LASTMOD.faq },
-      { url: `${appUrl}/privacy`, changeFrequency: "yearly", priority: 0.3, lastModified: STATIC_PAGE_LASTMOD.legal },
-      { url: `${appUrl}/terms`, changeFrequency: "yearly", priority: 0.3, lastModified: STATIC_PAGE_LASTMOD.legal },
-    ];
+    const staticPages = getStaticPages(
+      appUrl,
+      latestBarberUpdate,
+      latestReviewUpdate,
+      latestBlogUpdate
+    );
 
     // Service Hub Pages (Static parent categories)
     const servicePages = POPULAR_SERVICES.map((srv) => ({
@@ -175,10 +189,6 @@ export default async function sitemap() {
     ];
   } catch (error) {
     console.error("Failed to build dynamic sitemap entries", error);
-    return [
-      { url: `${appUrl}`, changeFrequency: "weekly", priority: 1.0, lastModified: STATIC_PAGE_LASTMOD.home },
-      { url: `${appUrl}/barbers`, changeFrequency: "daily", priority: 0.9, lastModified: STATIC_PAGE_LASTMOD.home },
-      { url: `${appUrl}/for-barbers`, changeFrequency: "weekly", priority: 0.85, lastModified: STATIC_PAGE_LASTMOD.forBarbers },
-    ];
+    return getStaticPages(appUrl);
   }
 }

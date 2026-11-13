@@ -14,8 +14,9 @@ const POPULAR_CITIES = [
 ];
 
 export default function PopularGrids({ cityStats = [] }) {
+  const safeCityStats = Array.isArray(cityStats) ? cityStats : [];
   const countMap = Object.fromEntries(
-    cityStats.map((item) => [item.citySlug, item.count])
+    safeCityStats.map((item) => [item.citySlug, item.count])
   );
 
   return (
