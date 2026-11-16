@@ -311,7 +311,15 @@ function auditHtml(route, html, baseUrl, headers = {}) {
     warnings.push(`${missingAltCount} image(s) missing non-empty alt attribute`);
   }
 
-  // 8. Structured Data: JSON-LD semantic validation
+  // 8. Favicon & Google Search Icon Validation
+  const faviconMatch = html.match(/<link[^>]*rel=["'](?:shortcut icon|icon)["'][^>]*>/i);
+  if (!faviconMatch) {
+    warnings.push("Missing <link rel=\"icon\"> for Google Search snippet branding");
+  } else if (/sizes=["']142x127["']/i.test(faviconMatch[0])) {
+    issues.push("Favicon has non-square sizes='142x127' (Google requires a multiple of 48px square)");
+  }
+
+  // 9. Structured Data: JSON-LD semantic validation
   const jsonLdRegex = /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
   let jsonLdMatch;
   let jsonLdCount = 0;

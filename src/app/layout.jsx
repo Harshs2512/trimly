@@ -51,6 +51,17 @@ export const metadata = {
       "Find and book verified barbers and salons near you. Real-time slots, INR pricing, instant confirmation.",
     images: [`${APP_URL}/og-image.jpg`],
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
   // Google Search Console verification — set NEXT_PUBLIC_GSC_VERIFICATION in your env
   ...(process.env.NEXT_PUBLIC_GSC_VERIFICATION && {
     verification: {
