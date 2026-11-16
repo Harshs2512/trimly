@@ -17,6 +17,12 @@ const inter = Inter({
 const APP_URL = getAppUrl();
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
 
+export const viewport = {
+  themeColor: "#006b75",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata = {
   metadataBase: new URL(APP_URL),
   title: {
@@ -105,6 +111,14 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="en-IN" className={inter.variable} suppressHydrationWarning>
+      <head>
+        <link
+          rel="search"
+          type="application/opensearchdescription+xml"
+          title="Trimlly"
+          href="/opensearch.xml"
+        />
+      </head>
       <body
         className={`${inter.className} bg-background text-foreground flex flex-col min-h-screen antialiased`}
       >

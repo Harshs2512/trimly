@@ -84,7 +84,16 @@ function loadSession() {
   if (typeof window === "undefined") return INIT_STATE;
   try {
     const raw = sessionStorage.getItem(SESSION_KEY);
-    if (raw) return { ...INIT_STATE, ...JSON.parse(raw) };
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      // Preserve contact info but always reset conversational step to GREETING
+      return {
+        ...INIT_STATE,
+        name: parsed.name || "",
+        phone: parsed.phone || "",
+        email: parsed.email || "",
+      };
+    }
   } catch {}
   return INIT_STATE;
 }
@@ -93,6 +102,131 @@ function saveSession(state) {
   try {
     sessionStorage.setItem(SESSION_KEY, JSON.stringify(state));
   } catch {}
+}
+
+// ─── Inline Lead Form (Module Scope to preserve React DOM tree and input focus) ──
+function LeadFormInline({
+  state,
+  setState,
+  phoneError,
+  setPhoneError,
+  submitting,
+  onSubmit,
+  inputRef,
+}) {
+  return (
+    <form onSubmit={onSubmit} className="mt-2 space-y-2.5" aria-label="Contact form">
+      {/* Honeypot - hidden from real users */}
+      <input
+        type="text"
+        name="website"
+        value=""
+        readOnly
+        tabIndex={-1}
+        aria-hidden="true"
+        className="hidden"
+      />
+
+      <div>
+        <label htmlFor="chat-name" className="block text-xs font-semibold text-foreground mb-1">
+          Your Name *
+        </label>
+        <input
+          id="chat-name"
+          type="text"
+          required
+          maxLength={100}
+          value={state.name}
+          onChange={(e) => setState((s) => ({ ...s, name: e.target.value }))}
+          placeholder="Aman Sharma"
+          className="w-full px-3 py-2 text-sm text-foreground bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary caret-primary"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="chat-phone" className="block text-xs font-semibold text-foreground mb-1">
+          Mobile Number (+91) *
+        </label>
+        <div className="flex items-center gap-1">
+          <span className="px-2 py-2 text-sm bg-muted border border-border rounded-l-lg text-muted-foreground font-medium select-none">
+            +91
+          </span>
+          <input
+            id="chat-phone"
+            ref={inputRef}
+            type="tel"
+            required
+            maxLength={10}
+            inputMode="numeric"
+            value={state.phone.replace(/^\+91/, "").replace(/\D/g, "").slice(0, 10)}
+            onChange={(e) => {
+              const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+              setState((s) => ({ ...s, phone: digits }));
+              setPhoneError("");
+            }}
+            placeholder="98765 43210"
+            className="flex-1 px-3 py-2 text-sm text-foreground bg-background border border-border border-l-0 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary caret-primary"
+          />
+        </div>
+        {phoneError && (
+          <p className="text-xs text-destructive mt-1 flex items-center gap-1">
+            <AlertCircle className="w-3 h-3 shrink-0" />
+            {phoneError}
+          </p>
+        )}
+      </div>
+
+      <div>
+        <label htmlFor="chat-email" className="block text-xs font-semibold text-foreground mb-1">
+          Email <span className="text-muted-foreground font-normal">(optional)</span>
+        </label>
+        <input
+          id="chat-email"
+          type="email"
+          maxLength={254}
+          value={state.email}
+          onChange={(e) => setState((s) => ({ ...s, email: e.target.value }))}
+          placeholder="email@example.com"
+          className="w-full px-3 py-2 text-sm text-foreground bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary caret-primary"
+        />
+      </div>
+
+      <div className="flex items-start gap-2 pt-1">
+        <input
+          id="chat-consent"
+          type="checkbox"
+          required
+          checked={state.consent}
+          onChange={(e) => {
+            setState((s) => ({ ...s, consent: e.target.checked }));
+            setPhoneError("");
+          }}
+          className="mt-0.5 w-4 h-4 rounded border-border accent-primary cursor-pointer shrink-0"
+        />
+        <label htmlFor="chat-consent" className="text-[11px] text-muted-foreground leading-relaxed cursor-pointer">
+          I agree to be contacted by Trimlly about my enquiry.{" "}
+          <a href="/privacy" target="_blank" className="text-primary underline underline-offset-2">
+            Privacy Policy
+          </a>
+        </label>
+      </div>
+
+      <button
+        type="submit"
+        disabled={submitting}
+        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
+      >
+        {submitting ? (
+          <span className="animate-spin w-4 h-4 border-2 border-primary-foreground/40 border-t-primary-foreground rounded-full" />
+        ) : (
+          <>
+            <Send className="w-4 h-4" />
+            Send Enquiry
+          </>
+        )}
+      </button>
+    </form>
+  );
 }
 
 // ─── Main Chat Panel ──────────────────────────────────────────────────────────
@@ -145,6 +279,8 @@ export default function ChatbotPanel({ onClose, page, referrer, utms }) {
   // Push an initial greeting on first open
   useEffect(() => {
     if (messages.length === 0) {
+      // Ensure conversational state starts fresh at GREETING on new mount
+      setState((s) => ({ ...s, step: STEPS.GREETING, path: null }));
       const withinHours = isWithinBusinessHours();
       const greetSuffix = withinHours
         ? " Our team is online now."
@@ -199,33 +335,40 @@ export default function ChatbotPanel({ onClose, page, referrer, utms }) {
     async (value, label) => {
       setMessages((prev) => [...prev, userMsg(label)]);
 
-      if (state.step === STEPS.GREETING) {
-        if (value === "customer") {
-          setState((s) => ({ ...s, step: STEPS.CUSTOMER_CITY, path: "customer" }));
-          trackEvent("chat_path_selected", { path: "customer" });
-          addBotMsg(
-            "Great! Which city are you looking for a barber in?",
-            CHATBOT_CITIES.map((c) => ({ label: c.label, value: c.id }))
-          );
-        } else if (value === "owner") {
-          setState((s) => ({ ...s, step: STEPS.OWNER_CITY, path: "owner" }));
-          trackEvent("chat_path_selected", { path: "owner" });
-          addBotMsg(
-            "Excellent! Let's get your salon listed. Which city is your salon in?",
-            CHATBOT_CITIES.map((c) => ({ label: c.label, value: c.id }))
-          );
-        } else {
-          setState((s) => ({ ...s, step: STEPS.FAQ, path: "explore" }));
-          trackEvent("chat_path_selected", { path: "explore" });
-          addBotMsg(
-            "No problem! Here are some common questions — tap one to get the answer:",
-            CHATBOT_FAQ.slice(0, 5).map((f) => ({ label: f.question, value: f.id }))
-          );
-        }
+      // 1. Primary path navigation (Always handled regardless of previous state)
+      if (value === "customer") {
+        setState((s) => ({ ...s, step: STEPS.CUSTOMER_CITY, path: "customer" }));
+        trackEvent("chat_path_selected", { path: "customer" });
+        addBotMsg(
+          "Great! Which city are you looking for a barber in?",
+          CHATBOT_CITIES.map((c) => ({ label: c.label, value: c.id }))
+        );
         return;
       }
 
-      if (state.step === STEPS.CUSTOMER_CITY) {
+      if (value === "owner") {
+        setState((s) => ({ ...s, step: STEPS.OWNER_CITY, path: "owner" }));
+        trackEvent("chat_path_selected", { path: "owner" });
+        addBotMsg(
+          "Excellent! Let's get your salon listed. Which city is your salon in?",
+          CHATBOT_CITIES.map((c) => ({ label: c.label, value: c.id }))
+        );
+        return;
+      }
+
+      if (value === "explore") {
+        setState((s) => ({ ...s, step: STEPS.FAQ, path: "explore" }));
+        trackEvent("chat_path_selected", { path: "explore" });
+        addBotMsg(
+          "No problem! Here are some common questions — tap one to get the answer:",
+          CHATBOT_FAQ.slice(0, 5).map((f) => ({ label: f.question, value: f.id }))
+        );
+        return;
+      }
+
+      // 2. City selection (customer or owner)
+      const isKnownCity = CHATBOT_CITIES.some((c) => c.id === value);
+      if (state.step === STEPS.CUSTOMER_CITY || (isKnownCity && state.path !== "owner")) {
         const cityLabel = CHATBOT_CITIES.find((c) => c.id === value)?.label || value;
         setState((s) => ({ ...s, step: STEPS.CUSTOMER_SERVICE, city: value, cityLabel }));
         addBotMsg(
@@ -235,7 +378,28 @@ export default function ChatbotPanel({ onClose, page, referrer, utms }) {
         return;
       }
 
-      if (state.step === STEPS.CUSTOMER_SERVICE) {
+      if (state.step === STEPS.OWNER_CITY || (isKnownCity && state.path === "owner")) {
+        const cityLabel = CHATBOT_CITIES.find((c) => c.id === value)?.label || value;
+        setState((s) => ({ ...s, step: STEPS.OWNER_DETAILS, city: value, cityLabel }));
+        addBotMsg(
+          `Here's what listing on Trimlly gives your salon in ${cityLabel}:
+
+✅ Free listing — zero monthly fees
+✅ Customers find you through city directory search
+✅ Real-time slot calendar on any phone
+✅ Automated SMS & email reminders
+✅ Verified badge to build trust
+✅ Direct UPI & cash payments — you keep it all
+
+Ready to get started? Tell us your name and mobile and our team will guide you through setup.`,
+          [{ label: "List my salon free →", value: "__lead_form__" }]
+        );
+        return;
+      }
+
+      // 3. Service selection
+      const isKnownService = CHATBOT_SERVICES.some((s) => s.id === value);
+      if (state.step === STEPS.CUSTOMER_SERVICE || isKnownService) {
         const serviceLabel = CHATBOT_SERVICES.find((s) => s.id === value)?.label || value;
         setState((s) => ({ ...s, step: STEPS.LEAD_FORM, service: value, serviceLabel }));
 
@@ -259,26 +423,9 @@ export default function ChatbotPanel({ onClose, page, referrer, utms }) {
         return;
       }
 
-      if (state.step === STEPS.OWNER_CITY) {
-        const cityLabel = CHATBOT_CITIES.find((c) => c.id === value)?.label || value;
-        setState((s) => ({ ...s, step: STEPS.OWNER_DETAILS, city: value, cityLabel }));
-        addBotMsg(
-          `Here's what listing on Trimlly gives your salon in ${cityLabel}:
-
-✅ Free listing — zero monthly fees
-✅ Customers find you through city directory search
-✅ Real-time slot calendar on any phone
-✅ Automated SMS & email reminders
-✅ Verified badge to build trust
-✅ Direct UPI & cash payments — you keep it all
-
-Ready to get started? Tell us your name and mobile and our team will guide you through setup.`,
-          [{ label: "List my salon free →", value: "__lead_form__" }]
-        );
-        return;
-      }
-
-      if (state.step === STEPS.FAQ) {
+      // 4. FAQ selection
+      const isKnownFaq = CHATBOT_FAQ.some((f) => f.id === value);
+      if (state.step === STEPS.FAQ || isKnownFaq) {
         const faq = CHATBOT_FAQ.find((f) => f.id === value);
         if (faq) {
           addBotMsg(faq.answer);
@@ -335,7 +482,7 @@ Ready to get started? Tell us your name and mobile and our team will guide you t
         []
       );
     },
-    [state, addBotMsg, fetchBarbers]
+    [state, addBotMsg, fetchBarbers, router]
   );
 
   // ── Lead form submit ──
@@ -432,123 +579,6 @@ Ready to get started? Tell us your name and mobile and our team will guide you t
     await postEvent("call_click", page);
   }
 
-  // ─── Lead Form Component (inline) ────────────────────────────────────────────
-  function LeadFormInline() {
-    return (
-      <form onSubmit={handleLeadSubmit} className="mt-2 space-y-2.5" aria-label="Contact form">
-        {/* Honeypot - hidden from real users */}
-        <input
-          type="text"
-          name="website"
-          value=""
-          readOnly
-          tabIndex={-1}
-          aria-hidden="true"
-          className="hidden"
-        />
-
-        <div>
-          <label htmlFor="chat-name" className="block text-xs font-semibold text-foreground mb-1">
-            Your Name *
-          </label>
-          <input
-            id="chat-name"
-            type="text"
-            required
-            maxLength={100}
-            value={state.name}
-            onChange={(e) => setState((s) => ({ ...s, name: e.target.value }))}
-            placeholder="Aman Sharma"
-            className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="chat-phone" className="block text-xs font-semibold text-foreground mb-1">
-            Mobile Number (+91) *
-          </label>
-          <div className="flex items-center gap-1">
-            <span className="px-2 py-2 text-sm bg-muted border border-border rounded-l-lg text-muted-foreground font-medium select-none">
-              +91
-            </span>
-            <input
-              id="chat-phone"
-              ref={inputRef}
-              type="tel"
-              required
-              maxLength={10}
-              inputMode="numeric"
-              value={state.phone.replace(/^\+91/, "").replace(/\D/g, "").slice(0, 10)}
-              onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
-                setState((s) => ({ ...s, phone: digits }));
-                setPhoneError("");
-              }}
-              placeholder="98765 43210"
-              className="flex-1 px-3 py-2 text-sm bg-background border border-border border-l-0 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-            />
-          </div>
-          {phoneError && (
-            <p className="text-xs text-destructive mt-1 flex items-center gap-1">
-              <AlertCircle className="w-3 h-3 shrink-0" />
-              {phoneError}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label htmlFor="chat-email" className="block text-xs font-semibold text-foreground mb-1">
-            Email <span className="text-muted-foreground font-normal">(optional)</span>
-          </label>
-          <input
-            id="chat-email"
-            type="email"
-            maxLength={254}
-            value={state.email}
-            onChange={(e) => setState((s) => ({ ...s, email: e.target.value }))}
-            placeholder="email@example.com"
-            className="w-full px-3 py-2 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary"
-          />
-        </div>
-
-        <div className="flex items-start gap-2 pt-1">
-          <input
-            id="chat-consent"
-            type="checkbox"
-            required
-            checked={state.consent}
-            onChange={(e) => {
-              setState((s) => ({ ...s, consent: e.target.checked }));
-              setPhoneError("");
-            }}
-            className="mt-0.5 w-4 h-4 rounded border-border accent-primary cursor-pointer shrink-0"
-          />
-          <label htmlFor="chat-consent" className="text-[11px] text-muted-foreground leading-relaxed cursor-pointer">
-            I agree to be contacted by Trimlly about my enquiry.{" "}
-            <a href="/privacy" target="_blank" className="text-primary underline underline-offset-2">
-              Privacy Policy
-            </a>
-          </label>
-        </div>
-
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground rounded-lg text-sm font-semibold hover:bg-primary/90 transition-colors disabled:opacity-60 disabled:cursor-not-allowed min-h-[44px]"
-        >
-          {submitting ? (
-            <span className="animate-spin w-4 h-4 border-2 border-primary-foreground/40 border-t-primary-foreground rounded-full" />
-          ) : (
-            <>
-              <Send className="w-4 h-4" />
-              Send Enquiry
-            </>
-          )}
-        </button>
-      </form>
-    );
-  }
-
   return (
     <div
       ref={panelRef}
@@ -622,7 +652,15 @@ Ready to get started? Tell us your name and mobile and our team will guide you t
               {/* Inline lead form */}
               {msg.showForm && state.step === STEPS.LEAD_FORM && !state.leadSubmitted && (
                 <div className="mt-2 bg-card border border-border rounded-xl p-3">
-                  <LeadFormInline />
+                  <LeadFormInline
+                    state={state}
+                    setState={setState}
+                    phoneError={phoneError}
+                    setPhoneError={setPhoneError}
+                    submitting={submitting}
+                    onSubmit={handleLeadSubmit}
+                    inputRef={inputRef}
+                  />
                 </div>
               )}
 
